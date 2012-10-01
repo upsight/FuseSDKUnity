@@ -1,0 +1,148 @@
+
+#pragma mark Initialization
+
+void FuseAPI_Initialize();
+void FuseAPI_RegisterCrash(NSException* exception);
+
+#pragma mark - Session Creation
+
+void FuseAPI_StartSession(const char* gameId);
+void FuseAPI_SessionStartReceived();
+void FuseAPI_SessionLoginError(int error);
+
+#pragma mark - Analytic Event
+
+void FuseAPI_RegisterEvent(const char* message);
+
+#pragma mark - In-App Purchase Logging
+
+@interface FuseAPI_Product : NSObject
+{
+	
+}
+
+@property(nonatomic, copy) NSString* productIdentifier;
+@property(nonatomic, assign) NSLocale *priceLocale;
+@property(nonatomic, assign) NSDecimalNumber *price;
+
+@end
+
+@interface FuseAPI_ProductsResponse : NSObject
+{
+	
+}
+
+@property(nonatomic, assign) NSMutableArray *products;
+
+@end
+
+void FuseAPI_RegisterInAppPurchaseListStart();
+void FuseAPI_RegisterInAppPurchaseListProduct(const char* productId, const char* priceLocale, float price);
+void FuseAPI_RegisterInAppPurchaseListEnd();
+
+@interface FuseAPI_Payment : NSObject
+{
+	
+}
+
+@property(nonatomic, copy) NSString* productIdentifier;
+
+@end
+
+@interface FuseAPI_PaymentTransaction : NSObject
+{
+	
+}
+
+@property(nonatomic, assign) FuseAPI_Payment* payment;
+@property(nonatomic, assign) NSData* transactionReceipt;
+@property(nonatomic, assign) SKPaymentTransactionState transactionState;
+
+@end
+
+void FuseAPI_RegisterInAppPurchase(const char* productId, const unsigned char* transactionReceiptBuffer, int transactionReceiptLength, int transactionState);
+void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, const char* originalTransactionId);
+
+#pragma mark - Fuse Interstitial Ads
+
+void FuseAPI_ShowAd();
+void FuseAPI_AdWillClose();
+
+#pragma mark - Notifications
+
+void FuseAPI_DisplayNotifications();
+
+#pragma mark - More Games
+
+void FuseAPI_DisplayMoreGames();
+void FuseAPI_OverlayWillClose();
+
+#pragma mark - Gender
+
+void FuseAPI_RegisterGender(int gender);
+
+#pragma mark - Account Login
+
+void FuseAPI_GameCenterLogin();
+void FuseAPI_FacebookLogin(const char* facebookId);
+void FuseAPI_TwitterLogin(const char* twitterId);
+void FuseAPI_OpenFeintLogin(const char* openFeintId);
+void FuseAPI_FuseLogin(const char* fuseId, const char* alias);
+void FuseAPI_AccountLoginComplete(int type, const char* accountId);
+const char* FuseAPI_GetFuseId();
+
+#pragma mark - Miscellaneous
+
+int FuseAPI_GamesPlayed();
+const char* FuseAPI_LibraryVersion();
+bool FuseAPI_Connected();
+void FuseAPI_TimeFromServer();
+void FuseAPI_TimeUpdated(int timestamp);
+bool FuseAPI_NotReadyToTerminate();
+
+#pragma mark - Data Opt In/Out
+
+void FuseAPI_EnableData(bool enable);
+bool FuseAPI_DataEnabled();
+
+#pragma mark - User Game Data
+
+void FuseAPI_SetGameDataStart(const char* key, bool isCollection, const char* fuseId);
+void FuseAPI_SetGameDataKeyValue(const char* key, const char* value, bool isBinary);
+int FuseAPI_SetGameDataEnd();
+void FuseAPI_GameDataSetAcknowledged(int requestId);
+
+void FuseAPI_GameDataError(int error);
+
+void FuseAPI_GetGameDataStart(const char* key, const char* fuseId);
+void FuseAPI_GetGameDataKey(const char* key);
+int FuseAPI_GetGameDataEnd();
+void FuseAPI_GameDataReceivedStart(const char* fuseId, const char* key);
+void FuseAPI_GameDataReceivedKeyValue(const char* key, const char* value, bool isBinary);
+void FuseAPI_GameDataReceivedEnd();
+
+#pragma mark - Friend List
+
+#pragma mark - Chat List
+
+#pragma mark - User-to-User Push Notifications
+
+void FuseAPI_UserPushNotification(const char* fuseId, const char* message);
+void FuseAPI_FriendsPushNotification(const char* message);
+
+#pragma mark - Gifting
+
+#pragma mark - Game Configuration Data
+
+const char* FuseAPI_GetGameConfigurationValue(const char* key);
+void FuseAPI_GameConfigurationReceived();
+
+#pragma mark - Callback
+
+@interface FuseAPI_Delegate : NSObject<FuseDelegate, FuseAdDelegate, FuseOverlayDelegate, FuseGameDataDelegate>
+{
+	
+}
+
+@end
+
