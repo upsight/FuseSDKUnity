@@ -472,16 +472,29 @@ enum kFuseFriendsListErrors
  * @see gameDataError: for more information on error cases involved with retrieving game data
  */
 -(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data;
+
+@optional
 /*!
  * @brief This function indicates when an error has occurred when sending or receiving per-user game data information.
- * @details When an error occurs when trying to set or retrieve game data, this function will be thrown with an error code.
+ * @details When an error occurs when trying to set or retrieve game data, this function will be thrown with an error code.  Either this function or gameDataError:RequestID: should be implemented to catch an error.  This function does not provide the request ID.
  * @param _error [NSNumber*] The error number corresponding to a value in kFuseGameDataErrors
  * @see FuseAPI::setGameData:Delegate: for more information on setting game data
  * @see FuseAPI::getGameData:Delegate: for more information on retrieving game data
  * @see kFuseGameDataErrors for information on all of the possible error cases
  */
 -(void) gameDataError:(NSNumber*)_error;
-@optional
+
+/*!
+ * @brief This function indicates when an error has occurred when sending or receiving per-user game data information.
+ * @details When an error occurs when trying to set or retrieve game data, this function will be thrown with an error code.  Either this function or gameDataError:RequestID: should be implemented to catch an error.  This function provides the request ID.
+ * @param _error [NSNumber*] The error number corresponding to a value in kFuseGameDataErrors
+ * @param _request_id [NSNumber*] The request ID
+ * @see FuseAPI::setGameData:Delegate: for more information on setting game data
+ * @see FuseAPI::getGameData:Delegate: for more information on retrieving game data
+ * @see kFuseGameDataErrors for information on all of the possible error cases
+ */
+-(void) gameDataError:(NSNumber*)_error RequestID:(NSNumber*)_request_id;
+
 /*!
  * @brief This function indicates the server has acknowledged a save of per-user game data
  * @details When this function is called, it indicates that the server has successfully saved data sent from the client device.  
@@ -909,12 +922,72 @@ enum kFuseFriendsListErrors
  
  @endcode
  
- @param _facebook_id [NSString*] This is the account id of the user signed in to Facebook
+ @param _facebook_id [NSString*] This is the account id of the user signed in to Facebook (e.g. 122611572) 
  @since Fuse API version 1.14
  @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
  @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
+ @deprecated Since FuseAPI version 1.23. See facebookLogin:Name:withAccessToken: for more information on new function.
  */
-+(void) facebookLogin:(NSString*)_facebook_id;
++(void) facebookLogin:(NSString*)_facebook_id __attribute__((deprecated));
+
+/*!
+ * @brief Facebook account registration
+ * @details Uniquely track a user across devices by passing Facebook login information of a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.
+ 
+ To call this function:
+ 
+ @code
+ 
+ [FuseAPI facebookLogin:@"facebook_id"];
+ 
+ @endcode
+ 
+ If required, a callback is sent to the \<FuseDelegate\> (if registered) indicating that the Fuse system has received the login information.
+ 
+ @code
+ 
+ -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
+ 
+ @endcode
+ 
+ @param _facebook_id [NSString*] This is the account id of the user signed in to Facebook (e.g. 122611572) 
+ @param _name [NSString*] The first and last name of the user (i.e. "Jon Jovi").  Can be @"" or nil if unknown.
+ @param _access_token [NSString*] This is the access token generated if a user signs in to a facebook app on the device (can be @"" or nil if not available)
+ @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
+ @since Fuse API version 1.23
+ */
++(void) facebookLogin:(NSString*)_facebook_id Name:(NSString*)_name withAccessToken:(NSString*)_accesstoken;
+
+/*!
+ * @brief Facebook account registration
+ * @details Uniquely track a user across devices by passing Facebook login information of a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.  Use this version if the gender of the player is known.
+ 
+ To call this function:
+ 
+ @code
+ 
+ [FuseAPI facebookLogin:@"facebook_id"];
+ 
+ @endcode
+ 
+ If required, a callback is sent to the \<FuseDelegate\> (if registered) indicating that the Fuse system has received the login information.
+ 
+ @code
+ 
+ -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
+ 
+ @endcode
+ 
+ @param _facebook_id [NSString*] This is the account id of the user signed in to Facebook (e.g. 122611572) 
+ @param _name [NSString*] The first and last name of the user (i.e. "Jon Jovi").  Can be @"" or nil if unknown.
+ @param _gender [int] The suspected gender of the user.  Please see kFuseGender for more information on the gender enumerated type.
+ @param _access_token [NSString*] This is the access token generated if a user signs in to a facebook app on the device (can be @"" or nil if not available)
+ @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
+ @since Fuse API version 1.23
+ */
++(void) facebookLogin:(NSString*)_facebook_id Name:(NSString*)_name Gender:(int)_gender withAccessToken:(NSString*)_accesstoken;
 
 /*!
  * @brief Twitter account registration
@@ -1000,6 +1073,54 @@ enum kFuseFriendsListErrors
  @see getFuseID for more information on retrieving the user's Fuse ID once signed in
  */
 +(void) fuseLogin:(NSString*)_fuse_id Alias:(NSString*)_alias;
+
+/*!
+ * @brief Get the original account ID used to log in to the Fuse system that corresponds to the Fuse ID
+ * @details This function returns the original parameter used to create the user account session.
+ 
+ To call this function
+ 
+ @code
+ 
+ NSString *originalID = [FuseAPI getOriginalAccountID];
+ 
+ @endcode
+ 
+ * @retval [NSString*] The original account ID used to sign in to the fuse system (for instance 122611572 if the user is signed in using Facebook)
+ * @see getOriginalAccountType to get the type associated with the account ID
+ * @since Fuse API version 1.23
+ */
++(NSString*) getOriginalAccountID;
+
+/*!
+ * @brief Get the original account type used to log in to the Fuse system that corresponds to the Fuse ID
+ * @details This function returns the type of account used to create the user account session.
+ 
+ To call this function
+ 
+ @code
+ 
+ int type = [FuseAPI getOriginalAccountType];
+ 
+ // where type corresponds to the following enum:
+ 
+ enum kFuseAccountType
+ {
+    FUSE_ACCOUNT_NONE = 0,
+    FUSE_GAMECENTER = 1,
+    FUSE_FACEBOOK = 2,
+    FUSE_TWITTER = 3,
+    FUSE_OPENFEINT = 4,
+    FUSE_USER = 5,
+ };
+ 
+ @endcode
+ 
+ * @retval [int] The original account type used to sign in to the fuse system (for instance 4 if the user is signed in using Facebook)
+ * @see getOriginalAccountID to get the ID associated with the account type
+ * @since Fuse API version 1.23
+ */
++(int) getOriginalAccountType;
 
 #pragma mark Miscellaneous
 /*!

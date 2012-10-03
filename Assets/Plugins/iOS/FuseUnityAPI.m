@@ -9,6 +9,7 @@ static void* _FuseAPI_SessionLoginError = NULL;
 static void* _FuseAPI_TimeUpdated = NULL;
 static void* _FuseAPI_PurchaseVerification = NULL;
 static void* _FuseAPI_AdWillClose = NULL;
+static void* _FuseAPI_NotificationAction = NULL;
 static void* _FuseAPI_OverlayWillClose = NULL;
 static void* _FuseAPI_AccountLoginComplete = NULL;
 static void* _FuseAPI_GameConfigurationReceived = NULL;
@@ -17,6 +18,10 @@ static void* _FuseAPI_GameDataError = NULL;
 static void* _FuseAPI_GameDataReceivedStart = NULL;
 static void* _FuseAPI_GameDataReceivedKeyValue = NULL;
 static void* _FuseAPI_GameDataReceivedEnd = NULL;
+static void* _FuseAPI_FriendsListUpdatedStart = NULL;
+static void* _FuseAPI_FriendsListUpdatedFriend = NULL;
+static void* _FuseAPI_FriendsListUpdatedEnd = NULL;
+static void* _FuseAPI_FriendsListError = NULL;
 
 static FuseAPI_ProductsResponse* _FuseAPI_productsResponse = nil;
 
@@ -41,6 +46,7 @@ void FuseAPI_Initialize()
 	_FuseAPI_TimeUpdated = Mono_GetMethod("FuseAPI:_TimeUpdated(int)");
 	_FuseAPI_PurchaseVerification = Mono_GetMethod("FuseAPI:_PurchaseVerification");
 	_FuseAPI_AdWillClose = Mono_GetMethod("FuseAPI:_AdWillClose");
+	_FuseAPI_NotificationAction = Mono_GetMethod("FuseAPI:_NotificationAction");
 	_FuseAPI_OverlayWillClose = Mono_GetMethod("FuseAPI:_OverlayWillClose");
 	_FuseAPI_AccountLoginComplete = Mono_GetMethod("FuseAPI:_AccountLoginComplete");
 	_FuseAPI_GameConfigurationReceived = Mono_GetMethod("FuseAPI:_GameConfigurationReceived");
@@ -49,6 +55,10 @@ void FuseAPI_Initialize()
 	_FuseAPI_GameDataReceivedStart = Mono_GetMethod("FuseAPI:_GameDataReceivedStart");
 	_FuseAPI_GameDataReceivedKeyValue = Mono_GetMethod("FuseAPI:_GameDataReceivedKeyValue");
 	_FuseAPI_GameDataReceivedEnd = Mono_GetMethod("FuseAPI:_GameDataReceivedEnd");
+	_FuseAPI_FriendsListUpdatedStart = Mono_GetMethod("FuseAPI:_FriendsListUpdatedStart");
+	_FuseAPI_FriendsListUpdatedFriend = Mono_GetMethod("FuseAPI:_FriendsListUpdatedFriend");
+	_FuseAPI_FriendsListUpdatedEnd = Mono_GetMethod("FuseAPI:_FriendsListUpdatedEnd");
+	_FuseAPI_FriendsListError = Mono_GetMethod("FuseAPI:_FriendsListError");
 	
 	_FuseAPI_delegate = [FuseAPI_Delegate new];
 }
@@ -172,6 +182,12 @@ void FuseAPI_DisplayNotifications()
 	[FuseAPI displayNotifications];
 }
 
+void FuseAPI_NotificationAction(const char* action)
+{
+	void *args[] = { Mono_NewString(action) };
+	Mono_CallMethod(_FuseAPI_NotificationAction, args);
+}
+
 #pragma mark - More Games
 
 void FuseAPI_DisplayMoreGames()
@@ -198,9 +214,14 @@ void FuseAPI_GameCenterLogin()
 	[FuseAPI gameCenterLogin:[GKLocalPlayer localPlayer]];
 }
 
-void FuseAPI_FacebookLogin(const char* facebookId)
+void FuseAPI_FacebookLogin(const char* facebookId, const char* name, const char* accessToken)
 {
-	[FuseAPI facebookLogin:[NSString stringWithUTF8String:facebookId]];
+	[FuseAPI facebookLogin:[NSString stringWithUTF8String:facebookId] Name:[NSString stringWithUTF8String:name] withAccessToken:[NSString stringWithUTF8String:accessToken]];
+}
+
+void FuseAPI_FacebookLoginGender(const char* facebookId, const char* name, int gender, const char* accessToken)
+{
+	[FuseAPI facebookLogin:[NSString stringWithUTF8String:facebookId] Name:[NSString stringWithUTF8String:name] Gender:gender withAccessToken:[NSString stringWithUTF8String:accessToken]];
 }
 
 void FuseAPI_TwitterLogin(const char* twitterId)
@@ -216,6 +237,22 @@ void FuseAPI_OpenFeintLogin(const char* openFeintId)
 void FuseAPI_FuseLogin(const char* fuseId, const char* alias)
 {
 	[FuseAPI fuseLogin:[NSString stringWithUTF8String:fuseId] Alias:[NSString stringWithUTF8String:alias]];
+}
+
+const char* FuseAPI_GetOriginalAccountId()
+{
+	NSString* accountId = [FuseAPI getOriginalAccountID];
+	
+	const char* string = accountId.UTF8String;
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
+}
+
+int FuseAPI_GetOriginalAccountType()
+{
+	return [FuseAPI getOriginalAccountType];
 }
 
 void FuseAPI_AccountLoginComplete(int type, const char* accountId)
@@ -349,9 +386,9 @@ void FuseAPI_GameDataSetAcknowledged(int requestId)
 	Mono_CallMethod(_FuseAPI_GameDataSetAcknowledged, args);
 }
 
-void FuseAPI_GameDataError(int error)
+void FuseAPI_GameDataError(int error, int requestId)
 {
-	void *args[] = { &error };
+	void *args[] = { &error, &requestId };
 	Mono_CallMethod(_FuseAPI_GameDataError, args);
 }
 
@@ -417,6 +454,76 @@ void FuseAPI_GameDataReceivedEnd()
 	Mono_CallMethod(_FuseAPI_GameDataReceivedEnd, NULL);
 }
 
+#pragma mark - Friends List
+
+void FuseAPI_UpdateFriendsListFromServer()
+{
+	[FuseAPI updateFriendsListFromServer];
+}
+
+void FuseAPI_FriendsListUpdatedStart()
+{
+	Mono_CallMethod(_FuseAPI_FriendsListUpdatedStart, NULL);
+}
+
+void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* alias, bool pending)
+{
+	void *args[] = { Mono_NewString(fuseId), Mono_NewString(alias), &pending };
+	Mono_CallMethod(_FuseAPI_FriendsListUpdatedFriend, args);
+}
+
+void FuseAPI_FriendsListUpdatedEnd()
+{
+	Mono_CallMethod(_FuseAPI_FriendsListUpdatedEnd, NULL);
+}
+
+void FuseAPI_FriendsListError(int error)
+{
+	void *args[] = { &error };
+	Mono_CallMethod(_FuseAPI_FriendsListError, args);
+}
+
+int FuseAPI_GetFriendsListCount()
+{
+	return [[FuseAPI getFriendsList] count];
+}
+
+const char* FuseAPI_GetFriendsListFriendFuseId(int index)
+{
+	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
+	NSString* fuseId = [keys objectAtIndex:index];
+	
+	const char* string = [fuseId UTF8String];
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
+}
+
+const char* FuseAPI_GetFriendsListFriendAlias(int index)
+{
+	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
+	NSString* fuseId = [keys objectAtIndex:index];
+	NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
+	NSString* alias = [friend objectForKey:@"alias"];
+	
+	const char* string = alias.UTF8String;
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
+}
+
+bool FuseAPI_GetFriendsListFriendPending(int index)
+{
+	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
+	NSString* fuseId = [keys objectAtIndex:index];
+	NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
+	int pending = [[friend objectForKey:@"pending"] intValue];
+	
+	return pending;
+}
+
 #pragma mark - User-to-User Push Notifications
 
 void FuseAPI_UserPushNotification(const char* fuseId, const char* message)
@@ -471,6 +578,13 @@ void FuseAPI_FriendsPushNotification(const char* message)
 	FuseAPI_AdWillClose();
 }
 
+#pragma mark Notifications
+
+-(void) notificationAction:(NSString*)_action
+{
+	FuseAPI_NotificationAction(_action.UTF8String);
+}
+
 #pragma mark More Games
 
 - (void)overlayWillClose
@@ -519,14 +633,37 @@ void FuseAPI_FriendsPushNotification(const char* message)
 	FuseAPI_GameDataReceivedEnd();
 }
 
-- (void)gameDataError:(NSNumber *)_error
+- (void)gameDataError:(NSNumber*)_error RequestID:(NSNumber*)_request_id
 {
-	FuseAPI_GameDataError(_error.intValue);
+	FuseAPI_GameDataError(_error.intValue, _request_id.intValue);
 }
 
 - (void)gameDataSetAcknowledged:(NSNumber*)_request_id
 {
 	FuseAPI_GameDataSetAcknowledged(_request_id.intValue);
+}
+
+#pragma mark Friends List
+
+-(void) friendsListUpdated:(NSDictionary*)_friendsList
+{
+	FuseAPI_FriendsListUpdatedStart();
+	for (NSString* fuseId in _friendsList)
+	{
+		NSDictionary* friendEntry = (NSDictionary*)[_friendsList objectForKey:fuseId];
+		
+		NSString* alias = [friendEntry objectForKey:@"alias"];
+		int pending = [[friendEntry objectForKey:@"pending"] intValue];
+		
+		FuseAPI_FriendsListUpdatedFriend(fuseId.UTF8String, alias.UTF8String, pending);
+	}
+	FuseAPI_FriendsListUpdatedEnd();
+}
+
+-(void) friendsListError:(NSNumber*)_error
+{
+	FuseAPI_FriendsListError(_error.intValue);
+	
 }
 
 #pragma mark Game Configuration Data

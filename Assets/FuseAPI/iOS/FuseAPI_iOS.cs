@@ -173,6 +173,18 @@ public class FuseAPI_iOS
 			FuseAPI_DisplayNotifications();
 		}
 	}
+	
+	private static void _NotificationAction(string action)
+	{
+//		Debug.Log("FuseAPI:_NotificationAction(" + action + ")");
+		
+		if (NotificationAction != null)
+		{
+			NotificationAction(action);
+		}
+	}
+	
+	public static event Action<string> NotificationAction;
 	#endregion
 
 	#region More Games
@@ -224,6 +236,16 @@ public class FuseAPI_iOS
 	#endregion
 	
 	#region Account Login
+	public enum AccountType
+	{
+		NONE = 0,
+		GAMECENTER = 1,
+		FACEBOOK = 2,
+		TWITTER = 3,
+		OPENFEINT = 4,
+		USER = 5,
+	}
+	
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_GameCenterLogin();
 	
@@ -237,24 +259,41 @@ public class FuseAPI_iOS
 		}
 		else
 		{
-			_AccountLoginComplete(0, "");
+			_AccountLoginComplete(AccountType.GAMECENTER, "");
 		}
 	}
 	
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_FacebookLogin(string facebookId);
+	private static extern void FuseAPI_FacebookLogin(string facebookId, string name, string accessToken);
 	
-	public static void FacebookLogin(string facebookId)
+	public static void FacebookLogin(string facebookId, string name, string accessToken)
 	{
-//		Debug.Log ("FuseAPI:FacebookLogin(" + facebookId + ")");
+//		Debug.Log ("FuseAPI:FacebookLogin(" + facebookId + "," + name + "," + accessToken + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_FacebookLogin(facebookId);
+			FuseAPI_FacebookLogin(facebookId, name, accessToken);
 		}
 		else
 		{
-			_AccountLoginComplete(2, facebookId);
+			_AccountLoginComplete(AccountType.FACEBOOK, facebookId);
+		}
+	}
+	
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_FacebookLoginGender(string facebookId, string name, Gender gender, string accessToken);
+	
+	public static void FacebookLogin(string facebookId, string name, Gender gender, string accessToken)
+	{
+//		Debug.Log ("FuseAPI:FacebookLogin(" + facebookId + "," + name " "," + gender + "," + accessToken + ")");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_FacebookLoginGender(facebookId, name, gender, accessToken);
+		}
+		else
+		{
+			_AccountLoginComplete(AccountType.FACEBOOK, facebookId);
 		}
 	}
 	
@@ -271,7 +310,7 @@ public class FuseAPI_iOS
 		}
 		else
 		{
-			_AccountLoginComplete(0, twitterId);
+			_AccountLoginComplete(AccountType.TWITTER, twitterId);
 		}
 	}
 	
@@ -288,7 +327,7 @@ public class FuseAPI_iOS
 		}
 		else
 		{
-			_AccountLoginComplete(0, openFeintId);
+			_AccountLoginComplete(AccountType.OPENFEINT, openFeintId);
 		}
 	}
 	
@@ -305,11 +344,53 @@ public class FuseAPI_iOS
 		}
 		else
 		{
-			_AccountLoginComplete(0, fuseId);
+			_AccountLoginComplete(AccountType.USER, fuseId);
 		}
 	}
 	
-	private static void _AccountLoginComplete(int type, string accountId)
+	[DllImport("__Internal")]
+	private static extern string FuseAPI_GetOriginalAccountId();
+	
+	public static string GetOriginalAccountId()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			string accountId = FuseAPI_GetOriginalAccountId();
+			
+//			Debug.Log("FuseAPI:GetOriginalAccountId()==" + accountId);
+			
+			return accountId;
+		}
+		else
+		{
+//			Debug.Log("FuseAPI:GetOriginalAccountId()");
+			
+			return "";
+		}
+	}
+	
+	[DllImport("__Internal")]
+	private static extern AccountType FuseAPI_GetOriginalAccountType();
+	
+	public static AccountType GetOriginalAccountType()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			AccountType accountType = FuseAPI_GetOriginalAccountType();
+			
+//			Debug.Log("FuseAPI:GetOriginalAccountType()==" + accountType);
+			
+			return accountType;
+		}
+		else
+		{
+//			Debug.Log("FuseAPI:GetOriginalAccountType()");
+			
+			return AccountType.NONE;
+		}
+	}
+	
+	private static void _AccountLoginComplete(AccountType type, string accountId)
 	{
 //		Debug.Log("FuseAPI:AccountLoginComplete(" + type + "," + accountId + ")");
 		
@@ -319,28 +400,7 @@ public class FuseAPI_iOS
 		}
 	}
 	
-	public static event Action<int, string> AccountLoginComplete;
-	
-	[DllImport("__Internal")]
-	private static extern string FuseAPI_GetFuseId();
-	
-	public static string GetFuseId()
-	{
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			string fuseId = FuseAPI_GetFuseId();
-			
-//			Debug.Log("FuseAPI:GetFuseId()==" + fuseId);
-			
-			return fuseId;
-		}
-		else
-		{
-//			Debug.Log("FuseAPI:GetFuseId()");
-			
-			return "";
-		}
-	}
+	public static event Action<AccountType, string> AccountLoginComplete;
 	#endregion
 	
 	#region Miscellaneous
@@ -540,17 +600,17 @@ public class FuseAPI_iOS
 		}
 	}
 	
-	private static void _GameDataError(int error)
+	private static void _GameDataError(int error, int requestId)
 	{
-//		Debug.Log("FuseAPI:GameDataError(" + error + ")");
+//		Debug.Log("FuseAPI:GameDataError(" + error + "," + requestId + ")");
 		
 		if (GameDataError != null)
 		{
-			GameDataError(error);
+			GameDataError(error, requestId);
 		}
 	}
 	
-	public static event Action<int> GameDataError;
+	public static event Action<int, int> GameDataError;
 	
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_GetGameDataStart(string key, string fuseId);
@@ -649,12 +709,137 @@ public class FuseAPI_iOS
 	
 	public static event Action<string, string, Hashtable> GameDataReceived;
 	
+	[DllImport("__Internal")]
+	private static extern string FuseAPI_GetFuseId();
+	
+	public static string GetFuseId()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			string fuseId = FuseAPI_GetFuseId();
+			
+//			Debug.Log("FuseAPI:GetFuseId()==" + fuseId);
+			
+			return fuseId;
+		}
+		else
+		{
+//			Debug.Log("FuseAPI:GetFuseId()");
+			
+			return "";
+		}
+	}
+	
 	private static string _gameDataKey = "";
 	private static string _gameDataFuseId = "";
 	private static Hashtable _gameData = null;
 	#endregion
 	
 	#region Friend List
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_UpdateFriendsListFromServer();
+	
+	public static void UpdateFriendsListFromServer()
+	{
+		Debug.Log("FuseAPI:UpdateFriendsListFromServer()");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_UpdateFriendsListFromServer();
+		}
+		else
+		{
+			_FriendsListUpdatedStart();
+			_FriendsListUpdatedEnd();
+		}
+	}
+	
+	public struct Friend
+	{
+		public string fuseId;
+		public string alias;
+		public bool pending;
+	}
+	
+	private static void _FriendsListUpdatedStart()
+	{
+		Debug.Log("FuseAPI:FriendsListUpdatedStart()");
+		
+		_friendsList = new List<Friend>();
+	}
+	
+	private static void _FriendsListUpdatedFriend(string fuseId, string alias, bool pending)
+	{
+		Debug.Log("FuseAPI:_FriendsListUpdatedFriend(" + fuseId + "," + alias + "," + pending + ")");
+		
+		Friend friend = new Friend();
+		friend.fuseId = fuseId;
+		friend.alias = alias;
+		friend.pending = pending;
+		
+		_friendsList.Add(friend);
+	}
+	
+	private static void _FriendsListUpdatedEnd()
+	{
+		Debug.Log("FuseAPI:_FriendsListUpdatedEnd()");
+		
+		if (FriendsListUpdated != null)
+		{
+			FriendsListUpdated(_friendsList);
+		}
+		
+		_friendsList = null;
+	}
+	
+	public static event Action<List<Friend>> FriendsListUpdated;
+	
+	private static void _FriendsListError(int error)
+	{
+		Debug.Log("FuseAPI:FriendsListError(" + error + ")");
+		
+		if (FriendsListError != null)
+		{
+			FriendsListError(error);
+		}
+	}
+	
+	public static event Action<int> FriendsListError;
+	
+	private static List<Friend> _friendsList = null;
+	
+	[DllImport("__Internal")]
+	private static extern int FuseAPI_GetFriendsListCount();
+	[DllImport("__Internal")]
+	private static extern string FuseAPI_GetFriendsListFriendFuseId(int index);
+	[DllImport("__Internal")]
+	private static extern string FuseAPI_GetFriendsListFriendAlias(int index);
+	[DllImport("__Internal")]
+	private static extern bool FuseAPI_GetFriendsListFriendPending(int index);
+	
+	public static List<Friend> GetFriendsList()
+	{
+		Debug.Log("FuseAPI:GetFriendsList()");
+		
+		List<Friend> friendsList = new List<Friend>();
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			int friendCount = FuseAPI_GetFriendsListCount();
+			
+			for (int index = 0; index < friendCount; index++)
+			{
+				Friend friend = new Friend();
+				friend.fuseId = FuseAPI_GetFriendsListFriendFuseId(index);
+				friend.alias = FuseAPI_GetFriendsListFriendAlias(index);
+				friend.pending = FuseAPI_GetFriendsListFriendPending(index);
+				
+				_friendsList.Add(friend);
+			}
+		}
+			
+		return friendsList;
+	}
 	#endregion
 
 	#region Chat List

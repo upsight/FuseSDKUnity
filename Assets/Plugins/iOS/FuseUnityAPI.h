@@ -71,6 +71,7 @@ void FuseAPI_AdWillClose();
 #pragma mark - Notifications
 
 void FuseAPI_DisplayNotifications();
+void FuseAPI_NotificationAction(const char* action);
 
 #pragma mark - More Games
 
@@ -84,12 +85,14 @@ void FuseAPI_RegisterGender(int gender);
 #pragma mark - Account Login
 
 void FuseAPI_GameCenterLogin();
-void FuseAPI_FacebookLogin(const char* facebookId);
+void FuseAPI_FacebookLogin(const char* facebookId, const char* name, const char* accessToken);
+void FuseAPI_FacebookLoginGender(const char* facebookId, const char* name, int gender, const char* accessToken);
 void FuseAPI_TwitterLogin(const char* twitterId);
 void FuseAPI_OpenFeintLogin(const char* openFeintId);
 void FuseAPI_FuseLogin(const char* fuseId, const char* alias);
+const char* FuseAPI_GetOriginalAccountId();
+int FuseAPI_GetOriginalAccountType();
 void FuseAPI_AccountLoginComplete(int type, const char* accountId);
-const char* FuseAPI_GetFuseId();
 
 #pragma mark - Miscellaneous
 
@@ -112,7 +115,7 @@ void FuseAPI_SetGameDataKeyValue(const char* key, const char* value, bool isBina
 int FuseAPI_SetGameDataEnd();
 void FuseAPI_GameDataSetAcknowledged(int requestId);
 
-void FuseAPI_GameDataError(int error);
+void FuseAPI_GameDataError(int error, int requestId);
 
 void FuseAPI_GetGameDataStart(const char* key, const char* fuseId);
 void FuseAPI_GetGameDataKey(const char* key);
@@ -121,7 +124,19 @@ void FuseAPI_GameDataReceivedStart(const char* fuseId, const char* key);
 void FuseAPI_GameDataReceivedKeyValue(const char* key, const char* value, bool isBinary);
 void FuseAPI_GameDataReceivedEnd();
 
+const char* FuseAPI_GetFuseId();
+
 #pragma mark - Friend List
+
+void FuseAPI_UpdateFriendsListFromServer();
+void FuseAPI_FriendsListUpdatedStart();
+void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* alias, bool pending);
+void FuseAPI_FriendsListUpdatedEnd();
+void FuseAPI_FriendsListError(int error);
+int FuseAPI_GetFriendsListCount();
+const char* FuseAPI_GetFriendsListFriendFuseId(int index);
+const char* FuseAPI_GetFriendsListFriendAlias(int index);
+bool FuseAPI_GetFriendsListFriendPending(int index);
 
 #pragma mark - Chat List
 
