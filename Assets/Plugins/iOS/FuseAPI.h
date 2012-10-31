@@ -90,6 +90,14 @@ enum kFuseFriendsListErrors
     FUSE_FRIENDS_LIST_REQUEST_FAILED
 };
 
+enum kFuseMailErrors
+{
+    FUSE_MAIL_NO_ERROR = 0,
+    FUSE_MAIL_SERVER_ERROR,
+    FUSE_MAIL_NOT_CONNECTED,
+    FUSE_MAIL_REQUEST_FAILED
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief This is main Fuse API delegate
@@ -414,10 +422,99 @@ enum kFuseFriendsListErrors
  */
 -(void) puchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id;
 
--(void) giftListRecieved:(NSDictionary*)_gifts User:(NSString*)_fuse_id;
--(void) giftListError:(NSNumber*)_error;
--(void) giftAcknowledged:(NSNumber*)_gift_id User:(NSString*)_fuse_id;
--(void) giftError:(NSNumber*)_error;
+/*!
+ * @brief This function is invoked when a mail/gift list is returned from the server
+ * @details This function is called in response to a FuseAPI::getMailListFromServer or FuseAPI::getMailListFriendFromServer:.  To handle the returned list:
+ 
+ @code
+ 
+ -(void) mailListRecieved:(NSDictionary*)_messages User:(NSString*)_fuse_id;
+ {
+    if (_messages != nil && [_messages count] > 0)
+    {
+        NSArray *keys = [_messages allKeys];
+        NSArray *sortedKeys = [keys sortedArrayUsingSelector:@selector(compare:)];
+ 
+        for (int i = 0; i < [sortedKeys count]; i++)
+        {
+            NSString *message_id = [sortedKeys objectAtIndex:i];
+            NSMutableDictionary *entry = (NSMutableDictionary*)[_messages objectForKey:message_id];
+ 
+            NSLog(@"%d [%@]: %@ -> %@  [Gift ID: %d, Gift Name: %@, Gift Amount: %d]", [message_id intValue], [entry objectForKey:@"timestamp"], [entry objectForKey:@"alias"], [entry objectForKey:@"message"], [[entry objectForKey:@"gift_id"] intValue], [entry objectForKey:@"gift_name"], [[entry objectForKey:@"gift_amount"] intValue]);
+ 
+            // Optional
+            [FuseAPI setMailAsReceived:[message_id intValue]];
+        }
+    }
+ }
+ 
+ @endcode
+ 
+ @param _messages [NSDictionary*] This is the list of messages/gifts
+ @param _fuse_id [NSString*] The fuse ID for which the mail/gift list belongs
+ @see FuseAPI::getMailListFromServer for more information on retrieving the mail list for the currently signed in user from the server
+ @see FuseAPI::getMailListFriendFromServer: for more information on retrievinf the mail list for any user from the server
+ @since FuseAPI version 1.24
+ */
+-(void) mailListRecieved:(NSDictionary*)_messages User:(NSString*)_fuse_id;
+
+/*!
+ * @brief This function is called when an error has occurred fetching the list of mail/gift messages
+ * @details If any error occurs while fetching the mail list from the server, this function is involed with an error code indicating the type of error.  
+ 
+ @code
+ 
+ -(void) mailListError:(NSNumber*)_error
+ {
+    if ([_error intValue] != FUSE_MAIL_NO_ERROR)
+    {
+        // An error has occurred
+    }
+ }
+ 
+ @endcode
+ 
+ @param _error [NSNumber*] The error code corresponding to a value in kFuseMailErrors
+ @see FuseAPI::getMailListFromServer for more information on retrieving the mail list for the currently signed in user from the server
+ @see FuseAPI::getMailListFriendFromServer: for more information on retrievinf the mail list for any user from the server
+ @since Fuse API version 1.24
+ */
+-(void) mailListError:(NSNumber*)_error;
+
+/*!
+ * @brief This function is called to acknowledge a successful sending of a mail/gift to another user
+ * @details The function is called as a resulf of either FuseAPI::sendMail:Message: or FuseAPI::sendMailWithGift:Messge:GiftID:GiftAmount:.
+ 
+ @param _message_id [NSString *] The ID of the mail message
+ @param _fuse_id [NSString *] The Fuse ID to which the mail message was sent
+ @see FuseAPI::sendMail:Message: for more information on sending a mail message
+ @see FuseAPI::sendMailWithGift:Messge:GiftID:GiftAmount: for more information on sending a mail message with a gift
+ @since Fuse API version 1.24
+ */
+-(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id;
+
+/*!
+ * @brief This function is called when an error has occurred sending a mail messages
+ * @details If any error occurs while sending a mail message, this function is involed with an error code indicating the type of error.
+ 
+ @code
+ 
+ -(void) mailError:(NSNumber*)_error
+ {
+    if ([_error intValue] != FUSE_MAIL_NO_ERROR)
+    {
+        // An error has occurred
+    }
+ }
+ 
+ @endcode
+ 
+ @param _error [NSNumber*] The error code corresponding to a value in kFuseMailErrors
+ @see FuseAPI::sendMail:Message: for more information on sending a mail message
+ @see FuseAPI::sendMailWithGift:Messge:GiftID:GiftAmount: for more information on sending a mail message with a gift
+ @since Fuse API version 1.24
+ */
+-(void) mailError:(NSNumber*)_error;
 
 @end
 
@@ -462,9 +559,23 @@ enum kFuseFriendsListErrors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 @protocol FuseGameDataDelegate <NSObject>
 @required
+
 /*!
  * @brief This function is called when the request for game data has returned to the device.
- * @details The requested data is given as an input to the function.
+ * @details The requested data is given as an input to the function.  This function is the same as gameDataReceived:ForKey:Data: except that it also passes back the request ID that was given to the client when the request was made.  You can optionally use this function or gameDataReceived:ForKey:Data:.
+ * @param _fuse_id [NSString*] The Fuse ID of the user for which the data was requested.  Can be different that the user signed in on the device if the data requested was for a friend or other user.
+ * @param _key [NSString*] The master object key (if specified) for the data returning.  Can be 'nil'.
+ * @param _data [NSMutableDictionary*] The data payload.
+ * @param _request_id [NSNubmber*] The request ID
+ * @see FuseAPI::getGameData:Delegate: for more information on retrieving game data
+ * @see gameDataError: for more information on error cases involved with retrieving game data
+ */
+-(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data RequestID:(NSNumber*)_request_id;
+
+@optional
+/*!
+ * @brief This function is called when the request for game data has returned to the device.  This function does not receieve the request ID in the callback, unlike gameDataReceived:ForKey:Data:RequestID: which can be optionally used instead (if required).
+ * @details The requested data is given as an input to the function.  This 
  * @param _fuse_id [NSString*] The Fuse ID of the user for which the data was requested.  Can be different that the user signed in on the device if the data requested was for a friend or other user.
  * @param _key [NSString*] The master object key (if specified) for the data returning.  Can be 'nil'.
  * @param _data [NSMutableDictionary*] The data payload.
@@ -473,7 +584,6 @@ enum kFuseFriendsListErrors
  */
 -(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data;
 
-@optional
 /*!
  * @brief This function indicates when an error has occurred when sending or receiving per-user game data information.
  * @details When an error occurs when trying to set or retrieve game data, this function will be thrown with an error code.  Either this function or gameDataError:RequestID: should be implemented to catch an error.  This function does not provide the request ID.
@@ -636,7 +746,7 @@ enum kFuseFriendsListErrors
  */
 +(void) respondToApplicationLaunchOptions:(NSDictionary *)launchOptions Application:(UIApplication *)application;
 
-#pragma mark Analytic Event Function
+#pragma mark Analytic Event Functions
 /*!
  * @brief This function is used to register an named event in the Fuse system.
  * @details This function logs the time and frequency of an event within a given game session.  The input string can be anything that is relevant to the design of the game but should be easily understandable when read by users in the Fuse system.
@@ -653,8 +763,8 @@ enum kFuseFriendsListErrors
  
  * @param _message [NSString*] The event name to be logged
  */
-
 +(void) registerEvent:(NSString *)_message;
+
 /*!
  * @brief This function is used to register an named event in the Fuse system.
  * @details This function logs the time and frequency of an event within a given game session.  The input string can be anything that is relevant to the design of the game but should be easily understandable when read by users in the Fuse system.
@@ -1485,6 +1595,18 @@ enum kFuseFriendsListErrors
  */
 +(int) getGameData:(NSArray*)_keys Key:(NSString*)_key Delegate:(id)_delegate;
 
+/*!
+@brief 
+@details
+
+@param
+@param
+ 
+@retval
+*/
++(NSDictionary*) getGameDataBuffered:(NSDictionary *)_parentKeys Delegate:(id)_delegate;
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*!
  @brief This function retrieves persistent data for a friend of the current user from the Fuse server.
@@ -1764,6 +1886,9 @@ enum kFuseFriendsListErrors
  @param _fuse_id [NSString*] This is the "Fuse ID" of the player to which the message will be sent
  @since Fuse API version 1.22
  */
+
+
+
 +(void) postUserChatMessage:(NSString*)_message TargetUser:(NSString*)_fuse_id; 
 
 /*!
@@ -1927,6 +2052,187 @@ enum kFuseFriendsListErrors
  @since Fuse API version 1.22
  */
 +(void) friendsPushNotification:(NSString*)_message;
+
+#pragma mark Mail/Gifting
+
+/*!
+ @brief Get the the list of messages (and gifts) sent to the currently signed in user.
+ @details This function receives the server list of gifts granted to the user.  This function is asynchronous in that a list will not be returned to the user until it is received by the client from the server, and at that point in the form of the callback FuseDelegate::giftListRecieved: to the \<FuseDelegate\>. This function assumes the list being fetched is for a user already signed in using one of the available account services (Game Center, Facebook) in the Fuse API
+ 
+ A sample of the callback would be as follows:
+ 
+ @code
+ 
+ -(void) mailListRecieved:(NSDictionary*)_messages User:(NSString*)_fuse_id
+ {
+    // Sample code for parsing the dictionary returned
+    if (_messages != nil && [_messages count] > 0)
+    {
+        NSArray *keys = [_messages allKeys];
+ 
+        for (int i = 0; i < [keys count]; i++)
+        {
+            NSString *message_id = [keys objectAtIndex:i];
+            NSMutableDictionary *entry = (NSMutableDictionary*)[_messages objectForKey:message_id];
+ 
+            // Note: message_id is not the identifier specifying the type of gift - it is a unique index given to the gift transaction in the DB
+ 
+            NSLog(@"%d [%@]: %@ -> %@ %@ %d %@", [message_id intValue], [entry objectForKey:@"timestamp"], [entry objectForKey:@"alias"], [entry objectForKey:@"from_user"], [entry objectForKey:@"gift_name"], [[entry objectForKey:@"gift_amount"] intValue], [entry objectForKey:@"gift_url"]);
+        }
+    }
+ }
+ 
+ -(void) mailListError:(NSNumber*)_error
+ {
+    // An error has occurred
+    // Refer to kFuseMailListErrors for information of the error cases possible
+ }
+ 
+ @endcode
+ 
+ @see startSession:Delegate: for information on setting up the \<FuseDelegate\>
+ @see gameCenterLogin: for more information on how to register a login with a Game Center ID
+ @see facebookLogin: for more information on how to register a login with a Facebook account ID
+ @see twitterLogin: for more information on how to register a login with a Twitter account ID
+ @see openFeintLogin: for more information on how to register a login with an OpenFeint account ID
+ @see fuseLogin:Alias: for more information on how to register a login with a Fuse ID
+ @since Fuse API version 1.24
+ */
++(void) getMailListFromServer;
+
+/*!
+ * @brief Get the mail list of a user that has already been retrieved from the server
+ * @details This list is the local copy, of any user that has already been fetched
+ * @see getMailListFromServer and getMailListFriendFromServer: for more information on retrieving the mail/gift list from the server
+ * @since Fuse API version 1.24
+ */
++(NSMutableDictionary*) getMailList:(NSString*)_fuse_id;
+
+/*!
+ * @brief Get the list of messages (and gifts) sent to another user.
+ * @details Similar to getMailListFromServer, this function will return the message list for another user (not the user currently signed in).
+ *
+ * @param _fuse_id [NSString*] This is the "Fuse ID" of the player for which the list is requested
+ * @see getMailListFromServer for more information on how to handle the callback for this function
+ * @since Fuse API version 1.24
+ */
++(void) getMailListFriendFromServer:(NSString*)_fuse_id;
+
+/*!
+ * @brief Mark a particular message (or gift) as receieved by the user
+ * @details In order to facilitate the handshaking required, this function will mark a particular gift as "used". After this has been called, this message/gift will no longer appear in the list returned by the server. The function should only be called once it has been guaranteed by the client that the item has been credited to the user.
+ 
+ This function can only be called for the user currently logged in (therefore the input "Fuse ID" is not able to be specified - assumed to be the same as getFuseID.
+ 
+ * @param _message_id [int] The gift ID that has been consumed by the client
+ * @see getFuseID for more information on retrieving the user's Fuse ID once signed in
+ * @since Fuse API version 1.24
+ */
++(void) setMailAsReceived:(int)_message_id;
+
+/*
+ * @brief Send a message to a user with a gift attached
+ * @details This function facilitates gifting another user. A message can be specified along with the unique gift identifier as well as amount.  This function will return a callback to the \<FuseDelegate\> to indicate if the gifting process was successful or whether an error occurred.
+ 
+ An example of the callback is as follows:
+ 
+ @code
+ 
+ -(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id
+ {
+    // The message was received successfully
+ }
+ 
+ -(void) mailError:(NSNumber*)_error
+ {
+    // An error has occurred
+    // Refer to kFuseMailErrors for information of the error cases possible
+ }
+ 
+ @endcode
+ 
+ * @param _fuse_id [NSString*] This is the "Fuse ID" of the player for which the gift is destined
+ * @param _message [NSString*] The message to be sent along with the gift (optional)
+ * @param _gift_id [int] The unique gift index that identifies the gift uniquely to the game (should this be an INT?)
+ * @param _amount [int] The quantity of the gift to be awarded to the user (associated with _gift_id)
+ * @see FuseDelegate::giftAcknowledged for more information on the send gift callback
+ * @see FuseDelegate::giftListError for more information on the error handling for this function
+ * @since Fuse API version 1.24
+ */
++(void) sendMailWithGift:(NSString*)_fuse_id Message:(NSString*)_message GiftID:(int)_gift_id GiftAmount:(int)_amount;
+
+
+/*
+ * @brief Send a message to a user
+ * @details This function facilitates messaging another user. This function will return a callback to the \<FuseDelegate\> to indicate if the messaging process was successful or whether an error occurred.
+ 
+ An example of the callback is as follows:
+ 
+ @code
+ 
+ -(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id
+ {
+    // The message was received successfully
+ }
+ 
+ -(void) mailError:(NSNumber*)_error
+ {
+    // An error has occurred
+    // Refer to kFuseMailErrors for information of the error cases possible
+ }
+ 
+ @endcode
+ 
+ * @param _fuse_id [NSString*] This is the "Fuse ID" of the player for which the gift is destined
+ * @param _message [NSString*] The message to be sent along with the gift (optional)
+ * @see FuseDelegate::mailAcknowledged for more information on the send gift callback
+ * @see FuseDelegate::mailListError for more information on the error handling for this function
+ * @since Fuse API version 1.24
+ */
++(void) sendMail:(NSString*)_fuse_id Message:(NSString*)_message;
+
+#pragma mark Specific Event Registration
+
+/*!
+ * @brief Register the user's current level after they level-up
+ * @details
+ * @param _level [int] The player's new game level
+ * @since Fuse API version 1.24
+ */
++(void) registerLevel:(int)_level;
+
+/*!
+ * @brief Register a change in the current balances of the user's in-game currencies.
+ * @details
+ * @param _currencyType [int] Enter 1-4, representing up to four different in-game resources
+ * @param _balance [int] The
+ */
++(void) registerCurrency:(int)_currencyType Balance:(int)_balance;
+
+/*!
+ * @brief Register a view of a Flurry video
+ * @details
+ *
+ * @since Fuse API version 1.24
+ */
++(void) registerFlurryView;
+
+/*!
+ * @brief Register a click on a Flurry video
+ * @details
+ *
+ * @since Fuse API version 1.24
+ */
++(void) registerFlurryClick;
+
+/*!
+ * @brief Register the receipt of a tapjoy reward to the user
+ * @details
+ * @param The total amount of the in-game currency the user is awarded by Tapjoy
+ * @since Fuse API version 1.24
+ */
++(void) registerTapjoyReward:(int)_amtCurrency;
+
 
 #pragma mark Game Configuration Data
 /*!

@@ -473,21 +473,23 @@ public class FuseAPI_iOS
 		}
 		else
 		{
-			_TimeUpdated((int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds);
+			_TimeUpdated((DateTime.UtcNow - unixEpoch).Ticks / TimeSpan.TicksPerSecond);
 		}
 	}
 	
-	private static void _TimeUpdated(int timestamp)
+	private static void _TimeUpdated(long timestamp)
 	{
 //		Debug.Log("FuseAPI:TimeUpdated(" + timestamp + ")");
 		
-		if (TimeUpdated != null)
+		if (TimeUpdated != null && timestamp >= 0)
 		{
-			TimeUpdated(timestamp);
+			TimeUpdated(unixEpoch + TimeSpan.FromTicks(timestamp * TimeSpan.TicksPerSecond));
 		}
 	}
 	
-	public static event Action<int> TimeUpdated;
+	public static event Action<DateTime> TimeUpdated;
+	
+	private static readonly DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 	
 	[DllImport("__Internal")]
 	private static extern bool FuseAPI_NotReadyToTerminate();
@@ -651,7 +653,7 @@ public class FuseAPI_iOS
 		}
 		else
 		{
-			_GameDataReceivedStart(fuseId, key);
+			_GameDataReceivedStart(fuseId, key, -1);
 			_GameDataReceivedEnd();
 			
 			return -1;
@@ -670,13 +672,14 @@ public class FuseAPI_iOS
 	
 	public static event Action<int> GameDataSetAcknowledged;
 	
-	private static void _GameDataReceivedStart(string fuseId, string key)
+	private static void _GameDataReceivedStart(string fuseId, string key, int requestId)
 	{
 //		Debug.Log("FuseAPI:_GameDataReceivedStart(" + fuseId + "," + key + ")");
 		
 		_gameDataFuseId = fuseId;
 		_gameDataKey = key;
 		_gameData = new Hashtable();
+		_gameDataRequestId = requestId;
 	}
 	
 	private static void _GameDataReceivedKeyValue(string key, string value, bool isBinary)
@@ -700,14 +703,15 @@ public class FuseAPI_iOS
 		
 		if (GameDataReceived != null)
 		{
-			GameDataReceived(_gameDataFuseId, _gameDataKey, _gameData);
+			GameDataReceived(_gameDataFuseId, _gameDataKey, _gameData, _gameDataRequestId);
+			_gameDataRequestId = -1;
 			_gameData = null;
 			_gameDataKey = "";
 			_gameDataFuseId = "";
 		}
 	}
 	
-	public static event Action<string, string, Hashtable> GameDataReceived;
+	public static event Action<string, string, Hashtable, int> GameDataReceived;
 	
 	[DllImport("__Internal")]
 	private static extern string FuseAPI_GetFuseId();
@@ -733,6 +737,7 @@ public class FuseAPI_iOS
 	private static string _gameDataKey = "";
 	private static string _gameDataFuseId = "";
 	private static Hashtable _gameData = null;
+	private static int _gameDataRequestId = -1;
 	#endregion
 	
 	#region Friend List
@@ -757,6 +762,7 @@ public class FuseAPI_iOS
 	public struct Friend
 	{
 		public string fuseId;
+		public string accountId;
 		public string alias;
 		public bool pending;
 	}
@@ -768,12 +774,13 @@ public class FuseAPI_iOS
 		_friendsList = new List<Friend>();
 	}
 	
-	private static void _FriendsListUpdatedFriend(string fuseId, string alias, bool pending)
+	private static void _FriendsListUpdatedFriend(string fuseId, string accountId, string alias, bool pending)
 	{
-		Debug.Log("FuseAPI:_FriendsListUpdatedFriend(" + fuseId + "," + alias + "," + pending + ")");
+		Debug.Log("FuseAPI:_FriendsListUpdatedFriend(" + fuseId + "," + accountId + "," + alias + "," + pending + ")");
 		
 		Friend friend = new Friend();
 		friend.fuseId = fuseId;
+		friend.accountId = accountId;
 		friend.alias = alias;
 		friend.pending = pending;
 		
@@ -813,6 +820,8 @@ public class FuseAPI_iOS
 	[DllImport("__Internal")]
 	private static extern string FuseAPI_GetFriendsListFriendFuseId(int index);
 	[DllImport("__Internal")]
+	private static extern string FuseAPI_GetFriendsListFriendAccountId(int index);
+	[DllImport("__Internal")]
 	private static extern string FuseAPI_GetFriendsListFriendAlias(int index);
 	[DllImport("__Internal")]
 	private static extern bool FuseAPI_GetFriendsListFriendPending(int index);
@@ -831,6 +840,7 @@ public class FuseAPI_iOS
 			{
 				Friend friend = new Friend();
 				friend.fuseId = FuseAPI_GetFriendsListFriendFuseId(index);
+				friend.accountId = FuseAPI_GetFriendsListFriendAccountId(index);
 				friend.alias = FuseAPI_GetFriendsListFriendAlias(index);
 				friend.pending = FuseAPI_GetFriendsListFriendPending(index);
 				

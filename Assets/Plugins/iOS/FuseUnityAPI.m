@@ -42,8 +42,8 @@ void FuseAPI_Initialize()
 	Mono_Initialize();
 	
 	_FuseAPI_SessionStartReceived = Mono_GetMethod("FuseAPI:_SessionStartReceived");
-	_FuseAPI_SessionLoginError = Mono_GetMethod("FuseAPI:_SessionLoginError(int)");
-	_FuseAPI_TimeUpdated = Mono_GetMethod("FuseAPI:_TimeUpdated(int)");
+	_FuseAPI_SessionLoginError = Mono_GetMethod("FuseAPI:_SessionLoginError");
+	_FuseAPI_TimeUpdated = Mono_GetMethod("FuseAPI:_TimeUpdated");
 	_FuseAPI_PurchaseVerification = Mono_GetMethod("FuseAPI:_PurchaseVerification");
 	_FuseAPI_AdWillClose = Mono_GetMethod("FuseAPI:_AdWillClose");
 	_FuseAPI_NotificationAction = Mono_GetMethod("FuseAPI:_NotificationAction");
@@ -84,19 +84,6 @@ void FuseAPI_SessionLoginError(int error)
 {
 	void *args[] = { &error };
 	Mono_CallMethod(_FuseAPI_SessionLoginError, args);
-}
-
-#pragma mark - Time
-
-void FuseAPI_TimeFromServer()
-{
-	[FuseAPI utcTimeFromServer];
-}
-
-void FuseAPI_TimeUpdated(int timestamp)
-{
-	void *args[] = { &timestamp };
-	Mono_CallMethod(_FuseAPI_TimeUpdated, args);
 }
 
 #pragma mark - Analytics
@@ -295,6 +282,17 @@ bool FuseAPI_Connected()
 	return [FuseAPI connected];
 }
 
+void FuseAPI_TimeFromServer()
+{
+	[FuseAPI utcTimeFromServer];
+}
+
+void FuseAPI_TimeUpdated(long long timestamp)
+{
+	void *args[] = { &timestamp };
+	Mono_CallMethod(_FuseAPI_TimeUpdated, args);
+}
+
 bool FuseAPI_NotReadyToTerminate()
 {
 	return [FuseAPI notReadyToTerminate];
@@ -437,9 +435,9 @@ int FuseAPI_GetGameDataEnd()
 	
 }
 
-void FuseAPI_GameDataReceivedStart(const char* fuseId, const char* key)
+void FuseAPI_GameDataReceivedStart(const char* fuseId, const char* key, int requestId)
 {
-	void *args[] = { Mono_NewString(fuseId), Mono_NewString(key) };
+	void *args[] = { Mono_NewString(fuseId), Mono_NewString(key), &requestId };
 	Mono_CallMethod(_FuseAPI_GameDataReceivedStart, args);
 }
 
@@ -466,9 +464,9 @@ void FuseAPI_FriendsListUpdatedStart()
 	Mono_CallMethod(_FuseAPI_FriendsListUpdatedStart, NULL);
 }
 
-void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* alias, bool pending)
+void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* accountId, const char* alias, bool pending)
 {
-	void *args[] = { Mono_NewString(fuseId), Mono_NewString(alias), &pending };
+	void *args[] = { Mono_NewString(fuseId), Mono_NewString(accountId), Mono_NewString(alias), &pending };
 	Mono_CallMethod(_FuseAPI_FriendsListUpdatedFriend, args);
 }
 
@@ -494,6 +492,20 @@ const char* FuseAPI_GetFriendsListFriendFuseId(int index)
 	NSString* fuseId = [keys objectAtIndex:index];
 	
 	const char* string = [fuseId UTF8String];
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
+}
+
+const char* FuseAPI_GetFriendsListFriendAccountId(int index)
+{
+	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
+	NSString* fuseId = [keys objectAtIndex:index];
+	NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
+	NSString* accountId = [friend objectForKey:@"account_id"];
+	
+	const char* string = accountId.UTF8String;
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -603,14 +615,14 @@ void FuseAPI_FriendsPushNotification(const char* message)
 
 - (void)timeUpdated:(NSNumber*)_timeStamp
 {
-	FuseAPI_TimeUpdated([_timeStamp integerValue]);
+	FuseAPI_TimeUpdated([_timeStamp longLongValue]);
 }
 
 #pragma mark User Game Data
 
-- (void)gameDataReceived:(NSString *)_user_account_id ForKey:(NSString *)_key Data:(NSMutableDictionary *)_data
+- (void)gameDataReceived:(NSString *)_user_account_id ForKey:(NSString *)_key Data:(NSMutableDictionary *)_data RequestID:(NSNumber *)_request_id
 {
-	FuseAPI_GameDataReceivedStart(_user_account_id.UTF8String, _key.UTF8String);
+	FuseAPI_GameDataReceivedStart(_user_account_id.UTF8String, _key.UTF8String, _request_id.intValue);
 	for (NSString* key in _data)
 	{
 		NSObject* value = [_data objectForKey:key];
@@ -652,10 +664,11 @@ void FuseAPI_FriendsPushNotification(const char* message)
 	{
 		NSDictionary* friendEntry = (NSDictionary*)[_friendsList objectForKey:fuseId];
 		
+		NSString* accountId = [friendEntry objectForKey:@"account_id"];
 		NSString* alias = [friendEntry objectForKey:@"alias"];
 		int pending = [[friendEntry objectForKey:@"pending"] intValue];
 		
-		FuseAPI_FriendsListUpdatedFriend(fuseId.UTF8String, alias.UTF8String, pending);
+		FuseAPI_FriendsListUpdatedFriend(fuseId.UTF8String, accountId.UTF8String, alias.UTF8String, pending);
 	}
 	FuseAPI_FriendsListUpdatedEnd();
 }

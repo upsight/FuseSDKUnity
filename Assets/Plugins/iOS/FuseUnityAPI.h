@@ -100,7 +100,7 @@ int FuseAPI_GamesPlayed();
 const char* FuseAPI_LibraryVersion();
 bool FuseAPI_Connected();
 void FuseAPI_TimeFromServer();
-void FuseAPI_TimeUpdated(int timestamp);
+void FuseAPI_TimeUpdated(long long timestamp);
 bool FuseAPI_NotReadyToTerminate();
 
 #pragma mark - Data Opt In/Out
@@ -120,7 +120,7 @@ void FuseAPI_GameDataError(int error, int requestId);
 void FuseAPI_GetGameDataStart(const char* key, const char* fuseId);
 void FuseAPI_GetGameDataKey(const char* key);
 int FuseAPI_GetGameDataEnd();
-void FuseAPI_GameDataReceivedStart(const char* fuseId, const char* key);
+void FuseAPI_GameDataReceivedStart(const char* fuseId, const char* key, int requestId);
 void FuseAPI_GameDataReceivedKeyValue(const char* key, const char* value, bool isBinary);
 void FuseAPI_GameDataReceivedEnd();
 
@@ -130,11 +130,12 @@ const char* FuseAPI_GetFuseId();
 
 void FuseAPI_UpdateFriendsListFromServer();
 void FuseAPI_FriendsListUpdatedStart();
-void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* alias, bool pending);
+void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* accountId, const char* alias, bool pending);
 void FuseAPI_FriendsListUpdatedEnd();
 void FuseAPI_FriendsListError(int error);
 int FuseAPI_GetFriendsListCount();
 const char* FuseAPI_GetFriendsListFriendFuseId(int index);
+const char* FuseAPI_GetFriendsListFriendAccountId(int index);
 const char* FuseAPI_GetFriendsListFriendAlias(int index);
 bool FuseAPI_GetFriendsListFriendPending(int index);
 
