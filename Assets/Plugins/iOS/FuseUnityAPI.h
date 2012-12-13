@@ -148,6 +148,25 @@ void FuseAPI_FriendsPushNotification(const char* message);
 
 #pragma mark - Gifting
 
+void FuseAPI_GetMailListFriendFromServer(const char* fuseId);
+void FuseAPI_MailListReceivedStart(const char* fuseId);
+void FuseAPI_MailListReceivedMail(int messageId, long long timestamp, const char* alias, const char* message, int giftId, const char* giftName, int giftAmount);
+void FuseAPI_MailListReceivedEnd();
+void FuseAPI_MailListError(int error);
+int FuseAPI_GetMailListCount(const char* fuseId);
+int FuseAPI_GetMailListMailMessageId(const char* fuseId, int index);
+long long FuseAPI_GetMailListMailTimestamp(const char* fuseId, int index);
+const char* FuseAPI_GetMailListMailAlias(const char* fuseId, int index);
+const char* FuseAPI_GetMailListMailMessage(const char* fuseId, int index);
+int FuseAPI_GetMailListMailGiftId(const char* fuseId, int index);
+const char* FuseAPI_GetMailListMailGiftName(const char* fuseId, int index);
+int FuseAPI_GetMailListMailGiftAmount(const char* fuseId, int index);
+void FuseAPI_SetMailAsReceived(int messageId);
+void FuseAPI_SendMail(const char* fuseId, const char* message);
+void FuseAPI_SendMailWithGift(const char* fuseId, const char* message, int giftId, int giftAmount);
+void _MailAcknowledged(int messageId, const char* fuseId);
+void _MailError(int error);
+
 #pragma mark - Game Configuration Data
 
 const char* FuseAPI_GetGameConfigurationValue(const char* key);

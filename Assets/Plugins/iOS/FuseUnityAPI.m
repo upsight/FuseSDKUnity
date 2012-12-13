@@ -22,6 +22,12 @@ static void* _FuseAPI_FriendsListUpdatedStart = NULL;
 static void* _FuseAPI_FriendsListUpdatedFriend = NULL;
 static void* _FuseAPI_FriendsListUpdatedEnd = NULL;
 static void* _FuseAPI_FriendsListError = NULL;
+static void* _FuseAPI_MailListReceivedStart = NULL;
+static void* _FuseAPI_MailListReceivedMail = NULL;
+static void* _FuseAPI_MailListReceivedEnd = NULL;
+static void* _FuseAPI_MailListError = NULL;
+static void* _FuseAPI_MailAcknowledged = NULL;
+static void* _FuseAPI_MailError = NULL;
 
 static FuseAPI_ProductsResponse* _FuseAPI_productsResponse = nil;
 
@@ -59,6 +65,12 @@ void FuseAPI_Initialize()
 	_FuseAPI_FriendsListUpdatedFriend = Mono_GetMethod("FuseAPI:_FriendsListUpdatedFriend");
 	_FuseAPI_FriendsListUpdatedEnd = Mono_GetMethod("FuseAPI:_FriendsListUpdatedEnd");
 	_FuseAPI_FriendsListError = Mono_GetMethod("FuseAPI:_FriendsListError");
+	_FuseAPI_MailListReceivedStart = Mono_GetMethod("FuseAPI:_MailListReceivedStart");
+	_FuseAPI_MailListReceivedMail = Mono_GetMethod("FuseAPI:_MailListReceivedMail");
+	_FuseAPI_MailListReceivedEnd = Mono_GetMethod("FuseAPI:_MailListReceivedEnd");
+	_FuseAPI_MailListError = Mono_GetMethod("FuseAPI:_MailListError");
+	_FuseAPI_MailAcknowledged = Mono_GetMethod("FuseAPI:_MailAcknowledged");
+	_FuseAPI_MailError = Mono_GetMethod("FuseAPI:_MailError");
 	
 	_FuseAPI_delegate = [FuseAPI_Delegate new];
 }
@@ -324,10 +336,17 @@ const char* FuseAPI_GetGameConfigurationValue(const char* key)
 	NSString* value = [FuseAPI getGameConfigurationValue:[NSString stringWithUTF8String:key]];
 	
 	const char* string = [value UTF8String];
-    char* copy = (char*)malloc(strlen(string) + 1);
-    strcpy(copy, string);
-	
-	return copy;
+	if (string)
+	{
+		char* copy = (char*)malloc(strlen(string) + 1);
+		strcpy(copy, string);
+		
+		return copy;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void FuseAPI_GameConfigurationReceived()
@@ -548,6 +567,148 @@ void FuseAPI_FriendsPushNotification(const char* message)
 	[FuseAPI friendsPushNotification:[NSString stringWithUTF8String:message]];
 }
 
+#pragma mark - Gifting
+
+void FuseAPI_GetMailListFriendFromServer(const char* fuseId)
+{
+	[FuseAPI getMailListFriendFromServer:[NSString stringWithUTF8String:fuseId]];
+}
+
+void FuseAPI_MailListReceivedStart(const char* fuseId)
+{
+	void *args[] = { Mono_NewString(fuseId) };
+	Mono_CallMethod(_FuseAPI_MailListReceivedStart, args);
+}
+
+void FuseAPI_MailListReceivedMail(int messageId, long long timestamp, const char* alias, const char* message, int giftId, const char* giftName, int giftAmount)
+{
+	void *args[] = { &messageId, &timestamp, Mono_NewString(alias), Mono_NewString(message), &giftId, Mono_NewString(giftName), &giftAmount };
+	Mono_CallMethod(_FuseAPI_MailListReceivedMail, args);
+}
+
+void FuseAPI_MailListReceivedEnd()
+{
+	Mono_CallMethod(_FuseAPI_MailListReceivedEnd, NULL);
+}
+
+void FuseAPI_MailListError(int error)
+{
+	void *args[] = { &error };
+	Mono_CallMethod(_FuseAPI_MailListError, args);
+}
+
+int FuseAPI_GetMailListCount(const char* fuseId)
+{
+	return [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] count];
+}
+
+int FuseAPI_GetMailListMailMessageId(const char* fuseId, int index)
+{
+	NSArray* keys = [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] allKeys];
+	NSNumber* messageId = [keys objectAtIndex:index];
+	
+	return messageId.intValue;
+}
+
+long long FuseAPI_GetMailListMailTimestamp(const char* fuseId, int index)
+{
+	NSArray* keys = [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] allKeys];
+	NSNumber* messageId = [keys objectAtIndex:index];
+	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
+	NSNumber* timestamp = [mail objectForKey:@"timestamp"];
+	
+	return timestamp.longLongValue;
+}
+
+const char* FuseAPI_GetMailListMailAlias(const char* fuseId, int index)
+{
+	NSArray* keys = [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] allKeys];
+	NSNumber* messageId = [keys objectAtIndex:index];
+	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
+	NSString* alias = [mail objectForKey:@"alias"];
+	
+	const char* string = alias.UTF8String;
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
+}
+
+const char* FuseAPI_GetMailListMailMessage(const char* fuseId, int index)
+{
+	NSArray* keys = [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] allKeys];
+	NSNumber* messageId = [keys objectAtIndex:index];
+	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
+	NSString* message = [mail objectForKey:@"message"];
+	
+	const char* string = message.UTF8String;
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
+}
+
+int FuseAPI_GetMailListMailGiftId(const char* fuseId, int index)
+{
+	NSArray* keys = [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] allKeys];
+	NSNumber* messageId = [keys objectAtIndex:index];
+	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
+	NSNumber* giftId = [mail objectForKey:@"gift_id"];
+	
+	return [giftId intValue];
+}
+
+const char* FuseAPI_GetMailListMailGiftName(const char* fuseId, int index)
+{
+	NSArray* keys = [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] allKeys];
+	NSNumber* messageId = [keys objectAtIndex:index];
+	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
+	NSString* giftName = [mail objectForKey:@"gift_name"];
+	
+	const char* string = giftName.UTF8String;
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
+}
+
+int FuseAPI_GetMailListMailGiftAmount(const char* fuseId, int index)
+{
+	NSArray* keys = [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] allKeys];
+	NSNumber* messageId = [keys objectAtIndex:index];
+	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
+	NSNumber* giftAmount = [mail objectForKey:@"gift_amount"];
+	
+	return [giftAmount intValue];
+}
+
+void FuseAPI_SetMailAsReceived(int messageId)
+{
+	[FuseAPI setMailAsReceived:messageId];
+}
+
+void FuseAPI_SendMail(const char* fuseId, const char* message)
+{
+	[FuseAPI sendMail:[NSString stringWithUTF8String:fuseId] Message:[NSString stringWithUTF8String:message]];
+}
+
+void FuseAPI_SendMailWithGift(const char* fuseId, const char* message, int giftId, int giftAmount)
+{
+	[FuseAPI sendMailWithGift:[NSString stringWithUTF8String:fuseId] Message:[NSString stringWithUTF8String:message] GiftID:giftId GiftAmount:giftAmount];
+}
+
+void FuseAPI_MailAcknowledged(int messageId, const char* fuseId)
+{
+	void *args[] = { &messageId, Mono_NewString(fuseId) };
+	Mono_CallMethod(_FuseAPI_MailAcknowledged, args);
+}
+
+void FuseAPI_MailError(int error)
+{
+	void *args[] = { &error };
+	Mono_CallMethod(_FuseAPI_MailError, args);
+}
+
 #pragma mark - Callback
 
 @implementation FuseAPI_Delegate
@@ -677,6 +838,42 @@ void FuseAPI_FriendsPushNotification(const char* message)
 {
 	FuseAPI_FriendsListError(_error.intValue);
 	
+}
+
+#pragma mark Gifting
+
+-(void) mailListRecieved:(NSDictionary*)_messages User:(NSString*)_fuse_id
+{
+	FuseAPI_MailListReceivedStart(_fuse_id.UTF8String);
+	for (NSNumber* messageId in _messages)
+	{
+		NSDictionary* mail = (NSDictionary*)[_messages objectForKey:messageId];
+		
+		NSNumber* timestamp = [mail objectForKey:@"timestamp"];
+		NSString* alias = [mail objectForKey:@"alias"];
+		NSString* message = [mail objectForKey:@"message"];
+		int giftId = [[mail objectForKey:@"gift_id"] intValue];
+		NSString* giftName = [mail objectForKey:@"gift_name"];
+		int giftAmount = [[mail objectForKey:@"gift_amount"] intValue];
+		
+		FuseAPI_MailListReceivedMail(messageId.intValue, timestamp.longLongValue, alias.UTF8String, message.UTF8String, giftId, giftName.UTF8String, giftAmount);
+	}
+	FuseAPI_MailListReceivedEnd();
+}
+
+-(void) mailListError:(NSNumber*)_error
+{
+	FuseAPI_MailListError(_error.intValue);
+}
+
+-(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id
+{
+	FuseAPI_MailAcknowledged(_message_id.intValue, _fuse_id.UTF8String);
+}
+
+-(void) mailError:(NSNumber*)_error
+{
+	FuseAPI_MailError(_error.intValue);
 }
 
 #pragma mark Game Configuration Data
