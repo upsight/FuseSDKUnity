@@ -1,10 +1,12 @@
 package com.fusepowered.fuseactivities;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
+//import android.graphics.Bitmap;
+//import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+//import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -14,9 +16,13 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
+import android.webkit.WebChromeClient;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageButton;
+import android.util.DisplayMetrics;
 
 import com.fusepowered.activities.FuseApiBrowser;
 import com.fusepowered.fuseapi.Constants;
@@ -24,23 +30,29 @@ import com.fusepowered.fuseapi.FuseAPI;
 import com.fusepowered.fuseapi.NetworkService;
 import com.fusepowered.util.ActivityResults;
 
+@SuppressLint("SetJavaScriptEnabled")
 public class FuseApiMoregamesBrowser extends FuseApiBrowser {
 	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    	
     	requestWindowFeature(Window.FEATURE_NO_TITLE);
         
         Uri url = getIntent().getData();
         Bundle extras = getIntent().getExtras();
         extras.setClassLoader(getClassLoader());
        
+
         LayoutParams params = new FrameLayout.LayoutParams(
         		LayoutParams.WRAP_CONTENT,
         		LayoutParams.WRAP_CONTENT);
-       
+        DisplayMetrics dm = this.getResources().getDisplayMetrics();
+        
+        LayoutParams paramsBTN = new FrameLayout.LayoutParams(
+        		(int) Math.floor(47 * dm.density),
+        		(int) Math.floor(36 * dm.density));
+        
         AnimationSet set = new AnimationSet(true);
         Animation animation = new AlphaAnimation(0.0f, 1.0f);
         animation.setDuration(100);
@@ -63,15 +75,38 @@ public class FuseApiMoregamesBrowser extends FuseApiBrowser {
         webView.setWebViewClient(new Callback());
         webView.loadUrl(url.toString());
         webView.setLayoutParams(params);
+        webView.setWebChromeClient(new WebChromeClient()); 
+
+        WebViewClient webClient = new WebViewClient(){
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView  view, String  url){
+            	
+            	if(url.startsWith("market://")) {
+            		Intent market_intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        			startActivity(market_intent);
+        			        			
+        		} else {
+        			view.loadUrl(url);
+        		}
+            	
+                return true;
+            }
+        };
+        
+        webView.setWebViewClient(webClient);
+        
+        WebSettings webSettings = webView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
         
         NetworkService ns = new NetworkService();
-        
         ImageButton imageButton = new ImageButton(this);
-        imageButton.setLayoutParams(params);
+        imageButton.setLayoutParams(paramsBTN);
         imageButton.bringToFront();
         String imageUrl = extras.getString(Constants.EXTRA_RETURN);
-        Bitmap bitmap = ns.downloadImage2(imageUrl);
-        imageButton.setBackgroundDrawable(new BitmapDrawable(bitmap));
+        //Asynchronous call get an image (required for Android 3+)
+        
+        ns.createImageButton(imageUrl, imageButton);
+        
         imageButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {

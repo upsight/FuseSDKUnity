@@ -19,6 +19,17 @@ import android.util.Log;
 
 public class FuseUnityGameDataCallback extends FuseGameDataCallback
 {
+	public FuseUnityGameDataCallback()
+	{
+		_ourRequestId = _nextRequestId++;
+	}
+
+	public int getRequestId()
+	{
+		Log.d(_logTag, "getRequestId() = " + _ourRequestId);
+		return _ourRequestId;
+	}
+
 	public void callback()
 	{
 		Log.d(_logTag, "callback()");
@@ -87,14 +98,12 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void gameDataReceived(String accountId, GameKeyValuePairs gameKeyValuePairs)
 	{
-		Log.d(_logTag, "gameDataReceived(" + accountId + ",[data])");
-
-		gameDataReceived(accountId, gameKeyValuePairs, 0);
+		gameDataReceived(accountId, gameKeyValuePairs, -1);
 	}
 
 	public void gameDataReceived(String accountId, GameKeyValuePairs gameKeyValuePairs, int requestId)
 	{
-		Log.d(_logTag, "gameDataReceived(" + accountId + ",[data]," + requestId + ")");
+		Log.d(_logTag, "gameDataReceived(" + accountId + ",[data]," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
 
 		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", accountId);
 
@@ -110,27 +119,25 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", value);
 		}
 
-		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_GameDataReceived", Integer.toString(requestId));
+		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_GameDataReceived", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
 	}
 
 	public void gameDataError(FuseGameDataError fuseGameDataError)
 	{
-		Log.d(_logTag, "gameDataError(" + fuseGameDataError + ")");
-		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_ClearArgumentList", "");
-		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_GameDataError", Integer.toString(fuseGameDataError.ordinal()));
+		gameDataError(fuseGameDataError, -1);
 	}
 
 	public void gameDataError(FuseGameDataError fuseGameDataError, int requestId)
 	{
-		Log.d(_logTag, "gameDataError(" + fuseGameDataError + "," + requestId + ")");
-		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(requestId));
+		Log.d(_logTag, "gameDataError(" + fuseGameDataError + "," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
+		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
 		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_GameDataError",                Integer.toString(fuseGameDataError.ordinal()));
 	}
 
 	public void gameDataSetAcknowledged(int requestId)
 	{
-		Log.d(_logTag, "gameDataSetAcknowledged(" + requestId + ")");
-		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_GameDataSetAcknowledged", Integer.toString(requestId));
+		Log.d(_logTag, "gameDataSetAcknowledged(" + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
+		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_GameDataSetAcknowledged", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
 	}
 
 
@@ -174,15 +181,18 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_ClearArgumentList", "");
 
-		for (Mail mail : mailList)
+		if (mailList != null)
 		{
-			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getId()));
-			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getDate());
-			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getAlias());
-			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getMessage());
-			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getId()));
-			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getGift().getName());
-			UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getAmount()));
+			for (Mail mail : mailList)
+			{
+				UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getId()));
+				UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getDate());
+				UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getAlias());
+				UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getMessage());
+				UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getId()));
+				UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", mail.getGift().getName());
+				UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getAmount()));
+			}
 		}
 
 		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_MailListReceived", fuseId);
@@ -242,4 +252,6 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 
 	private static final String _logTag = "FuseUnityGameDataCallback";
+	private int _ourRequestId = 0;
+	private static int _nextRequestId = 1;
 }

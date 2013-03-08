@@ -6,6 +6,13 @@ import android.util.Log;
 
 public class FuseUnityAdCallback extends FuseAdCallback
 {
+	public void adAvailabilityResponse(int available, int error)
+	{
+		Log.d(_logTag, "adAvailabilityResponse(" + available + "," + error + ")");
+		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(error));
+		UnityPlayer.UnitySendMessage("FuseAPI_Android", "_AdAvailabilityResponse",       Integer.toString(available));
+	}
+
 	public void adDisplayed()
 	{
 		Log.d(_logTag, "adDisplayed()");

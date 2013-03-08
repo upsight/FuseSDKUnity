@@ -8,6 +8,7 @@ static void* _FuseAPI_SessionStartReceived = NULL;
 static void* _FuseAPI_SessionLoginError = NULL;
 static void* _FuseAPI_TimeUpdated = NULL;
 static void* _FuseAPI_PurchaseVerification = NULL;
+static void* _FuseAPI_AdAvailabilityResponse = NULL;
 static void* _FuseAPI_AdWillClose = NULL;
 static void* _FuseAPI_NotificationAction = NULL;
 static void* _FuseAPI_OverlayWillClose = NULL;
@@ -36,6 +37,7 @@ static NSString* _FuseAPI_gameDataFuseId = nil;
 static BOOL _FuseAPI_gameDataIsCollection = NO;
 static NSMutableDictionary* _FuseAPI_gameData = nil;
 static NSMutableArray* _FuseAPI_gameDataKeys = nil;
+static NSMutableDictionary* _FuseAPI_registerEventData = nil;
 
 static FuseAPI_Delegate* _FuseAPI_delegate = nil;
 
@@ -51,6 +53,7 @@ void FuseAPI_Initialize()
 	_FuseAPI_SessionLoginError = Mono_GetMethod("FuseAPI:_SessionLoginError");
 	_FuseAPI_TimeUpdated = Mono_GetMethod("FuseAPI:_TimeUpdated");
 	_FuseAPI_PurchaseVerification = Mono_GetMethod("FuseAPI:_PurchaseVerification");
+	_FuseAPI_AdAvailabilityResponse = Mono_GetMethod("FuseAPI:_AdAvailabilityResponse");
 	_FuseAPI_AdWillClose = Mono_GetMethod("FuseAPI:_AdWillClose");
 	_FuseAPI_NotificationAction = Mono_GetMethod("FuseAPI:_NotificationAction");
 	_FuseAPI_OverlayWillClose = Mono_GetMethod("FuseAPI:_OverlayWillClose");
@@ -105,6 +108,28 @@ void FuseAPI_RegisterEvent(const char* message)
 	[FuseAPI registerEvent:[NSString stringWithUTF8String:message]];
 }
 
+void FuseAPI_RegisterEventStart()
+{
+	_FuseAPI_registerEventData = [[NSMutableDictionary alloc] init];
+}
+
+void FuseAPI_RegisterEventKeyValue(const char* entryKey, double entryValue)
+{
+  [_FuseAPI_registerEventData setValue:[NSNumber numberWithDouble:entryValue] forKey:[NSString stringWithUTF8String:entryKey]];
+}
+
+int FuseAPI_RegisterEventEnd(const char* name, const char* paramName, const char* paramValue)
+{
+	int result = [FuseAPI registerEvent:[NSString stringWithUTF8String:name] ParameterName:[NSString stringWithUTF8String:paramName] ParameterValue:[NSString stringWithUTF8String:paramValue] Variables:_FuseAPI_registerEventData];
+	[_FuseAPI_registerEventData release];	
+	return result;
+}
+
+int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const char* paramValue, const char* variableName, double variableValue)
+{
+	[FuseAPI registerEvent:[NSString stringWithUTF8String:name] ParameterName:[NSString stringWithUTF8String:paramName] ParameterValue:[NSString stringWithUTF8String:paramValue] VariableName:[NSString stringWithUTF8String:variableName] VariableValue:[NSNumber numberWithDouble:variableValue]];
+}
+
 #pragma mark - In-App Purchase Logging
 
 @implementation FuseAPI_Product
@@ -117,14 +142,16 @@ void FuseAPI_RegisterEvent(const char* message)
 
 void FuseAPI_RegisterInAppPurchaseListStart()
 {
-	_FuseAPI_productsResponse = [FuseAPI_ProductsResponse alloc];
+	_FuseAPI_productsResponse = [[FuseAPI_ProductsResponse alloc] init];
+	_FuseAPI_productsResponse.products = [[NSMutableArray alloc] init];
 }
 
 void FuseAPI_RegisterInAppPurchaseListProduct(const char* productId, const char* priceLocale, float price)
 {
-	FuseAPI_Product* product = [FuseAPI_Product alloc];
+	FuseAPI_Product* product = [[FuseAPI_Product alloc] init];
 	product.productIdentifier = [NSString stringWithUTF8String:productId];
-	product.priceLocale = [[NSLocale alloc] initWithLocaleIdentifier:[NSString stringWithUTF8String:priceLocale]];
+	NSString* formattedLocale = [NSString stringWithFormat:@"en_CA@currency=%@", [NSString stringWithUTF8String:priceLocale]];
+	product.priceLocale = [[NSLocale alloc] initWithLocaleIdentifier:formattedLocale];
 	product.price = [NSDecimalNumber decimalNumberWithDecimal:[[NSNumber numberWithFloat:price] decimalValue]];
 	
 	[_FuseAPI_productsResponse.products addObject:product];
@@ -134,6 +161,7 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 {
 	[FuseAPI registerInAppPurchaseList:(SKProductsResponse*)_FuseAPI_productsResponse];
 	
+	[_FuseAPI_productsResponse.products release];
 	[_FuseAPI_productsResponse release];
 }
 
@@ -147,8 +175,8 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 
 void FuseAPI_RegisterInAppPurchase(const char* productId, const unsigned char* transactionReceiptBuffer, int transactionReceiptLength, int transactionState)
 {
-	FuseAPI_PaymentTransaction* paymentTransaction = [FuseAPI_PaymentTransaction alloc];
-	paymentTransaction.payment = [FuseAPI_Payment alloc];
+	FuseAPI_PaymentTransaction* paymentTransaction = [[FuseAPI_PaymentTransaction alloc] init];
+	paymentTransaction.payment = [[FuseAPI_Payment alloc] init];
 	paymentTransaction.payment.productIdentifier = [NSString stringWithUTF8String:productId];
 	paymentTransaction.transactionReceipt = [[NSData alloc] initWithBytesNoCopy:(void*)transactionReceiptBuffer length:transactionReceiptLength];
 	paymentTransaction.transactionState = transactionState;
@@ -164,9 +192,20 @@ void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, cons
 
 #pragma mark - Ads
 
+void FuseAPI_CheckAdAvailable()
+{
+  [FuseAPI checkAdAvailable];
+}
+
 void FuseAPI_ShowAd()
 {
 	[FuseAPI showAdWithDelegate:_FuseAPI_delegate];
+}
+
+void FuseAPI_AdAvailabilityResponse(int available, int error)
+{
+	void *args[] = { &available, &error };
+	Mono_CallMethod(_FuseAPI_AdAvailabilityResponse, args);
 }
 
 void FuseAPI_AdWillClose()
@@ -569,6 +608,11 @@ void FuseAPI_FriendsPushNotification(const char* message)
 
 #pragma mark - Gifting
 
+void FuseAPI_GetMailListFromServer()
+{
+	[FuseAPI getMailListFromServer];
+}
+
 void FuseAPI_GetMailListFriendFromServer(const char* fuseId)
 {
 	[FuseAPI getMailListFriendFromServer:[NSString stringWithUTF8String:fuseId]];
@@ -709,6 +753,33 @@ void FuseAPI_MailError(int error)
 	Mono_CallMethod(_FuseAPI_MailError, args);
 }
 
+#pragma mark - Specific Event Registration
+
+void FuseAPI_RegisterLevel(int level)
+{
+	[FuseAPI registerLevel:level];
+}
+
+void FuseAPI_RegisterCurrency(int type, int balance)
+{
+	[FuseAPI registerCurrency:type Balance:balance];
+}
+
+void FuseAPI_RegisterFlurryView()
+{
+	[FuseAPI registerFlurryView];
+}
+
+void FuseAPI_RegisterFlurryClick()
+{
+	[FuseAPI registerFlurryClick];
+}
+
+void FuseAPI_RegisterTapjoyReward(int amount)
+{
+	[FuseAPI registerTapjoyReward:amount];
+}
+
 #pragma mark - Callback
 
 @implementation FuseAPI_Delegate
@@ -745,6 +816,11 @@ void FuseAPI_MailError(int error)
 }
 
 #pragma mark Fuse Interstitial Ads
+
+- (void) adAvailabilityResponse:(NSNumber*)_available Error:(NSNumber*)_error
+{
+	FuseAPI_AdAvailabilityResponse(_available.intValue, _error.intValue);
+}
 
 - (void)adWillClose
 {

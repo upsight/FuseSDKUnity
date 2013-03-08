@@ -44,6 +44,14 @@ public class FuseAPI_iOS : FuseAPI
 	#region Analytics Event
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterEvent(string message);
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterEventStart();
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterEventKeyValue(string entryKey, double entryValue);
+	[DllImport("__Internal")]
+	private static extern int FuseAPI_RegisterEventEnd(string name, string paramName, string paramValue);
+	[DllImport("__Internal")]
+	private static extern int FuseAPI_RegisterEventVariable(string name, string paramName, string paramValue, string variableName, double variableValue);
 	
 	public static void RegisterEvent(string message)
 	{
@@ -53,6 +61,38 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			FuseAPI_RegisterEvent(message);
 		}
+	}
+
+	public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
+	{
+		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");
+
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_RegisterEventStart();
+			
+			foreach (DictionaryEntry entry in variables)
+			{
+				string entryKey = entry.Key as string;
+				double entryValue = (double)entry.Value;
+				FuseAPI_RegisterEventKeyValue(entryKey, entryValue);
+			}
+
+			return FuseAPI_RegisterEventEnd(name, paramName, paramValue);
+		}
+
+		return -1;
+	}
+
+	public static int RegisterEvent(string name, string paramName, string paramValue, string variableName, double variableValue)
+	{
+		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			return FuseAPI_RegisterEventVariable(name, paramName, paramValue, variableName, variableValue);
+		}
+
+		return -1;
 	}
 	#endregion
 	
@@ -84,7 +124,7 @@ public class FuseAPI_iOS : FuseAPI
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterInAppPurchase(string productId, byte[] transactionReceiptBuffer, int transactionReceiptLength, int transactionState);
 	
-	public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }
+//	public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }
 	
 	public static void RegisterInAppPurchase(string productId, byte[] transactionReceipt, TransactionState transactionState)
 	{
@@ -111,8 +151,16 @@ public class FuseAPI_iOS : FuseAPI
 	
 	#region Fuse Interstitial Ads
 	[DllImport("__Internal")]
+	private static extern void FuseAPI_CheckAdAvailable();
+	[DllImport("__Internal")]
 	private static extern void FuseAPI_ShowAd();
-	
+
+	public static void CheckAdAvailable()
+	{
+		Debug.Log("FuseAPI:CheckAdAvailable()");
+		FuseAPI_CheckAdAvailable();
+	}
+
 	public static void ShowAd()
 	{
 //		Debug.Log("FuseAPI:ShowAd()");
@@ -126,7 +174,14 @@ public class FuseAPI_iOS : FuseAPI
 			_AdWillClose();
 		}
 	}
-	
+
+	private static void _AdAvailabilityResponse(int available, int error)
+	{
+		Debug.Log("FuseAPI:AdAvailabilityResponse(" + available + "," + error + ")");
+
+		OnAdAvailabilityResponse(available, error);
+	}
+
 	private static void _AdWillClose()
 	{
 //		Debug.Log("FuseAPI:AdWillClose()");
@@ -802,11 +857,23 @@ public class FuseAPI_iOS : FuseAPI
 	
 	#region Gifting
 	[DllImport("__Internal")]
+	private static extern void FuseAPI_GetMailListFromServer();
+	[DllImport("__Internal")]
 	private static extern void FuseAPI_GetMailListFriendFromServer(string fuseId);
 	
 	public static void GetMailListFromServer()
 	{
-		GetMailListFriendFromServer("");
+//		Debug.Log("FuseAPI:GetMailListFromServer()");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_GetMailListFromServer();
+		}
+		else
+		{
+			_MailListReceivedStart("");
+			_MailListReceivedEnd();
+		}
 	}
 	
 	public static void GetMailListFriendFromServer(string fuseId)
@@ -1006,5 +1073,69 @@ public class FuseAPI_iOS : FuseAPI
 	}
 	
 	#endregion
+	
+#region Specific Event Registration
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterLevel(int level);
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterCurrency(int type, int balance);
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterFlurryView();
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterFlurryClick();
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterTapjoyReward(int amount);
+	
+	public static void RegisterLevel(int level)
+	{
+//		Debug.Log("FuseAPI:RegisterLevel(" + level + ")");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_RegisterLevel(level);
+		}
+	}
+	
+	public static void RegisterCurrency(int type, int balance)
+	{
+//		Debug.Log("FuseAPI:RegisterCurrency(" + type + "," + balance + ")");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_RegisterCurrency(type, balance);
+		}
+	}
+	
+	public static void RegisterFlurryView()
+	{
+//		Debug.Log("FuseAPI:RegisterFlurryView()");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_RegisterFlurryView();
+		}
+	}
+	
+	public static void RegisterFlurryClick()
+	{
+//		Debug.Log("FuseAPI:RegisterFlurryClick()");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_RegisterFlurryClick();
+		}
+	}
+	
+	public static void RegisterTapjoyReward(int amount)
+	{
+//		Debug.Log("FuseAPI:RegisterTapjoyReward(" + amount + ")");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_RegisterTapjoyReward(amount);
+		}
+	}
+#endregion
+	
 }
 #endif

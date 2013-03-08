@@ -42,7 +42,17 @@ public class FuseAPI : MonoBehaviour
 	{
 		FusePlatformAPI.RegisterEvent(message);
 	}
-	
+
+	public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
+	{
+		return FusePlatformAPI.RegisterEvent(name, paramName, paramValue, variables);
+	}
+
+	public static int RegisterEvent(string name, string paramName, string paramValue, string variableName, double variableValue)
+	{
+		return FusePlatformAPI.RegisterEvent(name, paramName, paramValue, variableName, variableValue);
+	}
+
 #endregion
 	
 #region In-App Purchase Logging
@@ -54,28 +64,26 @@ public class FuseAPI : MonoBehaviour
 		public float price;
 	}
 	
-	#if !UNITY_ANDROID
 	public static void RegisterInAppPurchaseList(Product[] products)
 	{
 		FusePlatformAPI.RegisterInAppPurchaseList(products);
 	}
-	#endif
 	
-	#if UNITY_ANDROID && !UNITY_EDITOR
+	#if UNITY_ANDROID
 	public enum PurchaseState { PURCHASED, CANCELED, REFUNDED }
 
 	public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload)
 	{
 		FusePlatformAPI.RegisterInAppPurchase(purchaseState, notifyId, productId, orderId, purchaseTime, developerPayload);
 	}
-
+	
 	public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload, double price, string currency)
 	{
 		FusePlatformAPI.RegisterInAppPurchase(purchaseState, notifyId, productId, orderId, purchaseTime, developerPayload, price, currency);
 	}
 	#else
 	public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }
-
+	
 	public static void RegisterInAppPurchase(string productId, byte[] transactionReceipt, TransactionState transactionState)
 	{
 		FusePlatformAPI.RegisterInAppPurchase(productId, transactionReceipt, transactionState);
@@ -87,11 +95,17 @@ public class FuseAPI : MonoBehaviour
 	
 #region Fuse Interstitial Ads
 	
+	public static void CheckAdAvailable()
+	{
+		FusePlatformAPI.CheckAdAvailable();
+	}
+
 	public static void ShowAd()
 	{
 		FusePlatformAPI.ShowAd();
 	}
 	
+	public static event Action<int, int> AdAvailabilityResponse;
 	public static event Action AdWillClose;
 	public static event Action AdDisplayed;
 	public static event Action AdClicked;
@@ -376,6 +390,33 @@ public class FuseAPI : MonoBehaviour
 	public static event Action GameConfigurationReceived;
 #endregion
 	
+#region Specific Event Registration
+	public static void RegisterLevel(int level)
+	{
+		FusePlatformAPI.RegisterLevel(level);
+	}
+	
+	public static void RegisterCurrency(int type, int balance)
+	{
+		FusePlatformAPI.RegisterCurrency(type, balance);
+	}
+	
+	public static void RegisterFlurryView()
+	{
+		FusePlatformAPI.RegisterFlurryView();
+	}
+	
+	public static void RegisterFlurryClick()
+	{
+		FusePlatformAPI.RegisterFlurryClick();
+	}
+	
+	public static void RegisterTapjoyReward(int amount)
+	{
+		FusePlatformAPI.RegisterTapjoyReward(amount);
+	}
+#endregion
+	
 #region Internal Event Triggers
 	static protected void OnSessionStartReceived()
 	{
@@ -398,6 +439,14 @@ public class FuseAPI : MonoBehaviour
 		if (PurchaseVerification != null)
 		{
 			PurchaseVerification(verified, transactionId, originalTransactionId);
+		}
+	}
+	
+	static protected void OnAdAvailabilityResponse(int available, int error)
+	{
+		if (AdAvailabilityResponse != null)
+		{
+			AdAvailabilityResponse(available, error);
 		}
 	}
 	
@@ -550,6 +599,6 @@ public class FuseAPI : MonoBehaviour
 	}
 
 	private static readonly DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-	#endregion
+	
+#endregion
 }

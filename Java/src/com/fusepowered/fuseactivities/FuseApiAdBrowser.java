@@ -21,18 +21,21 @@ import com.fusepowered.fuseapi.Constants;
 import com.fusepowered.fuseapi.FuseAPI;
 import com.fusepowered.util.ActivityResults;
 import com.fusepowered.util.FuseAdCallback;
+import com.fusepowered.util.FuseAdSkip;
 import com.fusepowered.util.FuseAnimationController;
 
 public class FuseApiAdBrowser extends FuseApiBrowser {
 
     private static final String TAG = "FuseApiAdBrowser";
-
+    private Callback myClient;
     RelativeLayout layout;
     String action;
     int adId;
 
     private class ShowButtonsAfterXMillisecondsTask extends AsyncTask<Integer, Void, Void> {
-        @Override
+    	
+    	
+    	@Override
         protected Void doInBackground(Integer... params) {
             try {
                 // All we do is sleep for the given number of milliseconds
@@ -40,12 +43,19 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
             }
             catch (InterruptedException e) {
                 Log.e(TAG, "Unexpected interruption", e);
+               	FuseAPI.sendFuseAdSkip(FuseAdSkip.FUSE_AD_SKIP_TIMEOUT.getErrorCode());
             }
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
+        	if (!myClient.completed)
+        	{
+        		FuseAPI.sendFuseAdSkip(FuseAdSkip.FUSE_AD_SKIP_TIMEOUT.getErrorCode());
+        		FuseAPI.fuseAdCallback.adWillClose();
+        		finish();
+        	}
             showAdButtons(0);
         }
     }
@@ -70,9 +80,14 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
         String html = extras.getString(Constants.EXTRA_AD_HTML);
         Log.d(TAG, String.format("Displaying ad [%d]...", adId));
         Log.d(TAG, String.format("Ad body: %s", html));
-
+        if (html.length() < 1)
+        {
+        	FuseAPI.sendFuseAdSkip(FuseAdSkip.FUSE_AD_SKIP_NO_HTML.getErrorCode());
+        	return;
+        }
         WebView webView = new WebView(this);
-        webView.setWebViewClient(new Callback());
+        myClient = new Callback();
+        webView.setWebViewClient(myClient);
         webView.setLayoutParams(params);
         final String mimeType = "text/html";
         final String encoding = "UTF-8";

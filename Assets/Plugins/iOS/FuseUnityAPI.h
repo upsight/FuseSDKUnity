@@ -13,6 +13,10 @@ void FuseAPI_SessionLoginError(int error);
 #pragma mark - Analytic Event
 
 void FuseAPI_RegisterEvent(const char* message);
+void FuseAPI_RegisterEventStart();
+void FuseAPI_RegisterEventKeyValue(const char* entryKey, double entryValue);
+int FuseAPI_RegisterEventEnd(const char* name, const char* paramName, const char* paramValue);
+int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const char* paramValue, const char* variableName, double variableValue);
 
 #pragma mark - In-App Purchase Logging
 
@@ -65,7 +69,9 @@ void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, cons
 
 #pragma mark - Fuse Interstitial Ads
 
+void FuseAPI_CheckAdAvailable();
 void FuseAPI_ShowAd();
+void FuseAPI_AdAvailabilityResponse(int available, int error);
 void FuseAPI_AdWillClose();
 
 #pragma mark - Notifications
@@ -171,6 +177,14 @@ void _MailError(int error);
 
 const char* FuseAPI_GetGameConfigurationValue(const char* key);
 void FuseAPI_GameConfigurationReceived();
+
+#pragma mark - Specific Event Registration
+
+void FuseAPI_RegisterLevel(int level);
+void FuseAPI_RegisterCurrency(int type, int balance);
+void FuseAPI_RegisterFlurryView();
+void FuseAPI_RegisterFlurryClick();
+void FuseAPI_RegisterTapjoyReward(int amount);
 
 #pragma mark - Callback
 

@@ -4,9 +4,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-#if UNITY_ANDROID && !UNITY_EDITOR
 public class FuseAPI_Android : FuseAPI
 {
+#if UNITY_ANDROID && !UNITY_EDITOR
 	void Awake()
 	{
 		_callback = GameObject.Find("FuseAPI_Android");
@@ -46,9 +46,37 @@ public class FuseAPI_Android : FuseAPI
 		Debug.Log("FuseAPI:RegisterEvent(" + message + ")");
 		_fuseUnityPlugin.CallStatic("registerEvent", message);
 	}
+
+	public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
+	{
+		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");
+
+		_fuseUnityPlugin.CallStatic("registerEventStart");
+			
+		foreach (DictionaryEntry entry in variables)
+		{
+			string entryKey = entry.Key as string;
+			double entryValue = (double)entry.Value;
+			_fuseUnityPlugin.CallStatic("registerEventKeyValue", entryKey, entryValue);
+		}
+
+		return _fuseUnityPlugin.CallStatic<int>("registerEventEnd", name, paramName, paramValue);
+	}
+
+	public static int RegisterEvent(string name, string paramName, string paramValue, string variableName, double variableValue)
+	{
+		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
+		return _fuseUnityPlugin.CallStatic<int>("registerEvent", name, paramName, paramValue, variableName, variableValue);
+	}
+
 #endregion
 
 #region In-App Purchase Logging
+	public static void RegisterInAppPurchaseList(Product[] products)
+	{
+		Debug.Log("***** NOT YET SUPPORTED BY FUSE'S ANDROID API ***** FuseAPI:RegisterInAppPurchaseList([data])");
+	}
+
 	public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload)
 	{
 		Debug.Log("FuseAPI:RegisterInAppPurchase(" + purchaseState.ToString() + "," + notifyId + "," + productId + "," + orderId + "," + DateTimeToTimestamp(purchaseTime) + "," + developerPayload + ")");
@@ -63,10 +91,23 @@ public class FuseAPI_Android : FuseAPI
 #endregion
 
 #region Fuse Interstitial Ads
+	public static void CheckAdAvailable()
+	{
+		Debug.Log("FuseAPI:CheckAdAvailable()");
+		_fuseUnityPlugin.CallStatic("checkAdAvailable");
+	}
+
 	public static void ShowAd()
 	{
 		Debug.Log("FuseAPI:ShowAd()");
 		_fuseUnityPlugin.CallStatic("showAd");
+	}
+
+	private void _AdAvailabilityResponse(string available)
+	{
+		Debug.Log("FuseAPI:AdAvailabilityResponse(" + available + "," + _args[0] + ")");
+		OnAdAvailabilityResponse(int.Parse(available), int.Parse(_args[0]));
+		_args.Clear();
 	}
 
 	private void _AdDisplayed(string dummy)
@@ -92,12 +133,12 @@ public class FuseAPI_Android : FuseAPI
 	public static void DisplayNotifications()
 	{
 		Debug.Log("FuseAPI:DisplayNotifications()");
-		_fusePlugin.CallStatic("displayNotifications");
+		_fuseUnityPlugin.CallStatic("displayNotifications");
 	}
 
 	private void _NotificationAction(string action)
 	{
-		Debug.Log("FuseAPI:AdWillClose()");
+		Debug.Log("FuseAPI:NotificationAction()");
 		OnNotificationAction(action);
 	}
 #endregion
@@ -106,7 +147,7 @@ public class FuseAPI_Android : FuseAPI
 	public static void DisplayMoreGames()
 	{
 		Debug.Log("FuseAPI:DisplayMoreGames()");
-		_fusePlugin.CallStatic("displayMoreGames");
+		_fuseUnityPlugin.CallStatic("displayMoreGames");
 	}
 #endregion
 	
@@ -114,7 +155,7 @@ public class FuseAPI_Android : FuseAPI
 	public static void RegisterGender(Gender gender)
 	{
 		Debug.Log("FuseAPI:RegisterGender()");
-		_fusePlugin.CallStatic("registerGender", (int)gender);
+		_fuseUnityPlugin.CallStatic("registerGender", (int)gender);
 	}
 #endregion
 
@@ -258,8 +299,7 @@ public class FuseAPI_Android : FuseAPI
 			}
 		}
 
-		_fuseUnityPlugin.CallStatic("setGameDataEnd", key, isCollection, fuseId);
-		return 0; //  fuseUnityPlugin.CallStatic<int>("setGameDataEnd", key, isCollection, fuseId);
+		return _fuseUnityPlugin.CallStatic<int>("setGameDataEnd", key, isCollection, fuseId);
 	}
 
 	public static string GetFuseId()
@@ -275,17 +315,9 @@ public class FuseAPI_Android : FuseAPI
 
 	private void _GameDataError(string fuseGameDataError)
 	{
-		if (_args.Count == 0)
-		{
-			Debug.Log("FuseAPI:GameDataError(" + fuseGameDataError + ")");
-			OnGameDataError(int.Parse(fuseGameDataError), 0);
-		}
-		else
-		{
-			Debug.Log("FuseAPI:GameDataError(" + fuseGameDataError + "," + _args[0] + ")");
-			OnGameDataError(int.Parse(fuseGameDataError), int.Parse(_args[0]));
-			_args.Clear();
-		}
+		Debug.Log("FuseAPI:GameDataError(" + fuseGameDataError + "," + _args[0] + ")");
+		OnGameDataError(int.Parse(fuseGameDataError), int.Parse(_args[0]));
+		_args.Clear();
 	}
 
 	public static int GetGameData(string[] keys)
@@ -314,8 +346,7 @@ public class FuseAPI_Android : FuseAPI
 			_fuseUnityPlugin.CallStatic("getGameDataKey", entry);
 		}
 
-		_fuseUnityPlugin.CallStatic("getGameDataEnd", key, fuseId);
-		return 0; // _fuseUnityPlugin.CallStatic<int>("getGameDataEnd", key, fuseId);
+		return _fuseUnityPlugin.CallStatic<int>("getGameDataEnd", key, fuseId);
 	}
 
 	private void _GameDataReceived(string requestId)
@@ -382,6 +413,18 @@ public class FuseAPI_Android : FuseAPI
 	{
 		Debug.Log("FuseAPI:FriendsListError(" + error + ")");
 		OnFriendsListError(int.Parse(error));
+	}
+#endregion
+
+#region User-to-User Push Notifications
+	public static void UserPushNotification(string fuseId, string message)
+	{
+		Debug.Log("***** NOT YET SUPPORTED BY FUSE'S ANDROID API ***** FuseAPI:UserPushNotification(" + fuseId + "," + message + ")");
+	}
+	
+	public static void FriendsPushNotification(string message)
+	{
+		Debug.Log("***** NOT YET SUPPORTED BY FUSE'S ANDROID API ***** FuseAPI:FriendsPushNotification(" + message + ")");
 	}
 #endregion
 
@@ -472,14 +515,48 @@ public class FuseAPI_Android : FuseAPI
 #region Game Configuration Data
 	public static string GetGameConfigurationValue(string key)
 	{
-		Debug.Log("FuseAPI:GetGameConfigurationValue(" + key + ")");
-		return _fuseUnityPlugin.CallStatic<string>("getGameConfigurationValue", key);
+//		Debug.Log("FuseAPI:GetGameConfigurationValue(" + key + ")");
+		_fuseUnityPlugin.SetStatic<string>("_stringConduit", key);
+		_fuseUnityPlugin.CallStatic("getGameConfigurationValue");
+		return _fuseUnityPlugin.GetStatic<string>("_stringConduit");
 	}
 
 	private void _GameConfigurationReceived(string dummy)
 	{
 		Debug.Log("FuseAPI:GameConfigurationReceived()");
 		OnGameConfigurationReceived();
+	}
+#endregion
+
+#region Specific Event Registration
+	public static void RegisterLevel(int level)
+	{
+		Debug.Log("FuseAPI:RegisterLevel(" + level + ")");
+		_fuseUnityPlugin.CallStatic("registerLevel", level);
+	}
+	
+	public static void RegisterCurrency(int type, int balance)
+	{
+		Debug.Log("FuseAPI:RegisterCurrency(" + type + "," + balance + ")");
+		_fuseUnityPlugin.CallStatic("registerCurrency", type, balance);
+	}
+	
+	public static void RegisterFlurryView()
+	{
+		Debug.Log("FuseAPI:RegisterFlurryView()");
+		_fuseUnityPlugin.CallStatic("registerFlurryView");
+	}
+	
+	public static void RegisterFlurryClick()
+	{
+		Debug.Log("FuseAPI:RegisterFlurryClick()");
+		_fuseUnityPlugin.CallStatic("registerFlurryClick");
+	}
+	
+	public static void RegisterTapjoyReward(int amount)
+	{
+		Debug.Log("FuseAPI:RegisterTapjoyReward(" + amount + ")");
+		_fuseUnityPlugin.CallStatic("registerTapjoyReward", amount);
 	}
 #endregion
 
@@ -527,5 +604,6 @@ public class FuseAPI_Android : FuseAPI
 	private static GameObject _callback;
 	private static AndroidJavaClass _fusePlugin;
 	private static AndroidJavaClass _fuseUnityPlugin;
+#endif	
 }
-#endif
+

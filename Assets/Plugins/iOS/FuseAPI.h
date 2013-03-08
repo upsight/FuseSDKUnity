@@ -98,6 +98,19 @@ enum kFuseMailErrors
     FUSE_MAIL_REQUEST_FAILED
 };
 
+enum kFuseAdErrors
+{
+    FUSE_AD_NO_ERROR = 0,
+    FUSE_AD_NOT_CONNECTED,
+};
+
+enum kFuseEventErrors
+{
+    FUSE_EVENT_NO_ERROR =0,
+    FUSE_EVENT_BAD_VALUE,
+    FUSE_EVENT_NULL_PARAMETER
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief This is main Fuse API delegate
@@ -399,7 +412,7 @@ enum kFuseMailErrors
  
  @code
  
- -(void) puchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id
+ -(void) purchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id
  {
     BOOL is_valid = [_verified boolValue];
  
@@ -420,7 +433,13 @@ enum kFuseMailErrors
  * @param _o_tx_id [NSString*] The original transaction ID specified by Apple (can be different than the transaction ID because the transaction could be a reinstatement of a previous purchase)
  * @see FuseAPI::registerInAppPurchase: for more information on how to invoke this process
  */
--(void) puchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id;
+-(void) purchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id;
+
+/*!
+ * @brief This function was a misspelt version of purchaseVerification:TransactionID:OriginalTransactionID
+ * @deprecated Since Fuse API version 1.25.  Most people spell purchase with an 'r', but not me apparently.
+ */
+-(void) puchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id __attribute__((deprecated));
 
 /*!
  * @brief This function is invoked when a mail/gift list is returned from the server
@@ -454,7 +473,7 @@ enum kFuseMailErrors
  @param _fuse_id [NSString*] The fuse ID for which the mail/gift list belongs
  @see FuseAPI::getMailListFromServer for more information on retrieving the mail list for the currently signed in user from the server
  @see FuseAPI::getMailListFriendFromServer: for more information on retrievinf the mail list for any user from the server
- @since FuseAPI version 1.24
+ @since FuseAPI version 1.25
  */
 -(void) mailListRecieved:(NSDictionary*)_messages User:(NSString*)_fuse_id;
 
@@ -477,7 +496,7 @@ enum kFuseMailErrors
  @param _error [NSNumber*] The error code corresponding to a value in kFuseMailErrors
  @see FuseAPI::getMailListFromServer for more information on retrieving the mail list for the currently signed in user from the server
  @see FuseAPI::getMailListFriendFromServer: for more information on retrievinf the mail list for any user from the server
- @since Fuse API version 1.24
+ @since Fuse API version 1.25
  */
 -(void) mailListError:(NSNumber*)_error;
 
@@ -487,11 +506,12 @@ enum kFuseMailErrors
  
  @param _message_id [NSString *] The ID of the mail message
  @param _fuse_id [NSString *] The Fuse ID to which the mail message was sent
+ @param _request_id [NSNumber *] The request ID that was provided when the message was sent
  @see FuseAPI::sendMail:Message: for more information on sending a mail message
  @see FuseAPI::sendMailWithGift:Messge:GiftID:GiftAmount: for more information on sending a mail message with a gift
- @since Fuse API version 1.24
+ @since Fuse API version 1.25
  */
--(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id;
+-(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id RequestID:(NSNumber*)_request_id;
 
 /*!
  * @brief This function is called when an error has occurred sending a mail messages
@@ -499,7 +519,7 @@ enum kFuseMailErrors
  
  @code
  
- -(void) mailError:(NSNumber*)_error
+ -(void) mailError:(NSNumber*)_error RequestID:(NSNumber*)_request_id
  {
     if ([_error intValue] != FUSE_MAIL_NO_ERROR)
     {
@@ -510,11 +530,49 @@ enum kFuseMailErrors
  @endcode
  
  @param _error [NSNumber*] The error code corresponding to a value in kFuseMailErrors
+ @param _request_id [NSNumber *] The request ID that was provided when the message was sent
  @see FuseAPI::sendMail:Message: for more information on sending a mail message
  @see FuseAPI::sendMailWithGift:Messge:GiftID:GiftAmount: for more information on sending a mail message with a gift
- @since Fuse API version 1.24
+ @since Fuse API version 1.25
  */
--(void) mailError:(NSNumber*)_error;
+-(void) mailError:(NSNumber*)_error RequestID:(NSNumber*)_request_id;
+
+/*!
+ * @brief This function is called in response to a request to check for an ad in the Fuse system
+ * @details As a result of the checkAdAvailable function, this function is invoked when the status of whether an ad is available is known.  To handle this response:
+ 
+ @code
+ 
+ -(void) adAvailabilityResponse:(NSNumber*)_available Error:(NSNumber*)_error
+ {
+    BOOL isAvailable = [_available boolValue];
+    int error = [_error intValue];
+ 
+    if (error != FUSE_AD_NO_ERROR)
+    {
+        // An error has occurred checking for the ad
+    }
+    else
+    {
+        if (isAvailable)
+        {
+            // An ad is available
+        }
+        else
+        {
+            // An ad is not available
+        }
+    }
+ }
+ 
+ @endcode
+ 
+ * @param _available [NSNumber *] This indicates whether an ad is available (boolean)
+ * @param _error [NSNumber *] This indicates whether an error has occurred and corresponds to values in kFuseAdErrors
+ * @see checkAdAvailable for more information on how to invoke the process of checking for an ad
+ * @since Fuse API version 1.26
+ */
+-(void) adAvailabilityResponse:(NSNumber*)_available Error:(NSNumber*)_error;
 
 @end
 
@@ -561,6 +619,19 @@ enum kFuseMailErrors
 @required
 
 /*!
+ * @brief This function is called when the request for game data has returned to the device.  This function does not receieve the request ID in the callback, unlike gameDataReceived:ForKey:Data:RequestID: which can be optionally used instead (if required).
+ * @details The requested data is given as an input to the function.  This 
+ * @param _fuse_id [NSString*] The Fuse ID of the user for which the data was requested.  Can be different that the user signed in on the device if the data requested was for a friend or other user.
+ * @param _key [NSString*] The master object key (if specified) for the data returning.  Can be 'nil'.
+ * @param _data [NSMutableDictionary*] The data payload.
+ * @see FuseAPI::getGameData:Delegate: for more information on retrieving game data
+ * @see gameDataError: for more information on error cases involved with retrieving game data
+ */
+-(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data;
+
+@optional
+
+/*!
  * @brief This function is called when the request for game data has returned to the device.
  * @details The requested data is given as an input to the function.  This function is the same as gameDataReceived:ForKey:Data: except that it also passes back the request ID that was given to the client when the request was made.  You can optionally use this function or gameDataReceived:ForKey:Data:.
  * @param _fuse_id [NSString*] The Fuse ID of the user for which the data was requested.  Can be different that the user signed in on the device if the data requested was for a friend or other user.
@@ -571,18 +642,6 @@ enum kFuseMailErrors
  * @see gameDataError: for more information on error cases involved with retrieving game data
  */
 -(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data RequestID:(NSNumber*)_request_id;
-
-@optional
-/*!
- * @brief This function is called when the request for game data has returned to the device.  This function does not receieve the request ID in the callback, unlike gameDataReceived:ForKey:Data:RequestID: which can be optionally used instead (if required).
- * @details The requested data is given as an input to the function.  This 
- * @param _fuse_id [NSString*] The Fuse ID of the user for which the data was requested.  Can be different that the user signed in on the device if the data requested was for a friend or other user.
- * @param _key [NSString*] The master object key (if specified) for the data returning.  Can be 'nil'.
- * @param _data [NSMutableDictionary*] The data payload.
- * @see FuseAPI::getGameData:Delegate: for more information on retrieving game data
- * @see gameDataError: for more information on error cases involved with retrieving game data
- */
--(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data;
 
 /*!
  * @brief This function indicates when an error has occurred when sending or receiving per-user game data information.
@@ -742,7 +801,7 @@ enum kFuseMailErrors
  
  * @param launchOptions [NSDictionary*] The dictionary of launch options passed to application:didFinishLaunchingWithOptions
  * @param application [UIApplication*] The initiating UIApplication instance
- * @deprecated This function is deprecated and will be removed in version 1.23
+ * @deprecated This function is deprecated and will be removed
  */
 +(void) respondToApplicationLaunchOptions:(NSDictionary *)launchOptions Application:(UIApplication *)application;
 
@@ -762,8 +821,9 @@ enum kFuseMailErrors
  @endcode
  
  * @param _message [NSString*] The event name to be logged
+ * @deprecated Since Fuse API version 1.26
  */
-+(void) registerEvent:(NSString *)_message;
++(void) registerEvent:(NSString *)_message __attribute__((deprecated));
 
 /*!
  * @brief This function is used to register an named event in the Fuse system.
@@ -781,8 +841,69 @@ enum kFuseMailErrors
  
  * @param _message [NSString*] The event name to be logged
  * @param _dict [NSDictionary*] A dictionary of values associated with the event
+ * @deprecated Since Fuse API version 1.26
  */
-+(void) registerEvent:(NSString *)_message withDict:(NSDictionary*)_dict;
++(void) registerEvent:(NSString *)_message withDict:(NSDictionary*)_dict __attribute__((deprecated));
+
+/*!
+ * @brief This function will send a named event (with values) to the Fuse system for tracking
+ * @details To log a named event in the fuse system, you can make the following function calls.  Note that any variable value sent will be summed in the Fuse system, while the other parameters will be counted.
+ *
+ * @code
+  
+    // with a dictionary
+    NSDictionary *dict = [[NSDictionary alloc] initWithObjectsAndKeys:[NSNumber numberWithInt:256], @"Coins",
+                                                                      [NSNumber numberWithInt:1000], @"XP",
+                                                                      [NSNumber numberWithFloat:20.5f], @"Frame Rate",
+                                                                      nil];
+ 
+    [FuseAPI registerEvent:@"Levels" ParameterValue:@"Level" ParameterName:@"1" Variables:dict];
+ 
+    // with no dictionary
+    [FuseAPI registerEvent:@"System" ParameterValue:@"Tutorial Level Reached" ParameterName:@"2" Variables:nil];
+ 
+    // with no parameters
+    [FuseAPI registerEvent:@"Tutorial Finished" ParameterValue:nil ParameterName:nil Variables:nil];
+ 
+ * @endcode
+ *
+ * @param _name [NSString*] The event group name (i.e. "Levels")
+ * @param _param_name [NSString*] The event parameter name (i.e. "Level")
+ * @param _param_value [NSString*] The event parameter value (i.e. "1")
+ * @param _variables [NSDictionary*] A list of key value pairs of variable names and values
+ * @retval [int] Indicates whether the event information is valid.  Corresponds to kFuseEventErrors.
+ * @since FuseAPI version 1.26
+ */
++(int) registerEvent:(NSString*)_name ParameterName:(NSString*)_param_name ParameterValue:(NSString*)_param_value Variables:(NSDictionary*)_variables;
+
+/*!
+ * @brief This function will send a named event (with values) to the Fuse system for tracking
+ * @details Similar to the above function which sends named events to the Fuse system using a dictionary, this function only allows one variable name and value to be sent.
+ *
+ * @code
+    
+    // with variables
+    [FuseAPI registerEvent:@"Levels" ParameterValue:@"Level" ParameterName:@"1" VariableName:@"Coins" VariableValue:256];
+ 
+    // with no variables
+    [FuseAPI registerEvent:@"System" ParameterValue:@"Tutorial Level Reached" ParameterName:@"2" VariableName:nil VariableValue:nil];
+ 
+    // with no parameters
+    [FuseAPI registerEvent:@"Tutorial Finished" ParameterValue:nil ParameterName:nil VariableName:nil VariableValue:nil];
+ 
+ * @endcode
+ *
+ * @param _name [NSString*] The event group name (i.e. "Levels")
+ * @param _param_name [NSString*] The event parameter name (i.e. "Level")
+ * @param _param_value [NSString*] The event parameter value (i.e. "1")
+ * @param _variable_name [NSString *] The name of the variable being logged (i.e. "Coins")
+ * @param _variable_value [NSNumber*] The value of the event being logged (i.e. 10)
+ * @retval [int] Indicates whether the event information is valid.  Corresponds to kFuseEventErrors.
+ * @see registerEvent:ParameterName:ParameterValue:Values: to see how to call the same function more efficiently with a dictionary (when calling multiple times with the same parameters)
+ * @since FuseAPI version 1.26
+ */
++(int) registerEvent:(NSString*)_name ParameterName:(NSString*)_param_name ParameterValue:(NSString*)_param_value VariableName:(NSString*)_variable_name VariableValue:(NSNumber*)_variable_value;
+
 
 #pragma mark Game Crash Registration
 /*!
@@ -850,7 +971,7 @@ enum kFuseMailErrors
  @endcode
  
  @param _transaction [SKPaymentTransaction *] The transaction object sent to the delegate once a purchase has been completed.
- @see FuseDelegate::puchaseVerification:TransactionID:OriginalTransactionID: for more information on the \<FuseDelegate\> callback indicating whether the transaction was verified by Apple's servers
+ @see FuseDelegate::purchaseVerification:TransactionID:OriginalTransactionID: for more information on the \<FuseDelegate\> callback indicating whether the transaction was verified by Apple's servers
  */
 +(void) registerInAppPurchase:(SKPaymentTransaction *)_transaction;
 
@@ -898,6 +1019,22 @@ enum kFuseMailErrors
  @param _delegate [id] The \<FuseAdDelegate\> object that will handle receiving callbacks in response to ad actions.
  */
 +(void) showAdWithDelegate:(id)_delegate;
+
+/*!
+ * @brief This function indicates whether an ad is available to be shown to the user
+ * @details This function is optional and can be used to test if an ad is available in the Fuse system before attempting to show an ad to the user.  If an ad is shown (using showAdWithDelegate:) without an ad unit available, the window will be dismissed.  To call this function:
+ 
+ @code
+ [FuseAPI checkAdAvailable];
+ @endcode
+ 
+ The response to this function is sent using the \<FuseDelegate\> protocol function adAvailabilityResponse:Error.  Note that a \<FuseDelegate\> object must be registered using startSession: to receive this callback.
+ 
+ * @see FuseDelegate::adAvailabilityResponse:Error: for more information on handling the callback response
+ * @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ * @since Fuse API version 1.26
+ */
++(void) checkAdAvailable;
 
 #pragma mark Notifications
 /*!
@@ -977,6 +1114,27 @@ enum kFuseMailErrors
 +(void) registerGender:(int)_gender;
 
 #pragma mark Account Login Functions
+
+/*!
+ @brief This function returns the public 'Fuse ID'.
+ @details After a user has registered a login for one of the supported services (i.e. Game Center, etc), a 9-digit 'Fuse ID' is generated that uniquely identifies the user.  This ID can be passed between users as a public ID for the Fuse system so that user's can interact (i.e. invite as friends, etc.) without exposing confidential account information.
+ 
+ @code
+ 
+ NSString *my_fuse_id = [FuseAPI getFuseID];
+ 
+ @endcode
+ 
+ @see gameCenterLogin: for more information on how to register a login with a Game Center ID
+ @see facebookLogin: for more information on how to register a login with a Facebook account ID
+ @see twitterLogin: for more information on how to register a login with a Twitter account ID
+ @see openFeintLogin: for more information on how to register a login with an OpenFeint account ID
+ @see fuseLogin:Alias: for more information on how to register a login with a Fuse ID
+ @retval [NSString*] The 9-digit Fuse ID.  This ID is strictly comprised of integers, but *do not* cast this value to an integer because a valid ID could have leading zeroes.
+ @since Fuse API version 1.21
+ */
++(NSString*) getFuseID;
+
 /*!
  * @brief Game Center account registration
  * @details Uniquely track a user across devices by passing Game Center login information of a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.
@@ -1019,6 +1177,35 @@ enum kFuseMailErrors
  To call this function:
  
  @code
+ 
+ [FuseAPI facebookLogin:@"facebook_id"];
+ 
+ @endcode
+ 
+ If required, a callback is sent to the \<FuseDelegate\> (if registered) indicating that the Fuse system has received the login information.
+ 
+ @code
+ 
+ -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
+ 
+ @endcode
+ 
+ @param _facebook_id [NSString*] This is the account id of the user signed in to Facebook (e.g. 122611572)
+ @param _name [NSString*] The first and last name of the user (i.e. "Jon Jovi").  Can be "" or nil if unknown.
+ @param _accesstoken [NSString*] This is the access token generated if a user signs in to a facebook app on the device (can be "" or nil if not available)
+ @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
+ @since Fuse API version 1.23
+ */
++(void) facebookLogin:(NSString*)_facebook_id Name:(NSString*)_name withAccessToken:(NSString*)_accesstoken;
+
+/*!
+ * @brief Facebook account registration
+ * @details Uniquely track a user across devices by passing Facebook login information of a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.
+ 
+ To call this function:
+ 
+ @code
 
  [FuseAPI facebookLogin:@"facebook_id"];
  
@@ -1042,42 +1229,13 @@ enum kFuseMailErrors
 
 /*!
  * @brief Facebook account registration
- * @details Uniquely track a user across devices by passing Facebook login information of a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.
- 
- To call this function:
- 
- @code
- 
- [FuseAPI facebookLogin:@"facebook_id"];
- 
- @endcode
- 
- If required, a callback is sent to the \<FuseDelegate\> (if registered) indicating that the Fuse system has received the login information.
- 
- @code
- 
- -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
- 
- @endcode
- 
- @param _facebook_id [NSString*] This is the account id of the user signed in to Facebook (e.g. 122611572) 
- @param _name [NSString*] The first and last name of the user (i.e. "Jon Jovi").  Can be @"" or nil if unknown.
- @param _access_token [NSString*] This is the access token generated if a user signs in to a facebook app on the device (can be @"" or nil if not available)
- @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
- @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
- @since Fuse API version 1.23
- */
-+(void) facebookLogin:(NSString*)_facebook_id Name:(NSString*)_name withAccessToken:(NSString*)_accesstoken;
-
-/*!
- * @brief Facebook account registration
  * @details Uniquely track a user across devices by passing Facebook login information of a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.  Use this version if the gender of the player is known.
  
  To call this function:
  
  @code
  
- [FuseAPI facebookLogin:@"facebook_id"];
+ [FuseAPI facebookLogin:@"facebook_id", Name:"Jon Bon" Gender:2 withAccessToken:@"8971634a47d0b"];
  
  @endcode
  
@@ -1092,7 +1250,7 @@ enum kFuseMailErrors
  @param _facebook_id [NSString*] This is the account id of the user signed in to Facebook (e.g. 122611572) 
  @param _name [NSString*] The first and last name of the user (i.e. "Jon Jovi").  Can be @"" or nil if unknown.
  @param _gender [int] The suspected gender of the user.  Please see kFuseGender for more information on the gender enumerated type.
- @param _access_token [NSString*] This is the access token generated if a user signs in to a facebook app on the device (can be @"" or nil if not available)
+ @param _accesstoken [NSString*] This is the access token generated if a user signs in to a facebook app on the device (can be @"" or nil if not available)
  @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
  @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
  @since Fuse API version 1.23
@@ -1125,6 +1283,34 @@ enum kFuseMailErrors
  @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
  */
 +(void) twitterLogin:(NSString*)_twitter_id;
+
+/*!
+ * @brief Twitter account registration with user name
+ * @details Uniquely track a user across devices by passing Twitter login information of a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.
+ 
+ To call this function:
+ 
+ @code
+ 
+ [FuseAPI twitterLogin:@"twit_id" Name:@"JohnnyGoodUser"];
+ 
+ @endcode
+ 
+ If required, a callback is sent to the \<FuseDelegate\> (if registered) indicating that the Fuse system has received the login information.
+ 
+ @code
+ 
+ -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
+ 
+ @endcode
+ 
+ @param _twitter_id [NSString*] This is the account id of the user signed in to Twitter
+ @param _alias [NSString*] This is the alias of the user
+ @since Fuse API version 1.14
+ @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
+ */
++(void) twitterLogin:(NSString*)_twitter_id Alias:(NSString*)_alias;
 
 /*!
  * @brief OpenFeint account registration
@@ -1183,6 +1369,64 @@ enum kFuseMailErrors
  @see getFuseID for more information on retrieving the user's Fuse ID once signed in
  */
 +(void) fuseLogin:(NSString*)_fuse_id Alias:(NSString*)_alias;
+
+/*!
+ * @brief Account registration using an email address
+ * @details Uniquely track a user across devices by passing an email address for a user.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user information across devices.
+ 
+ 
+ To call this function:
+ 
+ @code
+ 
+ [FuseAPI emailLogin:@"honky@gmail.com" Alais:@"Geronimo"];
+ 
+ @endcode
+ 
+ If required, a callback is sent to the \<FuseDelegate\> (if registered) indicating that the Fuse system has received the login information.
+ 
+ @code
+ 
+ -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
+ 
+ @endcode
+ 
+ @param _email [NSString*] This is the email address of the user signed in to the Fuse system
+ @param _alias [NSString*] The alias or 'handle' of the user
+ @since Fuse API version 1.25
+ @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
+ @see getFuseID for more information on retrieving the user's Fuse ID once signed in
+ */
++(void) emailLogin:(NSString*)_email Alias:(NSString*)_alias;
+
+/*!
+ * @brief Account registration using the unique device identifier
+ * @details Uniquely track a user based upon their device identifier.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user. However, this system cannot track users across devices since it is tied to a device.  The main benefit to using this call to "log" a user in to the system is to avoid any other sign-in (like Facebook or Game Center).
+ 
+ To call this function:
+ 
+ @code
+ 
+ [FuseAPI deviceLogin:@"Geronimo"];
+ 
+ @endcode
+ 
+ If required, a callback is sent to the \<FuseDelegate\> (if registered) indicating that the Fuse system has received the login information.
+ 
+ @code
+ 
+ -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
+ 
+ @endcode
+ 
+ @param _alias [NSString*] The alias or 'handle' of the user
+ @since Fuse API version 1.25
+ @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
+ @see getFuseID for more information on retrieving the user's Fuse ID once signed in
+ */
++(void) deviceLogin:(NSString*)_alias;
 
 /*!
  * @brief Get the original account ID used to log in to the Fuse system that corresponds to the Fuse ID
@@ -1261,21 +1505,6 @@ enum kFuseMailErrors
  */
 +(NSString*) libraryVersion;
 
-/*!
- * @brief This function returns the App API key
- * @details This returns the 36-character Fuse API key that was used when called startSession: or startSession:Delegate:
- 
- @code
- 
- NSString *api_key = [FuseAPI getID];
- 
- @endcode
- 
- * @retval [NSString*] The 36-character Fuse API key
- * @see startSession: to see how the API key was set
- * @deprecated This is deprecated as of version 1.22 because it is not really useful and is taking up binary size.  This will be removed in version 1.23.
- */
-+(NSString*) getID __attribute__((deprecated));
 
 /*! 
  * @brief This function indicates whether the application is connected to the internet
@@ -1596,15 +1825,54 @@ enum kFuseMailErrors
 +(int) getGameData:(NSArray*)_keys Key:(NSString*)_key Delegate:(id)_delegate;
 
 /*!
-@brief 
-@details
+ @brief This function is used to retrieve multiple read request at once.
+ @details To avoid having to call getGameData:Delegate: multiple times to read different data sets, this call can combine those read requests.  Simply add the parent keys to be read and the requests will be batched and sent to the server together.
 
-@param
-@param
+ @code
  
-@retval
+ NSArray *transferId = [NSArray arrayWithObjects:@"transferId", @"test2", nil];
+ NSArray *transferId2 = [NSArray arrayWithObjects:@"foo", [NSNumber numberWithInt:5], nil];
+ NSArray *transferId3 = [NSArray arrayWithObjects:@"bar", nil];
+ 
+ NSDictionary *parentKeys = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:transferId, transferId2, transferId3, nil]
+ forKeys:[NSArray arrayWithObjects:@"transferTest1", @"transferTest2", @"transferTest3", nil]];
+ 
+ [FuseAPI getGameDataCollection:parentKeys Delegate:self];
+ 
+ @endcode
+ 
+ The data is returned via a callback to the \<FuseGameDataDelegate\> object.  The delegate object *must* passed in to this function in order to get the data returned.  For information on how to create a delegate, please see the definition of setGameData:Delegate:.
+ 
+ The delegate function called in the case of a callback, for each entry in the _parentKeys object is as follows:
+ 
+ @code
+ 
+ @implementation YourDataObject
+ 
+ -(void) gameDataError:(NSNumber*)_error
+ {
+    // An error has occurred in getting game data
+    // see kFuseGameDataErrors for all error values
+    int error = [_error intValue];
+ }
+ 
+ -(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data
+ {
+    // Data has returned for the user specified by '_fuse_id'.
+    // Key can optionally by 'nil' or an empty string
+ }
+ 
+ @end
+ 
+ @endcode
+ 
+ @param _parentKeys [NSDictionary*] The list of parent keys to be read from the server.
+ @param _delegate [id] The \<FuseGameDataDelegate\> to which the callback will be made when data has returned to the device.
+ @retval [NSDictionary*] The dictionary of request IDs for the requests that are to be returned via the gameDataReceived callback.  Note this is not the returned data - just a key->value list of parent keys (that were passed in) and the request ID that will be returned with the data when returned.  Note that the callback will be called multiple times for this once request (once per entry in the dictionary).
+ @see gameDataReceived:ForKey:Data: for more information on the delegate callback
+ @since Fuse API version 1.25
 */
-+(NSDictionary*) getGameDataBuffered:(NSDictionary *)_parentKeys Delegate:(id)_delegate;
++(NSDictionary*) getGameDataCollection:(NSDictionary *)_parentKeys Delegate:(id)_delegate;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1648,26 +1916,6 @@ enum kFuseMailErrors
  @since Fuse API version 1.15
  */
 +(int) getFriendGameData:(NSArray*)_keys Key:(NSString*)_key FuseID:(NSString*)_fuse_id Delegate:(id)_delegate;
-
-/*!
- @brief This function returns the public 'Fuse ID'.
- @details After a user has registered a login for one of the supported services (i.e. Game Center, etc), a 9-digit 'Fuse ID' is generated that uniquely identifies the user.  This ID can be passed between users as a public ID for the Fuse system so that user's can interact (i.e. invite as friends, etc.) without exposing confidential account information.
- 
- @code
- 
- NSString *my_fuse_id = [FuseAPI getFuseID];
- 
- @endcode
- 
- @see gameCenterLogin: for more information on how to register a login with a Game Center ID
- @see facebookLogin: for more information on how to register a login with a Facebook account ID
- @see twitterLogin: for more information on how to register a login with a Twitter account ID
- @see openFeintLogin: for more information on how to register a login with an OpenFeint account ID
- @see fuseLogin:Alias: for more information on how to register a login with a Fuse ID
- @retval [NSString*] The 9-digit Fuse ID.  This ID is strictly comprised of integers, but *do not* cast this value to an integer because a valid ID could have leading zeroes.
- @since Fuse API version 1.21
- */
-+(NSString*) getFuseID;
 
 #pragma mark Friends List Actions
 /*!
@@ -1869,6 +2117,7 @@ enum kFuseMailErrors
 +(void) rejectFriend:(NSString*)_fuse_id;
 
 #pragma mark Chat List Actions
+
 /*!
  * @brief Post a chat message to another user
  * @details Using this system, users can communicate with one another inside the game.  Messages are posted to the Fuse system and requested by game clients when needed.  The user must have logged in to one of the supported account services (for instance Game Center using gameCenterLogin:) in order to have an assigned Fuse ID.  A message can be a maximum of 256 characters.  This system would most likely be used in conjunction with another social tool, such as the friend's list (see getFriendsList), where a list of users and their associated Fuse IDs would be known. A friend is in the second phase of the process if it is indicated as 'pending' in the updateFriendsListFromServer callback friendsListUpdated:.
@@ -1886,10 +2135,7 @@ enum kFuseMailErrors
  @param _fuse_id [NSString*] This is the "Fuse ID" of the player to which the message will be sent
  @since Fuse API version 1.22
  */
-
-
-
-+(void) postUserChatMessage:(NSString*)_message TargetUser:(NSString*)_fuse_id; 
++(void) postUserChatMessage:(NSString*)_message TargetUser:(NSString*)_fuse_id;
 
 /*!
  * @brief Post a chat message to another user indicating the user's level
@@ -2096,17 +2342,9 @@ enum kFuseMailErrors
  @see twitterLogin: for more information on how to register a login with a Twitter account ID
  @see openFeintLogin: for more information on how to register a login with an OpenFeint account ID
  @see fuseLogin:Alias: for more information on how to register a login with a Fuse ID
- @since Fuse API version 1.24
+ @since Fuse API version 1.25
  */
 +(void) getMailListFromServer;
-
-/*!
- * @brief Get the mail list of a user that has already been retrieved from the server
- * @details This list is the local copy, of any user that has already been fetched
- * @see getMailListFromServer and getMailListFriendFromServer: for more information on retrieving the mail/gift list from the server
- * @since Fuse API version 1.24
- */
-+(NSMutableDictionary*) getMailList:(NSString*)_fuse_id;
 
 /*!
  * @brief Get the list of messages (and gifts) sent to another user.
@@ -2114,9 +2352,17 @@ enum kFuseMailErrors
  *
  * @param _fuse_id [NSString*] This is the "Fuse ID" of the player for which the list is requested
  * @see getMailListFromServer for more information on how to handle the callback for this function
- * @since Fuse API version 1.24
+ * @since Fuse API version 1.25
  */
 +(void) getMailListFriendFromServer:(NSString*)_fuse_id;
+
+/*!
+ * @brief Get the mail list of a user that has already been retrieved from the server
+ * @details This list is the local copy, of any user that has already been fetched
+ * @see getMailListFromServer and getMailListFriendFromServer: for more information on retrieving the mail/gift list from the server
+ * @since Fuse API version 1.25
+ */
++(NSMutableDictionary*) getMailList:(NSString*)_fuse_id;
 
 /*!
  * @brief Mark a particular message (or gift) as receieved by the user
@@ -2126,11 +2372,11 @@ enum kFuseMailErrors
  
  * @param _message_id [int] The gift ID that has been consumed by the client
  * @see getFuseID for more information on retrieving the user's Fuse ID once signed in
- * @since Fuse API version 1.24
+ * @since Fuse API version 1.25
  */
 +(void) setMailAsReceived:(int)_message_id;
 
-/*
+/*!
  * @brief Send a message to a user with a gift attached
  * @details This function facilitates gifting another user. A message can be specified along with the unique gift identifier as well as amount.  This function will return a callback to the \<FuseDelegate\> to indicate if the gifting process was successful or whether an error occurred.
  
@@ -2138,12 +2384,12 @@ enum kFuseMailErrors
  
  @code
  
- -(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id
+ -(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id RequestID:(NSNumber*)_request_id
  {
     // The message was received successfully
  }
  
- -(void) mailError:(NSNumber*)_error
+ -(void) mailError:(NSNumber*)_error RequestID:(NSNumber*)_request_id
  {
     // An error has occurred
     // Refer to kFuseMailErrors for information of the error cases possible
@@ -2157,12 +2403,12 @@ enum kFuseMailErrors
  * @param _amount [int] The quantity of the gift to be awarded to the user (associated with _gift_id)
  * @see FuseDelegate::giftAcknowledged for more information on the send gift callback
  * @see FuseDelegate::giftListError for more information on the error handling for this function
- * @since Fuse API version 1.24
+ * @since Fuse API version 1.25
  */
-+(void) sendMailWithGift:(NSString*)_fuse_id Message:(NSString*)_message GiftID:(int)_gift_id GiftAmount:(int)_amount;
++(int) sendMailWithGift:(NSString*)_fuse_id Message:(NSString*)_message GiftID:(int)_gift_id GiftAmount:(int)_amount;
 
 
-/*
+/*!
  * @brief Send a message to a user
  * @details This function facilitates messaging another user. This function will return a callback to the \<FuseDelegate\> to indicate if the messaging process was successful or whether an error occurred.
  
@@ -2170,12 +2416,12 @@ enum kFuseMailErrors
  
  @code
  
- -(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id
+ -(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id RequestID:(NSNumber*)_request_id
  {
     // The message was received successfully
  }
  
- -(void) mailError:(NSNumber*)_error
+ -(void) mailError:(NSNumber*)_error RequestID:(NSNumber*)_request_id
  {
     // An error has occurred
     // Refer to kFuseMailErrors for information of the error cases possible
@@ -2185,51 +2431,85 @@ enum kFuseMailErrors
  
  * @param _fuse_id [NSString*] This is the "Fuse ID" of the player for which the gift is destined
  * @param _message [NSString*] The message to be sent along with the gift (optional)
- * @see FuseDelegate::mailAcknowledged for more information on the send gift callback
+ * @see FuseDelegate::mailAcknowledged:User:RequestID: for more information on the send gift callback
  * @see FuseDelegate::mailListError for more information on the error handling for this function
- * @since Fuse API version 1.24
+ * @since Fuse API version 1.25
  */
-+(void) sendMail:(NSString*)_fuse_id Message:(NSString*)_message;
++(int) sendMail:(NSString*)_fuse_id Message:(NSString*)_message;
 
 #pragma mark Specific Event Registration
 
 /*!
  * @brief Register the user's current level after they level-up
- * @details
- * @param _level [int] The player's new game level
- * @since Fuse API version 1.24
+ * @details This function can specifically track user levels to more accurately measure application penetration
+ *
+ * @code
+ 
+ [FuseAPI registerLevel:5];
+ 
+ * @endcode
+ *
+ * @param _level [int] The player's new level
+ * @since Fuse API version 1.25
  */
 +(void) registerLevel:(int)_level;
 
 /*!
- * @brief Register a change in the current balances of the user's in-game currencies.
- * @details
- * @param _currencyType [int] Enter 1-4, representing up to four different in-game resources
- * @param _balance [int] The
+ * @brief Register a change in the current balances of the user's in-app currencies.
+ * @details To better track the currency levels of your users, this function can be used to keep the system up-to-date as to the levels of currencies across your users.
+ *
+ * @code
+ 
+ [FuseAPI registerCurrency:2 Balance:115];
+ 
+ * @endcode
+ *
+ * @param _currencyType [int] Enter 1-4, representing up to four different in-app resources.  These values can be set specific to the application.
+ * @param _balance [int] The updated balance of the user
+ * @since Fuse API version 1.25
  */
 +(void) registerCurrency:(int)_currencyType Balance:(int)_balance;
 
 /*!
  * @brief Register a view of a Flurry video
- * @details
+ * @details Track each time a user views a Flurry video.
  *
- * @since Fuse API version 1.24
+ * @code
+ 
+ [FuseAPI registerFlurryView];
+ 
+ * @endcode
+ *
+ * @since Fuse API version 1.25
  */
 +(void) registerFlurryView;
 
 /*!
  * @brief Register a click on a Flurry video
- * @details
+ * @details Track each time a user clicks a Flurry video.
  *
- * @since Fuse API version 1.24
+ * @code
+ 
+ [FuseAPI registerFlurryClick];
+ 
+ * @endcode
+ *
+ * @since Fuse API version 1.25
  */
 +(void) registerFlurryClick;
 
 /*!
  * @brief Register the receipt of a tapjoy reward to the user
- * @details
- * @param The total amount of the in-game currency the user is awarded by Tapjoy
- * @since Fuse API version 1.24
+ * @details Track each time a user is rewarded through an incentivized action using Flurry.
+ *
+ * @code
+ 
+ [FuseAPI registerFlurryClick];
+ 
+ * @endcode
+ *
+ * @param _amtCurrency [int] The total amount of the in-game currency that the user has been awarded by Tapjoy
+ * @since Fuse API version 1.25
  */
 +(void) registerTapjoyReward:(int)_amtCurrency;
 
