@@ -87,6 +87,7 @@ void FuseAPI_RegisterCrash(NSException* exception)
 
 void FuseAPI_StartSession(const char* gameId)
 {
+	FuseAPI_Initialize();
 	[FuseAPI startSession:[NSString stringWithUTF8String:gameId] Delegate:_FuseAPI_delegate];
 }
 
@@ -115,19 +116,19 @@ void FuseAPI_RegisterEventStart()
 
 void FuseAPI_RegisterEventKeyValue(const char* entryKey, double entryValue)
 {
-  [_FuseAPI_registerEventData setValue:[NSNumber numberWithDouble:entryValue] forKey:[NSString stringWithUTF8String:entryKey]];
+	[_FuseAPI_registerEventData setValue:[NSNumber numberWithDouble:entryValue] forKey:[NSString stringWithUTF8String:entryKey]];
 }
 
 int FuseAPI_RegisterEventEnd(const char* name, const char* paramName, const char* paramValue)
 {
 	int result = [FuseAPI registerEvent:[NSString stringWithUTF8String:name] ParameterName:[NSString stringWithUTF8String:paramName] ParameterValue:[NSString stringWithUTF8String:paramValue] Variables:_FuseAPI_registerEventData];
-	[_FuseAPI_registerEventData release];	
+	[_FuseAPI_registerEventData release];
 	return result;
 }
 
 int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const char* paramValue, const char* variableName, double variableValue)
 {
-	[FuseAPI registerEvent:[NSString stringWithUTF8String:name] ParameterName:[NSString stringWithUTF8String:paramName] ParameterValue:[NSString stringWithUTF8String:paramValue] VariableName:[NSString stringWithUTF8String:variableName] VariableValue:[NSNumber numberWithDouble:variableValue]];
+	return [FuseAPI registerEvent:[NSString stringWithUTF8String:name] ParameterName:[NSString stringWithUTF8String:paramName] ParameterValue:[NSString stringWithUTF8String:paramValue] VariableName:[NSString stringWithUTF8String:variableName] VariableValue:[NSNumber numberWithDouble:variableValue]];
 }
 
 #pragma mark - In-App Purchase Logging
@@ -194,7 +195,7 @@ void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, cons
 
 void FuseAPI_CheckAdAvailable()
 {
-  [FuseAPI checkAdAvailable];
+	[FuseAPI checkAdAvailable];
 }
 
 void FuseAPI_ShowAd()
@@ -793,7 +794,9 @@ void FuseAPI_RegisterTapjoyReward(int amount)
 
 + (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
-	FuseAPI_Initialize();
+	// This no longer works under Unity 4.1 due to a mono_mutex_lock error,
+	// so it is now called from StartSession until mono under Unity 4.1 is investigated further.
+	//FuseAPI_Initialize();
 }
 
 #pragma mark Session Creation
