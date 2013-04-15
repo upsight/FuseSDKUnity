@@ -5,6 +5,6 @@
 	<classpathentry kind="lib" path="classes.jar"/>
 	<classpathentry kind="lib" path="android.jar"/>
 	<classpathentry kind="lib" path="facebook.jar"/>
-	<classpathentry kind="lib" path="FuseAndroidAPI_201212041608.jar"/>
+	<classpathentry kind="lib" path="FuseAndroidAPI_v1.26.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

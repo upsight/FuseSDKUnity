@@ -9,6 +9,7 @@ import com.fusepowered.util.GameValue;
 import com.fusepowered.util.Player;
 import com.fusepowered.util.Mail;
 import com.unity3d.player.UnityPlayerActivity;
+import com.unity3d.player.UnityPlayer;
 
 import java.util.Currency;
 import java.util.HashMap;
@@ -108,7 +109,7 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 			case AD_CLICKED:
 				break;
 			case MORE_GAMES_DISPLAYED:
-				UnityPlayer.UnitySendMessage("FuseCallback_Android", "_OverlayWillClose", "");
+				SendMessage("FuseCallback_Android", "_OverlayWillClose", "");
 			}
 		}
 		*/
@@ -646,6 +647,11 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	public static String MakeReturnComponent(String value)
 	{
 		return value.length() + ":" + value;
+	}
+
+	public static void SendMessage(String gameObject, String methodName, String message)
+	{
+		UnityPlayer.UnitySendMessage(gameObject, methodName, message == null ? "" : message);
 	}
 
 	private static final String _logTag = "FuseUnityAPI";
