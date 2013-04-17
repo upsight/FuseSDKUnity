@@ -812,7 +812,7 @@ enum kFuseEventErrors
  
  It is advisable to avoid recording events at a high rate as this could negatively impact both application and server performance.  For example, a good practice would be to issue an event at the start of a level (i.e. 'Level 1') or when a purchase is made.  It would be unadvisable to issue any event in each draw loop as this would create a tremendous amount of overhead and server traffic.
  
- The maximum length of a registered event is 256 characters, and each application is limited to a maximum 256 separate named events.
+ The maximum length of a registered event is 256 characters, and each application is limited to a maximum 1,000 separate named events.
  
  An example call would be:
  
@@ -831,7 +831,7 @@ enum kFuseEventErrors
  
  It is advisable to avoid recording events at a high rate as this could negatively impact both application and server performance.  For example, a good practice would be to issue an event at the start of a level (i.e. 'Level 1') or when a purchase is made.  It would be unadvisable to issue any event in each draw loop as this would create a tremendous amount of overhead and server traffic.
  
- The maximum length of a registered event is 256 characters, and each application is limited to a maximum 256 separate named events.
+ The maximum length of a registered event is 256 characters, and each application is limited to a maximum 1,000 separate named events.
  
  An example call would be:
  
@@ -867,6 +867,8 @@ enum kFuseEventErrors
  
  * @endcode
  *
+ * The maximum length of a registered event is 256 characters, and each application is limited to a maximum 1,000 separate named events.
+ *
  * @param _name [NSString*] The event group name (i.e. "Levels")
  * @param _param_name [NSString*] The event parameter name (i.e. "Level")
  * @param _param_value [NSString*] The event parameter value (i.e. "1")
@@ -892,6 +894,8 @@ enum kFuseEventErrors
     [FuseAPI registerEvent:@"Tutorial Finished" ParameterValue:nil ParameterName:nil VariableName:nil VariableValue:nil];
  
  * @endcode
+ *
+ * The maximum length of a registered event is 256 characters, and each application is limited to a maximum 1,000 separate named events.
  *
  * @param _name [NSString*] The event group name (i.e. "Levels")
  * @param _param_name [NSString*] The event parameter name (i.e. "Level")
@@ -1035,6 +1039,49 @@ enum kFuseEventErrors
  * @since Fuse API version 1.26
  */
 +(void) checkAdAvailable;
+
+/*!
+ * @brief This function indicates whether an ad is available to be shown to the user 
+ * @details This function is optional and can be used to test if an ad is available in the Fuse system before attempting to show an ad to the user.  If an ad is shown (using showAdWithDelegate:) without an ad unit available, the window will be dismissed.  This function differs from checkAdAvailable in that a delegate object can optionally be specified to allow for the callback to go to any object, not the specified FuseDelegate as done in checkAdAvailable.  To call this function:
+ 
+ @code
+ 
+ [FuseAPI checkAdAvailable:YourAdObject_instance];
+ 
+ @endcode
+ 
+ In the implementation of the object receiving the callback, add this function:
+ 
+ @code
+ 
+ @implementation YourAdObject
+ 
+ -(void) adAvailabilityResponse:(NSNumber*)_available Error:(NSNumber*)_error
+ {
+    BOOL isAvailable = [_available boolValue];
+    int error = [_error intValue];
+ 
+    if (error != FUSE_AD_NO_ERROR)
+    {
+        // An error has occurred
+    }
+    else
+    {
+    if (isAvailable)
+    {
+        // ad is available, and now cached
+    }
+ }
+ 
+ @end
+ 
+ @endcode
+ 
+ The response to this function is sent to the object and does not need to conform to any delegate protocol.
+ 
+ * @since Fuse API version 1.27
+ */
++(void) checkAdAvailableWithDelegate:(id)_delegate;
 
 #pragma mark Notifications
 /*!
@@ -1575,10 +1622,10 @@ enum kFuseEventErrors
  
  While it is necessary to allow a user to opt in and out of data collection, the implementation of this function is optional as there is another way to allow a user to stop data collection.  By using a settings bundle, which appears in the "Settings" menu for the application, data collection can be toggled without adding any code in the binary.  Many developers find this an easier and less intrusive way to integrate this feature.  This file can be found on the dashboard in the "Integrate API" section, or at this link:
  
-[https://dashboard.fusepowered.com/api/Settings.bundle.zip](https://dashboard.fusepowered.com/api/Settings.bundle.zip)
+[https://www.fuseboxx.com/api/Settings.bundle.zip](https://www.fuseboxx.com/api/Settings.bundle.zip)
  
  @see enableData to understand how to enable collecting data
- @see Download https://dashboard.fusepowered.com/api/Settings.bundle.zip to integrate the settings bundle and avoid having to implement this function
+ @see Download https://www.fuseboxx.com/api/Settings.bundle.zip to integrate the settings bundle and avoid having to implement this function
  */
 +(void) disableData;
 
@@ -1591,7 +1638,7 @@ enum kFuseEventErrors
  @endcode
 
  @see disableData to understand how to disable collecting data and more information on using the settings bundle
- @see Download https://dashboard.fusepowered.com/api/Settings.bundle.zip to integrate the settings bundle and avoid having to implement this function
+ @see Download https://www.fuseboxx.com/api/Settings.bundle.zip to integrate the settings bundle and avoid having to implement this function
  */
 +(void) enableData;
 
