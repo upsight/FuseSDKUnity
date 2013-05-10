@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 #if UNITY_EDITOR
-using FusePlatformAPI = FuseAPI;
+using FusePlatformAPI = FuseAPI_UnityEditor;
 #elif UNITY_IPHONE
 using FusePlatformAPI = FuseAPI_iOS;
 #elif UNITY_ANDROID
