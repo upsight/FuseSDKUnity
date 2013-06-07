@@ -1,19 +1,21 @@
 package com.fusepowered.unity;
 
-import com.fusepowered.util.FuseGameDataCallback;
-import com.fusepowered.util.GameKeyValuePairs;
-import com.fusepowered.util.GameValue;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fusepowered.util.FuseAttackErrors;
 import com.fusepowered.util.FuseEnemiesListError;
-import com.fusepowered.util.FuseGameDataError;
 import com.fusepowered.util.FuseFriendsListError;
+import com.fusepowered.util.FuseGameDataCallback;
+import com.fusepowered.util.FuseGameDataError;
 import com.fusepowered.util.FuseMailError;
-import com.fusepowered.util.UserTransactionLog;
-import com.fusepowered.util.Player;
+import com.fusepowered.util.GameKeyValuePairs;
+import com.fusepowered.util.GameValue;
 import com.fusepowered.util.Mail;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
+import com.fusepowered.util.Player;
+import com.fusepowered.util.UserTransactionLog;
+
 import android.util.Log;
 
 public class FuseUnityGameDataCallback extends FuseGameDataCallback

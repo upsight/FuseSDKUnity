@@ -42,6 +42,11 @@ public class FuseAPI : MonoBehaviour
 	{
 		FusePlatformAPI.RegisterEvent(message);
 	}
+	
+	public static void RegisterEvent(string message, Hashtable values)
+	{
+		FusePlatformAPI.RegisterEvent(message, values);
+	}
 
 	public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
 	{

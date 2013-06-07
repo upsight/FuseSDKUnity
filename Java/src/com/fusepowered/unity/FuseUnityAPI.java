@@ -1,27 +1,26 @@
 package com.fusepowered.unity;
 
-import com.fusepowered.fuseactivities.FuseApiAdBrowser;
-import com.fusepowered.fuseactivities.FuseApiMoregamesBrowser;
-import com.fusepowered.fuseapi.FuseAPI;
-import com.fusepowered.util.VerifiedPurchase;
-import com.fusepowered.util.GameKeyValuePairs;
-import com.fusepowered.util.GameValue;
-import com.fusepowered.util.Player;
-import com.fusepowered.util.Mail;
-import com.unity3d.player.UnityPlayerActivity;
-import com.unity3d.player.UnityPlayer;
-
+import java.util.ArrayList;
 import java.util.Currency;
 import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import android.os.Bundle;
-import android.util.Log;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
 
+import com.fusepowered.fuseactivities.FuseApiAdBrowser;
+import com.fusepowered.fuseactivities.FuseApiMoregamesBrowser;
+import com.fusepowered.fuseapi.*;
+import com.fusepowered.util.GameKeyValuePairs;
+import com.fusepowered.util.GameValue;
+import com.fusepowered.util.Mail;
+import com.fusepowered.util.Player;
+import com.fusepowered.util.VerifiedPurchase;
+import com.unity3d.player.UnityPlayer;
+import com.unity3d.player.UnityPlayerActivity;
 
 public class FuseUnityAPI extends UnityPlayerActivity implements Thread.UncaughtExceptionHandler
 {
@@ -160,6 +159,18 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	{
 		Log.d(_logTag, "registerEvent(" + message + ")");
 		FuseAPI.registerEvent(message);
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static void registerEventWithDictionary(String message, String[] keys, String[] attributes, int numValues)
+	{
+		Log.d(_logTag, "registerEvent(" + message + " + [variables] )");
+		HashMap<String, String> data = new HashMap<String, String>();
+		for( int i = 0; i < numValues; i++ )
+		{
+			data.put(keys[i], attributes[i]);
+		}
+		FuseAPI.registerEvent(message, data);
 	}
 
 	private static HashMap<String,Number> _registerEventData;
@@ -634,6 +645,12 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 // | API bridge helpers |
 // +--------------------+
 
+	public static void SetGameObjectCallback(String gameObject)
+	{
+		Log.d(_logTag, "Callback object set to: " + gameObject);
+		callbackObj = gameObject;
+	}
+	
 	public static String MakeReturnComponent(int value)
 	{
 		return MakeReturnComponent(Integer.toString(value));
@@ -651,9 +668,11 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 
 	public static void SendMessage(String gameObject, String methodName, String message)
 	{
-		UnityPlayer.UnitySendMessage(gameObject, methodName, message == null ? "" : message);
+		Log.d(_logTag, "Sending message: " + methodName + ": " + message);
+		UnityPlayer.UnitySendMessage(callbackObj, methodName, message == null ? "" : message);
 	}
 
+	static String callbackObj = "FuseAPI";
 	private static final String _logTag = "FuseUnityAPI";
 	private static UnityPlayerActivity _this;
 	private static FuseUnityGameDataCallback _gameDataCallback;

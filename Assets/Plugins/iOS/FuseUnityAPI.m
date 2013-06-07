@@ -104,6 +104,21 @@ void FuseAPI_SessionLoginError(int error)
 
 #pragma mark - Analytics
 
+void FuseAPI_RegisterEventWithDictionary(const char* message, const char** keys, const char** attributes, int numValues)
+{
+    printf("RegisterEventWithDictionary\n");
+    printf("Message: %s\n", message);
+    printf("Num Values: %i\n", numValues);
+    NSMutableDictionary* values = [[NSMutableDictionary alloc] initWithCapacity:numValues];
+    for( int i = 0; i < numValues; i++ )
+    {
+        printf("%i) key: %s, value: %s", i, keys[i], attributes[i]);
+        [values setObject:[NSString stringWithUTF8String:attributes[i]] forKey:[NSString stringWithUTF8String:keys[i]]];
+    }
+    [FuseAPI registerEvent:[NSString stringWithUTF8String:message] withDict:values];
+    [values release];
+}
+
 void FuseAPI_RegisterEvent(const char* message)
 {
 	[FuseAPI registerEvent:[NSString stringWithUTF8String:message]];
@@ -215,6 +230,12 @@ void FuseAPI_AdWillClose()
 }
 
 #pragma mark - Notifications
+
+void FuseAPI_RegisterPushToken(Byte* token, int size)
+{
+    NSData* deviceToken = [NSData dataWithBytes:token length:size];
+    [FuseAPI applicationdidRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
+}
 
 void FuseAPI_DisplayNotifications()
 {
@@ -859,6 +880,11 @@ void FuseAPI_RegisterTapjoyReward(int amount)
 }
 
 #pragma mark User Game Data
+
+-(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data
+{
+    [self gameDataReceived:_fuse_id ForKey:_key Data:_data RequestID:[NSNumber numberWithInt:0]];
+}
 
 - (void)gameDataReceived:(NSString *)_user_account_id ForKey:(NSString *)_key Data:(NSMutableDictionary *)_data RequestID:(NSNumber *)_request_id
 {

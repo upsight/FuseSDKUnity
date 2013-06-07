@@ -12,6 +12,7 @@ void FuseAPI_SessionLoginError(int error);
 
 #pragma mark - Analytic Event
 
+void FuseAPI_RegisterEventWithDictionary(const char* message, const char** keys, const char** attributes, int numValues);
 void FuseAPI_RegisterEvent(const char* message);
 void FuseAPI_RegisterEventStart();
 void FuseAPI_RegisterEventKeyValue(const char* entryKey, double entryValue);
@@ -76,6 +77,7 @@ void FuseAPI_AdWillClose();
 
 #pragma mark - Notifications
 
+void FuseAPI_RegisterPushToken(Byte* token, int size);
 void FuseAPI_DisplayNotifications();
 void FuseAPI_NotificationAction(const char* action);
 

@@ -9,7 +9,7 @@ public class FuseAPI_Android : FuseAPI
 #if UNITY_ANDROID && !UNITY_EDITOR
 	void Awake()
 	{
-		_callback = GameObject.Find("FuseAPI_Android");
+		_callback = this.gameObject;//GameObject.Find("FuseAPI_Android");
 
 		if (Application.platform == RuntimePlatform.Android)
 		{
@@ -17,6 +17,8 @@ public class FuseAPI_Android : FuseAPI
 			Debug.Log("FuseAPI:FusePlugin " + (_fusePlugin == null ? "NOT FOUND" : "FOUND"));
 			_fuseUnityPlugin = new AndroidJavaClass("com.fusepowered.unity.FuseUnityAPI");
 			Debug.Log("FuseAPI:FuseUnityPlugin " + (_fuseUnityPlugin == null ? "NOT FOUND" : "FOUND"));
+			Debug.Log("Callback object is: " + _callback.name);
+			_fuseUnityPlugin.CallStatic("SetGameObjectCallback", _callback.name);
 		}
 	}
 	
@@ -46,7 +48,27 @@ public class FuseAPI_Android : FuseAPI
 		Debug.Log("FuseAPI:RegisterEvent(" + message + ")");
 		_fuseUnityPlugin.CallStatic("registerEvent", message);
 	}
-
+	
+	new public static void RegisterEvent(string message, Hashtable values)
+	{
+		Debug.Log("FuseAPI:RegisterEvent(" + message + ", [variables])");
+		string[] keys = new string[20];			
+		string[] attributes = new string[20];
+		keys.Initialize();
+		attributes.Initialize();
+		int numEntries = 0;
+		foreach (DictionaryEntry entry in values)
+		{
+			string entryKey = entry.Key as string;
+			string entryValue = entry.Value as string;
+			
+			keys[numEntries] = entryKey;
+			attributes[numEntries] = entryValue;
+			numEntries++;
+		}
+		_fuseUnityPlugin.CallStatic("registerEventWithDictionary", message, keys, attributes, numEntries);
+	}
+	
 	new public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
 	{
 		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");

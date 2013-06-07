@@ -53,7 +53,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 	private static extern int FuseAPI_RegisterEventEnd(string name, string paramName, string paramValue);
 	[DllImport("__Internal")]
 	private static extern int FuseAPI_RegisterEventVariable(string name, string paramName, string paramValue, string variableName, double variableValue);
-	
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterEventWithDictionary(string message, string[] keys, string[] values, int numEntries);
+			
 	new public static void RegisterEvent(string message)
 	{
 		Debug.Log("FuseAPI:RegisterEvent(" + message + ")");
@@ -61,6 +63,30 @@ public class FuseAPI_UnityEditor : FuseAPI
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
 			FuseAPI_RegisterEvent(message);
+		}
+	}
+	
+	new public static void RegisterEvent(string message, Hashtable values)
+	{
+		Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			string[] keys = new string[20];			
+			string[] attributes = new string[20];
+			keys.Initialize();
+			attributes.Initialize();
+			int numEntries = 0;
+			foreach (DictionaryEntry entry in values)
+			{
+				string entryKey = entry.Key as string;
+				string entryValue = entry.Value as string;
+				
+				keys[numEntries] = entryKey;
+				attributes[numEntries] = entryValue;
+				numEntries++;
+			}
+			FuseAPI_RegisterEventWithDictionary(message, keys, attributes, numEntries);
 		}
 	}
 
