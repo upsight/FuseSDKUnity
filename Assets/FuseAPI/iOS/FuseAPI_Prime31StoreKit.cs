@@ -1,0 +1,107 @@
+//#define USING_PRIME31
+
+using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+public class FuseAPI_Prime31StoreKit : MonoBehaviour 
+{	
+#if UNITY_IPHONE && USING_PRIME31
+	
+	// cached in order to send failed and cancelled messages
+	private StoreKitTransaction currentTransaction = null;
+	
+	void Start () 
+	{
+		RegisterActions();
+	}
+	
+	private void RegisterActions()
+	{
+		// add hooks for Prime31 StoreKit events
+		StoreKitManager.productPurchaseAwaitingConfirmationEvent += productPurchaseAwaitingConfirmationEvent;
+		StoreKitManager.purchaseSuccessfulEvent += purchaseSuccessful;
+		StoreKitManager.purchaseCancelledEvent += purchaseCancelled;
+		StoreKitManager.purchaseFailedEvent += purchaseFailed;
+		StoreKitManager.productListReceivedEvent += productListReceivedEvent;
+	}
+	
+	private void UnregisterActions()
+	{
+		// remove all hooks for Prime31 StoreKit events
+		StoreKitManager.productPurchaseAwaitingConfirmationEvent -= productPurchaseAwaitingConfirmationEvent;
+		StoreKitManager.purchaseSuccessfulEvent -= purchaseSuccessful;
+		StoreKitManager.purchaseCancelledEvent -= purchaseCancelled;
+		StoreKitManager.purchaseFailedEvent -= purchaseFailed;
+		StoreKitManager.productListReceivedEvent -= productListReceivedEvent;
+	}
+	
+	void productListReceivedEvent( List<StoreKitProduct> productList )
+	{	
+		//Debug.Log( "productListReceivedEvent. total products received: " + productList.Count );
+		
+		// create an array of product info to pass into the Fuse API
+		FuseAPI.Product[] products = new FuseAPI.Product[productList.Count];
+		int numItems = 0;
+		foreach( StoreKitProduct product in productList )
+		{
+			FuseAPI.Product currentProduct = new FuseAPI.Product();
+			currentProduct.productId = product.productIdentifier;
+			currentProduct.priceLocale = product.currencyCode;
+			currentProduct.price = float.Parse(product.price);
+			products.SetValue(currentProduct, numItems++);
+			//Debug.Log( product.ToString() + "\n" );
+		}
+		FuseAPI.RegisterInAppPurchaseList(products);
+	}
+	
+	void productPurchaseAwaitingConfirmationEvent( StoreKitTransaction transaction )
+	{
+		//Debug.Log( "productPurchaseAwaitingConfirmationEvent: " + transaction );
+		
+		currentTransaction = transaction;
+		byte[] reciept = Convert.FromBase64String(transaction.base64EncodedTransactionReceipt);
+		FuseAPI.RegisterInAppPurchase(transaction.productIdentifier, reciept, FuseAPI.TransactionState.PURCHASING);		
+	}
+	
+	void purchaseFailed( string error )
+	{
+		//Debug.Log( "purchase failed with error: " + error );
+		
+		if( currentTransaction != null )
+		{
+			byte[] reciept = Convert.FromBase64String(currentTransaction.base64EncodedTransactionReceipt);
+			FuseAPI.RegisterInAppPurchase(currentTransaction.productIdentifier, reciept, FuseAPI.TransactionState.FAILED);			
+			currentTransaction = null;
+		}
+	}	
+
+	void purchaseCancelled( string error )
+	{
+		//Debug.Log( "purchase cancelled with error: " + error );
+		if( currentTransaction != null )
+		{
+			byte[] reciept = Convert.FromBase64String(currentTransaction.base64EncodedTransactionReceipt);
+			FuseAPI.RegisterInAppPurchase(currentTransaction.productIdentifier, reciept, FuseAPI.TransactionState.FAILED);			
+			currentTransaction = null;			
+		}
+	}
+	
+	void purchaseSuccessful( StoreKitTransaction transaction )
+	{
+		//Debug.Log( "purchased product: " + transaction );
+		
+		currentTransaction = null;
+		byte[] reciept = Convert.FromBase64String(transaction.base64EncodedTransactionReceipt);
+		FuseAPI.RegisterInAppPurchase(transaction.productIdentifier, reciept, FuseAPI.TransactionState.PURCHASED);		
+	}
+	
+	void OnDestroy()
+	{
+		UnregisterActions();
+	}
+	
+	
+#endif
+}
