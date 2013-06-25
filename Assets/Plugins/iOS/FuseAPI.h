@@ -842,8 +842,9 @@ enum kFuseEventErrors
  * @param _message [NSString*] The event name to be logged
  * @param _dict [NSDictionary*] A dictionary of values associated with the event
  * @deprecated Since Fuse API version 1.26
+ * @undeprecated in Fuse API version 1.29
  */
-+(void) registerEvent:(NSString *)_message withDict:(NSDictionary*)_dict __attribute__((deprecated));
++(void) registerEvent:(NSString *)_message withDict:(NSDictionary*)_dict;
 
 /*!
  * @brief This function will send a named event (with values) to the Fuse system for tracking

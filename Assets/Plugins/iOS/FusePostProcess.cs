@@ -43,6 +43,8 @@ public static class FusePostProcess
         // 1: Check this is an iOS build before running
 #if UNITY_IPHONE		
         {
+			Debug.Log("FusePostProcess Build Step - START");
+			
             // 2: We init our tab and process our project
             framework[] myFrameworks = { new framework("CoreTelephony.framework", CORETELEPHONY_FW, CORETELEPHONY_ID),
 										 new framework("AdSupport.framework", ADSUPPORT_FW, ADSUPPORT_ID),
@@ -60,7 +62,7 @@ public static class FusePostProcess
 //        Debug.Log("OnPostProcessBuild - Warning: This is not an iOS build");
 		return;
 #endif // UNITY IPHONE
-        Debug.Log("OnPostProcessBuild - STOP");
+        Debug.Log("FusePostProcess - STOP");
     }
 #endif // UNITY_EDITOR
     
