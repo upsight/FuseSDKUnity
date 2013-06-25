@@ -39,7 +39,13 @@ public class FuseAPI_Android : FuseAPI
 	{
 		Debug.Log("FuseAPI:SessionLoginError(" + error + ")");
 		OnSessionLoginError(int.Parse(error));
-	}	
+	}
+	
+	new public static void SetupPushNotifications(string gcmProjectID)
+	{
+		Debug.Log("FuseAPI:SetupPushNotifications(" + gcmProjectID + ")");
+		_fuseUnityPlugin.CallStatic("registerForPushNotifications", gcmProjectID);
+	}
 #endregion
 
 #region Analytics Event
@@ -51,9 +57,11 @@ public class FuseAPI_Android : FuseAPI
 	
 	new public static void RegisterEvent(string message, Hashtable values)
 	{
-		Debug.Log("FuseAPI:RegisterEvent(" + message + ", [variables])");
-		string[] keys = new string[20];			
-		string[] attributes = new string[20];
+		Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");
+				
+		int max_entries = 20; // this is an arbitrary large number
+		string[] keys = new string[max_entries];			
+		string[] attributes = new string[max_entries];
 		keys.Initialize();
 		attributes.Initialize();
 		int numEntries = 0;
@@ -68,7 +76,7 @@ public class FuseAPI_Android : FuseAPI
 		}
 		_fuseUnityPlugin.CallStatic("registerEventWithDictionary", message, keys, attributes, numEntries);
 	}
-	
+
 	new public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
 	{
 		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");
@@ -151,7 +159,7 @@ public class FuseAPI_Android : FuseAPI
 	}
 #endregion
 
-#region Notifications
+#region Notifications	
 	new public static void DisplayNotifications()
 	{
 		Debug.Log("FuseAPI:DisplayNotifications()");

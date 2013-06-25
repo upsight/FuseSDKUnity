@@ -34,6 +34,13 @@ public class FuseAPI : MonoBehaviour
 	public static event Action SessionStartReceived;
 	public static event Action<int> SessionLoginError; 
 	
+	#if UNITY_ANDROID
+	public static void SetupPushNotifications(string gcmProjectID)
+	{
+		FusePlatformAPI.SetupPushNotifications(gcmProjectID);
+	}
+	#endif
+	
 #endregion
 	
 #region Analytics Event
@@ -90,7 +97,7 @@ public class FuseAPI : MonoBehaviour
 	public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }
 	
 	public static void RegisterInAppPurchase(string productId, byte[] transactionReceipt, TransactionState transactionState)
-	{
+	{		
 		FusePlatformAPI.RegisterInAppPurchase(productId, transactionReceipt, transactionState);
 	}
 	#endif
@@ -117,7 +124,12 @@ public class FuseAPI : MonoBehaviour
 #endregion
 
 #region Notifications
-
+	
+	public static void FuseAPI_RegisterForPushNotifications()
+	{
+		FusePlatformAPI.FuseAPI_RegisterForPushNotifications();
+	}
+	
 	public static void DisplayNotifications()
 	{
 		FusePlatformAPI.DisplayNotifications();

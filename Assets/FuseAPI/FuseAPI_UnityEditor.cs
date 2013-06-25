@@ -40,6 +40,13 @@ public class FuseAPI_UnityEditor : FuseAPI
 		OnSessionLoginError(error);
 	}
 	
+	#if UNITY_ANDROID
+	new public static void SetupPushNotifications(string gcmProjectID)
+	{
+		Debug.Log("FuseAPI:SetupPushNotifications(" + gcmProjectID + ")");		
+	}
+	#endif
+	
 	#endregion
 	
 	#region Analytics Event
@@ -233,6 +240,11 @@ public class FuseAPI_UnityEditor : FuseAPI
 	#region Notifications
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_DisplayNotifications();
+	
+	new public static void FuseAPI_RegisterForPushNotifications()
+	{
+		Debug.Log("FuseAPI:RegisterForNotifications()");		
+	}
 	
 	new public static void DisplayNotifications()
 	{

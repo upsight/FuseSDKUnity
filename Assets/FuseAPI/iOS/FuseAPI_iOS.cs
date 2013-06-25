@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 
 public class FuseAPI_iOS : FuseAPI
 {
+	public bool registerForPushNotifications = true;
 #if UNITY_IPHONE && !UNITY_EDITOR
 	#region Session Creation
 	[DllImport("__Internal")]
@@ -13,13 +14,12 @@ public class FuseAPI_iOS : FuseAPI
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterPushToken(Byte[] token, int size);
 	
-	private bool tokenSent = false;
+	private bool waitingForToken = false;	
+	private static bool _registerForPushNotificationsCalled = false;
 	
 	void Awake()
 	{
-		NotificationServices.RegisterForRemoteNotificationTypes(RemoteNotificationType.Alert |
-                                RemoteNotificationType.Badge |
-                                RemoteNotificationType.Sound);
+		
 	}
 	
 	new public static void StartSession(string gameId)
@@ -38,17 +38,27 @@ public class FuseAPI_iOS : FuseAPI
 	
 	void Update()
 	{
-		if( !tokenSent )
+		if( registerForPushNotifications || _registerForPushNotificationsCalled )
 		{
-			if (!tokenSent) 
+			Debug.Log("FuseAPI: Registering for push notifications...");
+			NotificationServices.RegisterForRemoteNotificationTypes(RemoteNotificationType.Alert |
+                                RemoteNotificationType.Badge |
+                                RemoteNotificationType.Sound);
+			
+			registerForPushNotifications = false;
+			_registerForPushNotificationsCalled = false;
+			waitingForToken = true;
+		}
+		
+		if( waitingForToken )
+		{
+        	byte[] token = NotificationServices.deviceToken;
+            if (token != null) 
 			{
-            	byte[] token = NotificationServices.deviceToken;
-	            if (token != null) 
-				{
-	                FuseAPI_RegisterPushToken(token, token.Length); 
-	                tokenSent = true;
-            	}
-       	 	}
+				Debug.Log("FuseAPI: Device token registered!");
+                FuseAPI_RegisterPushToken(token, token.Length); 
+                waitingForToken = false;
+        	}
 		}
 	}	
 	
@@ -247,6 +257,11 @@ public class FuseAPI_iOS : FuseAPI
 	#region Notifications
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_DisplayNotifications();
+	
+	new public static void FuseAPI_RegisterForPushNotifications()
+	{
+		_registerForPushNotificationsCalled = true;
+	}
 	
 	new public static void DisplayNotifications()
 	{

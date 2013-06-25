@@ -7,6 +7,7 @@ using System.Collections.Generic;
 
 public class FuseAPI_Prime31StoreKit : MonoBehaviour 
 {	
+	// Uncomment the #define at the top of this file if you are using the Prime31 StoreKit plugin for iOS
 #if UNITY_IPHONE && USING_PRIME31
 	
 	// cached in order to send failed and cancelled messages
