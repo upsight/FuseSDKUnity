@@ -19,6 +19,7 @@ import com.fusepowered.util.GameValue;
 import com.fusepowered.util.Mail;
 import com.fusepowered.util.Player;
 import com.fusepowered.util.VerifiedPurchase;
+import com.google.android.gcm.GCMRegistrar;
 import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerActivity;
 
@@ -137,7 +138,6 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	}
 
 
-
 // +------------------+
 // | Session Creation |
 // +------------------+
@@ -147,6 +147,14 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 		Log.d(_logTag, "startSession(" + gameId + ")");
 		FuseAPI.startSession(gameId, _this, _this.getApplicationContext(), _gameDataCallback);
 		_sessionStarted = true;
+	}
+	
+	public static void registerForPushNotifications(String projectID)
+	{
+		Log.d(_logTag, "registerForPushNotifications(" + projectID + ")");	
+		
+		Intent forGCM = new Intent(UnityPlayer.currentActivity.getApplicationContext(), FuseUnityAPI.class);
+		FuseAPI.setupGCM(projectID, forGCM, _this);
 	}
 
 
@@ -158,7 +166,8 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	public static void registerEvent(String message)
 	{
 		Log.d(_logTag, "registerEvent(" + message + ")");
-		FuseAPI.registerEvent(message);
+		//FuseAPI.registerEvent(message);
+		registerEventWithDictionary(message, null, null, 0);
 	}
 	
 	@SuppressWarnings("deprecation")

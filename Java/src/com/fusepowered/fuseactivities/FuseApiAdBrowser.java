@@ -1,20 +1,30 @@
 package com.fusepowered.fuseactivities;
 
+
+
+
 import android.content.Intent;
+
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
+import android.view.Gravity;
 import android.view.Window;
+import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
+import android.view.animation.Animation.AnimationListener;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.webkit.WebChromeClient;
+import android.os.Build;
+import android.content.res.Configuration;
 
 import com.fusepowered.activities.FuseApiBrowser;
 import com.fusepowered.fuseapi.Constants;
@@ -26,51 +36,39 @@ import com.fusepowered.util.FuseAnimationController;
 
 public class FuseApiAdBrowser extends FuseApiBrowser {
 
-    private static final String TAG = "FuseApiAdBrowser";
+    private static final String TAG = "FuseApiAdBrowser ";
     private Callback myClient;
     RelativeLayout layout;
+    
     String action;
     int adId;
 
-    private class ShowButtonsAfterXMillisecondsTask extends AsyncTask<Integer, Void, Void> {
-    	
-    	
-    	@Override
-        protected Void doInBackground(Integer... params) {
-            try {
-                // All we do is sleep for the given number of milliseconds
-                Thread.sleep(params[0]);
-            }
-            catch (InterruptedException e) {
-                Log.e(TAG, "Unexpected interruption", e);
-               	FuseAPI.sendFuseAdSkip(FuseAdSkip.FUSE_AD_SKIP_TIMEOUT.getErrorCode());
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-        	if (!myClient.completed)
-        	{
-        		FuseAPI.sendFuseAdSkip(FuseAdSkip.FUSE_AD_SKIP_TIMEOUT.getErrorCode());
-        		FuseAPI.fuseAdCallback.adWillClose();
-        		finish();
-        	}
-            showAdButtons(0);
-        }
-    }
-
+    int orientation;
+	int pwidth;
+	int pheight;
+    int lwidth;
+    int lheight;
+    double overallscale;
+    WebView webView;
+    RelativeLayout.LayoutParams params;
+    FrameLayout.LayoutParams layoutParams;
+    
+    final int ICE_CREAM_SANDWICH = 14;
+    final int ICE_CREAM_SANDWICH_MR1 = 15;
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+ 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         layout = new RelativeLayout(this);
-
-        LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.FILL_PARENT);
+        params = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+        layout.setGravity(Gravity.CENTER);
         layout.setLayoutParams(params);
+        layout.setBackgroundColor(0);
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
 
         Bundle extras = getIntent().getExtras();
         extras.setClassLoader(getClassLoader());
@@ -85,28 +83,119 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
         	FuseAPI.sendFuseAdSkip(FuseAdSkip.FUSE_AD_SKIP_NO_HTML.getErrorCode());
         	return;
         }
-        WebView webView = new WebView(this);
+        webView = new WebView(this);
+        webView.setBackgroundColor(0);
+        webView.setId(1);
         myClient = new Callback();
         webView.setWebViewClient(myClient);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.setWebChromeClient(new WebChromeClient());
         webView.setLayoutParams(params);
+        
+        
+        
         final String mimeType = "text/html";
         final String encoding = "UTF-8";
-        webView.loadDataWithBaseURL("", html, mimeType, encoding, "");
-
+        
+        webView.loadDataWithBaseURL("http://www.fuseboxx.com", html, mimeType, encoding, null);
         layout.addView(webView);
+        
+        webView.setHorizontalFadingEdgeEnabled(false);
+        webView.setVerticalFadingEdgeEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setVerticalScrollBarEnabled(false);
 
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(params);
+        if (Build.VERSION.SDK_INT == ICE_CREAM_SANDWICH || Build.VERSION.SDK_INT == ICE_CREAM_SANDWICH_MR1)
+        {
+        	webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
+        
+       
+        //layoutParams = new FrameLayout.LayoutParams(params);
+        layoutParams = new FrameLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+
+        orientation = extras.getInt(Constants.EXTRA_AD_ORIENTATION);
+    	pwidth = extras.getInt(Constants.EXTRA_AD_PWIDTH);
+    	pheight = extras.getInt(Constants.EXTRA_AD_PHEIGHT);
+        lwidth = extras.getInt(Constants.EXTRA_AD_LWIDTH);
+        lheight = extras.getInt(Constants.EXTRA_AD_LHEIGHT);
+    	
+    	int adWidth;
+    	int adHeight;
+    	
+    	
+    	// How do we display this ad?  If the ad has both orientations then pick the one that is formated for the screen
+        if (orientation == 0)
+        {
+        	if (getResources().getDisplayMetrics().widthPixels > getResources().getDisplayMetrics().heightPixels)
+        	{
+        		adWidth = lwidth;
+            	adHeight = lheight;
+        	}
+        	else
+        	{
+        		adWidth = pwidth;
+            	adHeight = pheight;
+        	}
+
+        }
+        else if (orientation == 1)
+        {
+        	adWidth = pwidth;
+        	adHeight = pheight;
+        }
+        else
+        {
+        	adWidth = lwidth;
+        	adHeight = lheight;
+        }
+        
+        
+        int pixelWidth = adWidth;
+        int pixelHeight = adHeight;
+        
+        adWidth *= getResources().getDisplayMetrics().density;
+        adHeight *= getResources().getDisplayMetrics().density;
+
+        layoutParams.height = pixelHeight;
+        layoutParams.width = pixelWidth;
+        layoutParams.gravity = Gravity.CENTER;
+        
+        
+        //Determine which dimension is too big, and by how much we should scale
+        double widthscale = 1.0;
+        double heightscale = 1.0;
+        overallscale = 1.0;
+        if (getResources().getDisplayMetrics().widthPixels < adWidth)
+        {
+        	widthscale = adWidth / getResources().getDisplayMetrics().widthPixels;
+        }
+        if (getResources().getDisplayMetrics().heightPixels < adHeight)
+        {
+        	heightscale = adHeight / getResources().getDisplayMetrics().heightPixels;
+        }
+        
+        //Determine the largest scale factor to use
+        if (widthscale > heightscale)
+        	overallscale = widthscale;
+        else if (heightscale > widthscale)
+        	overallscale = heightscale;
+        
+        overallscale = (1/overallscale) * 100;
+
+        Log.d("KASH", "Set initial scale of ad window.");
+        //Set the webview scale to show the entire ad
+        webView.setInitialScale((int)overallscale);
+        
         this.addContentView(layout, layoutParams);
-
-        layout.startAnimation(FuseAnimationController.getTranslateAnimation(500));
-
-        ShowButtonsAfterXMillisecondsTask task = new ShowButtonsAfterXMillisecondsTask();
-        task.execute(Integer.valueOf(5000));
+        
+        layout.startAnimation(FuseAnimationController.getSlideInAnimation(500));
 
         FuseAPI.adDisplay(adId);
         if (FuseAPI.fuseAdCallback != null && FuseAPI.fuseAdCallback instanceof FuseAdCallback) {
             FuseAPI.fuseAdCallback.adDisplayed();
-        }
+        }       
+
     }
 
     protected void showAdButtons(int id) {
@@ -186,4 +275,63 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
         super.onStop();
         FuseAPI.adDismiss();
     }
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        layoutParams.gravity = Gravity.CENTER;
+        
+        if (orientation != 0)
+        	return;
+        //layout.invalidate();
+        if (getResources().getDisplayMetrics().widthPixels > getResources().getDisplayMetrics().heightPixels)
+        {
+        	layoutParams.width = lwidth;
+        	layoutParams.height = lheight;
+        }
+        else
+        {
+        	layoutParams.width = pwidth;
+        	layoutParams.height = pheight;
+        }
+        
+    }
+    
+    
+    
+    public void handleOnExit()
+    {
+		Animation transition = FuseAnimationController.getSlideOutAnimation(500);
+	    transition.setAnimationListener(new AnimationListener() 
+	    {			
+			@Override
+			public void onAnimationEnd(Animation animation) 
+			{
+				layout.setVisibility(View.GONE);
+				Log.d("AdBrowser", "Got an exit event for an ad");
+	            if (FuseAPI.fuseAdCallback != null && FuseAPI.fuseAdCallback instanceof FuseAdCallback)
+	                FuseAPI.fuseAdCallback.adWillClose();
+	            finish();				
+			}
+	
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{	
+			}
+	
+			@Override
+			public void onAnimationStart(Animation animation)
+			{	
+			}
+		});
+	    
+	    layout.startAnimation(transition);
+	    
+    }
+    
+    
+    
+    
+    
+
 }
