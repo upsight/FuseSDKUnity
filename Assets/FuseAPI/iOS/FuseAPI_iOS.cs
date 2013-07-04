@@ -108,8 +108,9 @@ public class FuseAPI_iOS : FuseAPI
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			string[] keys = new string[20];			
-			string[] attributes = new string[20];
+			int numValues = values.Keys.Count;
+			string[] keys = new string[numValues];			
+			string[] attributes = new string[numValues];
 			keys.Initialize();
 			attributes.Initialize();
 			int numEntries = 0;

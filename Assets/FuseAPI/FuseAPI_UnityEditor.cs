@@ -75,12 +75,13 @@ public class FuseAPI_UnityEditor : FuseAPI
 	
 	new public static void RegisterEvent(string message, Hashtable values)
 	{
-		Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");
-		
+		Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");		
+				
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			string[] keys = new string[20];			
-			string[] attributes = new string[20];
+			int numValues = values.Keys.Count;
+			string[] keys = new string[numValues];			
+			string[] attributes = new string[numValues];
 			keys.Initialize();
 			attributes.Initialize();
 			int numEntries = 0;
@@ -176,6 +177,12 @@ public class FuseAPI_UnityEditor : FuseAPI
 		{
 			_PurchaseVerification(true, "", "");
 		}
+	}
+	
+	// Android purchase notification
+	new public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload, double price, string currency)
+	{
+		Debug.Log("FuseAPI:RegisterInAppPurchase");
 	}
 	
 	private static void _PurchaseVerification(bool verified, string transactionId, string originalTransactionId)

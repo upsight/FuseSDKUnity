@@ -59,7 +59,7 @@ public class FuseAPI_Android : FuseAPI
 	{
 		Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");
 				
-		int max_entries = 20; // this is an arbitrary large number
+		int max_entries = values.Keys.Count;
 		string[] keys = new string[max_entries];			
 		string[] attributes = new string[max_entries];
 		keys.Initialize();
