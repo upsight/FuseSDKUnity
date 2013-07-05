@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using FuseNativeAPI;
 
 #if UNITY_EDITOR
 public class FuseAPI_UnityEditor : FuseAPI
@@ -13,17 +14,13 @@ public class FuseAPI_UnityEditor : FuseAPI
 	
 	new public static void StartSession(string gameId)
 	{
+		// set callbacks for native wrapper
+		FuseNative.SessionStartReceived += _SessionStartReceived;
+		FuseNative.SessionLoginError += _SessionLoginError;
+		FuseNative.GameConfigurationReceived += _GameConfigurationReceived;
+		
 		Debug.Log("FuseAPI:StartSession(" + gameId + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_StartSession(gameId);
-		}
-		else
-		{
-			_SessionStartReceived();
-		}
-		
+		FuseNative.StartSession(gameId);		
 	}
 	
 	private static void _SessionStartReceived()
@@ -179,11 +176,13 @@ public class FuseAPI_UnityEditor : FuseAPI
 		}
 	}
 	
+	#if UNITY_ANDROID
 	// Android purchase notification
 	new public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload, double price, string currency)
 	{
 		Debug.Log("FuseAPI:RegisterInAppPurchase");
 	}
+	#endif
 	
 	private static void _PurchaseVerification(bool verified, string transactionId, string originalTransactionId)
 	{
@@ -1104,16 +1103,7 @@ public class FuseAPI_UnityEditor : FuseAPI
 	{
 		Debug.Log("FuseAPI:GetGameConfigurationValue(" + key + ")");		
 		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			string value = FuseAPI_GetGameConfigurationValue(key);
-			
-			return value;
-		}
-		else
-		{
-			return "";
-		}
+		return FuseNative.GetGameConfigurationValue(key);
 	}
 	
 	private static void _GameConfigurationReceived()
