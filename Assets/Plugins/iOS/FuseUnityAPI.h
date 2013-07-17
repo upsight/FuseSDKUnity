@@ -101,6 +101,8 @@ void FuseAPI_FuseLogin(const char* fuseId, const char* alias);
 const char* FuseAPI_GetOriginalAccountId();
 int FuseAPI_GetOriginalAccountType();
 void FuseAPI_AccountLoginComplete(int type, const char* accountId);
+void FuseAPI_GooglePlayLogin(const char* _id, const char* alias);
+const char* FuseAPI_GetOriginalAccountAlias();
 
 #pragma mark - Miscellaneous
 

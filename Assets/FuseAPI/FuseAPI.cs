@@ -166,6 +166,9 @@ public class FuseAPI : MonoBehaviour
 		TWITTER = 3,
 		OPENFEINT = 4,
 		USER = 5,
+		EMAIL = 6,
+		DEVICE_ID = 7,
+		GOOGLE_PLAY = 8,
 	}
 	
 	public static void GameCenterLogin()
@@ -196,6 +199,16 @@ public class FuseAPI : MonoBehaviour
 	public static void FuseLogin(string fuseId, string alias)
 	{
 		FusePlatformAPI.FuseLogin(fuseId, alias);
+	}
+	
+	public static void GooglePlayLogin(string id, string alias)
+	{
+		FusePlatformAPI.GooglePlayLogin(id, alias);
+	}
+	
+	public static string GetOriginalAccountAlias()
+	{
+		return FusePlatformAPI.GetOriginalAccountAlias();
 	}
 	
 	public static string GetOriginalAccountId()
@@ -382,17 +395,17 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.SetMailAsReceived(messageId);
 	}
 	
-	public static void SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
+	public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
 	{
-		FusePlatformAPI.SendMailWithGift(fuseId, message, giftId, giftAmount);
+		return FusePlatformAPI.SendMailWithGift(fuseId, message, giftId, giftAmount);
 	}
 	
-	public static void SendMail(string fuseId, string message)
+	public static int SendMail(string fuseId, string message)
 	{
-		FusePlatformAPI.SendMail(fuseId, message);
+		return FusePlatformAPI.SendMail(fuseId, message);
 	}
 	
-	public static event Action<int, string> MailAcknowledged;
+	public static event Action<int, string, int> MailAcknowledged;
 	public static event Action<int> MailError;
 	
 #endregion
@@ -579,11 +592,11 @@ public class FuseAPI : MonoBehaviour
 		}
 	}
 	
-	static protected void OnMailAcknowledged(int messageId, string fuseId)
+	static protected void OnMailAcknowledged(int messageId, string fuseId, int requestID)
 	{
 		if (MailAcknowledged != null)
 		{
-			MailAcknowledged(messageId, fuseId);
+			MailAcknowledged(messageId, fuseId, requestID);
 		}
 	}
 	

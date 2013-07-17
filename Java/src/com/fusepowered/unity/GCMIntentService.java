@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.os.Handler;
+import com.fusepowered.fuseapi.Constants;
 
 import com.fusepowered.fuseapi.FuseAPI;
 import com.google.android.gcm.GCMBaseIntentService;
@@ -50,7 +51,7 @@ public class GCMIntentService extends GCMBaseIntentService
 	{
 		Log.i(TAG, "Received message");
 		//String message = intent.getExtras().getString("price");
-
+		
 		// notifies user
 		generateNotification(context, intent);
 	}
@@ -120,10 +121,12 @@ public class GCMIntentService extends GCMBaseIntentService
 				notification.setLatestEventInfo(context, title, msg, intent);
 
 				// Flags
+				// log the notification ID
+				FuseAPI.notificationID = m.getStringExtra(Constants.PARAM_NOTIFICATION_ID);
 				notification.flags |= Notification.FLAG_AUTO_CANCEL;
 				//notification.defaults |= Notification.DEFAULT_SOUND;
 				//notification.defaults |= Notification.DEFAULT_VIBRATE; // uncomment and add VIBRATE permissions on manifest to get vibrating notifications
-				notificationManager.notify(0, notification);
+				notificationManager.notify(Integer.getInteger(FuseAPI.notificationID), notification);
 			}
 		});        
 	}

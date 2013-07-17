@@ -190,9 +190,19 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getDate());
 				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getAlias());
 				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getMessage());
-				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getId()));
-				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getGift().getName());
-				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getAmount()));
+				if( mail.getGift() != null )
+				{
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getId()));
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getGift().getName());
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getAmount()));
+				}
+				else
+				{
+					// No Gift
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "0");
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "");
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "0");
+				}
 			}
 		}
 
@@ -205,11 +215,13 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 		FuseUnityAPI.SendMessage("FuseAPI_Android", "_MailListError", Integer.toString(fuseMailError.ordinal()));
 	}
 
-	public void mailAcknowledged(int messageId, String fuseId)
+	public void mailAcknowledged(int messageId, String fuseId, int requestID)
 	{
-		Log.d(_logTag, "mailAcknowledged(" + messageId + "," + fuseId + ")");
+		Log.d(_logTag, "mailAcknowledged(" + messageId + "," + fuseId + "," + requestID + ")");
 		FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(messageId));
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_MailAcknowledged",             fuseId);
+		FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", fuseId);
+		FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(requestID));
+		FuseUnityAPI.SendMessage("FuseAPI_Android", "_MailAcknowledged", "");
 	}
 
 	public void mailError(FuseMailError fuseMailError)

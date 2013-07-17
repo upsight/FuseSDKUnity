@@ -417,6 +417,42 @@ public class FuseAPI_UnityEditor : FuseAPI
 	}
 	
 	[DllImport("__Internal")]
+	private static extern void FuseAPI_GooglePlayLogin(string id, string alias);
+	
+	new public static void GooglePlayLogin(string id, string alias)
+	{		
+		Debug.Log ("FuseAPI:GooglePlayLogin(" + id + "," + alias + ")");
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_GooglePlayLogin(id, alias);
+		}
+		else
+		{
+			_AccountLoginComplete(AccountType.GOOGLE_PLAY, id);
+		}
+	}
+	
+	[DllImport("__Internal")]
+	private static extern string FuseAPI_GetOriginalAccountAlias();
+	
+	new public static string GetOriginalAccountAlias()
+	{
+		Debug.Log("FuseAPI:GetOriginalAccountAlias()");		
+		
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			string accountAlias = FuseAPI_GetOriginalAccountAlias();
+			
+			return accountAlias;
+		}
+		else
+		{
+			return "";
+		}
+	}
+	
+	[DllImport("__Internal")]
 	private static extern string FuseAPI_GetOriginalAccountId();
 	
 	new public static string GetOriginalAccountId()
@@ -1046,44 +1082,46 @@ public class FuseAPI_UnityEditor : FuseAPI
 	}
 	
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_SendMail(string fuseId, string message);
+	private static extern int FuseAPI_SendMail(string fuseId, string message);
 	
-	new public static void SendMail(string fuseId, string message)
+	new public static int SendMail(string fuseId, string message)
 	{
 		Debug.Log("FuseAPI:SendMail(" + fuseId + "," + message + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_SendMail(fuseId, message);
+			return FuseAPI_SendMail(fuseId, message);
 		}
 		else
 		{
-			_MailAcknowledged(-1, fuseId);
+			_MailAcknowledged(-1, fuseId, -1);
+			return -1;
 		}
 	}
 	
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_SendMailWithGift(string fuseId, string message, int giftId, int giftAmount);
+	private static extern int FuseAPI_SendMailWithGift(string fuseId, string message, int giftId, int giftAmount);
 	
-	new public static void SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
+	new public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
 	{
 		Debug.Log("FuseAPI:SendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_SendMailWithGift(fuseId, message, giftId, giftAmount);
+			return FuseAPI_SendMailWithGift(fuseId, message, giftId, giftAmount);
 		}
 		else
 		{
-			_MailAcknowledged(-1, fuseId);
+			_MailAcknowledged(-1, fuseId, -1);
+			return -1;
 		}
 	}
 	
-	private static void _MailAcknowledged(int messageId, string fuseId)
+	private static void _MailAcknowledged(int messageId, string fuseId, int requestID)
 	{
 		Debug.Log("FuseAPI:MailAcknowledged()");
 		
-		OnMailAcknowledged(messageId, fuseId);
+		OnMailAcknowledged(messageId, fuseId, requestID);
 	}
 	
 	private static void _MailError(int error)

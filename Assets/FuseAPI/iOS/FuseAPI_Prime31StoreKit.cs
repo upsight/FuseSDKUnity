@@ -1,14 +1,14 @@
-//#define USING_PRIME31
+//#define USING_PRIME31_IOS
 
 using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class FuseAPI_Prime31StoreKit : MonoBehaviour 
+public class FuseAPI_Prime31StoreKit : MonoBehaviour
 {	
 	// Uncomment the #define at the top of this file if you are using the Prime31 StoreKit plugin for iOS
-#if UNITY_IPHONE && USING_PRIME31
+#if UNITY_IPHONE && USING_PRIME31_IOS
 	
 	// cached in order to send failed and cancelled messages
 	private StoreKitTransaction currentTransaction = null;
@@ -104,5 +104,5 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	}
 	
 	
-#endif
+#endif//UNITY_IPHONE && USING_PRIME31_IOS
 }

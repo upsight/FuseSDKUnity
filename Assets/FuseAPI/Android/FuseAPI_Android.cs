@@ -6,10 +6,17 @@ using System.Collections.Generic;
 
 public class FuseAPI_Android : FuseAPI
 {
+	public bool persistent = true;
 #if UNITY_ANDROID && !UNITY_EDITOR
 	void Awake()
 	{
-		_callback = this.gameObject;//GameObject.Find("FuseAPI_Android");
+		// preserve the prefab and all attached scripts through level loads
+		if( persistent )
+		{
+			DontDestroyOnLoad(transform.gameObject);
+		}
+		
+		_callback = this.gameObject;
 
 		if (Application.platform == RuntimePlatform.Android)
 		{
@@ -107,16 +114,16 @@ public class FuseAPI_Android : FuseAPI
 		Debug.Log("***** NOT YET SUPPORTED BY FUSE'S ANDROID API ***** FuseAPI:RegisterInAppPurchaseList([data])");
 	}
 
-	new public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload)
+	new public static void RegisterInAppPurchase(PurchaseState purchaseState, string purchaseToken, string productId, string orderId, DateTime purchaseTime, string developerPayload)
 	{
-		Debug.Log("FuseAPI:RegisterInAppPurchase(" + purchaseState.ToString() + "," + notifyId + "," + productId + "," + orderId + "," + DateTimeToTimestamp(purchaseTime) + "," + developerPayload + ")");
-		_fuseUnityPlugin.CallStatic("registerInAppPurchase", purchaseState.ToString(), notifyId, productId, orderId, DateTimeToTimestamp(purchaseTime), developerPayload);
+		Debug.Log("FuseAPI:RegisterInAppPurchase(" + purchaseState.ToString() + "," + purchaseToken + "," + productId + "," + orderId + "," + DateTimeToTimestamp(purchaseTime) + "," + developerPayload + ")");
+		_fuseUnityPlugin.CallStatic("registerInAppPurchase", purchaseState.ToString(), purchaseToken, productId, orderId, DateTimeToTimestamp(purchaseTime), developerPayload);
 	}
 
-	new public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload, double price, string currency)
+	new public static void RegisterInAppPurchase(PurchaseState purchaseState, string purchaseToken, string productId, string orderId, DateTime purchaseTime, string developerPayload, double price, string currency)
 	{
-		Debug.Log("FuseAPI:RegisterInAppPurchase(" + purchaseState.ToString() + "," + notifyId + "," + productId + "," + orderId + "," + DateTimeToTimestamp(purchaseTime) + "," + developerPayload + "," + price + "," + currency + ")");
-		_fuseUnityPlugin.CallStatic("registerInAppPurchase", purchaseState.ToString(), notifyId, productId, orderId, DateTimeToTimestamp(purchaseTime), developerPayload, price, currency);
+		Debug.Log("FuseAPI:RegisterInAppPurchase(" + purchaseState.ToString() + "," + purchaseToken + "," + productId + "," + orderId + "," + DateTimeToTimestamp(purchaseTime) + "," + developerPayload + "," + price + "," + currency + ")");
+		_fuseUnityPlugin.CallStatic("registerInAppPurchase", purchaseState.ToString(), purchaseToken, productId, orderId, DateTimeToTimestamp(purchaseTime), developerPayload, price, currency);
 	}
 #endregion
 
@@ -218,6 +225,17 @@ public class FuseAPI_Android : FuseAPI
 	{
 		Debug.Log("FuseAPI:FuseLogin(" + fuseId + "," + alias + ")");
 		_fuseUnityPlugin.CallStatic("fuseLogin", fuseId, alias);
+	}
+	
+	new public static void GooglePlayLogin(string id, string alias)
+	{
+		//TODO
+	}
+	
+	new public static string GetOriginalAccountAlias()
+	{
+		//TODO
+		return "";
 	}
 	
 	new public static string GetOriginalAccountId()
@@ -505,16 +523,16 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.CallStatic("setMailAsReceived", messageId);
 	}
 	
-	new public static void SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
+	new public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
 	{
 		Debug.Log("FuseAPI:SendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
-		_fuseUnityPlugin.CallStatic("sendMailWithGift", fuseId, message, giftId, giftAmount);
+		return _fuseUnityPlugin.CallStatic<int>("sendMailWithGift", fuseId, message, giftId, giftAmount);
 	}
 	
-	new public static void SendMail(string fuseId, string message)
+	new public static int SendMail(string fuseId, string message)
 	{
 		Debug.Log("FuseAPI:SendMail(" + fuseId + "," + message + ")");
-		_fuseUnityPlugin.CallStatic("sendMail", fuseId, message);
+		return _fuseUnityPlugin.CallStatic<int>("sendMail", fuseId, message);
 	}
 
 	private void _MailListReceived(string fuseId)
@@ -529,10 +547,14 @@ public class FuseAPI_Android : FuseAPI
 		OnMailListError(int.Parse(error));
 	}
 
-	private void _MailAcknowledged(string messageId, string fuseId)
+	private void _MailAcknowledged()
 	{
-		Debug.Log("FuseAPI:MailAcknowledged(" + messageId + "," + fuseId + ")");
-		OnMailAcknowledged(int.Parse(messageId), fuseId);
+		string messageId = _args[0];
+		string fuseId = _args[1];
+		string requestID = _args[2];
+		Debug.Log("FuseAPI:MailAcknowledged(" + messageId + "," + fuseId + "," + requestID + ")");
+		OnMailAcknowledged(int.Parse(messageId), fuseId, int.Parse (requestID));
+		_args.Clear();
 	}
 
 	private void _MailError(string error)

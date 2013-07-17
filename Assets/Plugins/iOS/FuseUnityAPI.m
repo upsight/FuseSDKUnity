@@ -121,7 +121,7 @@ void FuseAPI_RegisterEventWithDictionary(const char* message, const char** keys,
 
 void FuseAPI_RegisterEvent(const char* message)
 {
-	[FuseAPI registerEvent:[NSString stringWithUTF8String:message]];
+	[FuseAPI registerEvent:[NSString stringWithUTF8String:message] withDict:NULL];
 }
 
 void FuseAPI_RegisterEventStart()
@@ -297,6 +297,22 @@ void FuseAPI_OpenFeintLogin(const char* openFeintId)
 void FuseAPI_FuseLogin(const char* fuseId, const char* alias)
 {
 	[FuseAPI fuseLogin:[NSString stringWithUTF8String:fuseId] Alias:[NSString stringWithUTF8String:alias]];
+}
+
+void FuseAPI_GooglePlayLogin(const char* _id, const char* alias)
+{
+    [FuseAPI googlePlayLogin:[NSString stringWithUTF8String:_id] Alias:[NSString stringWithUTF8String:alias]];
+}
+
+const char* FuseAPI_GetOriginalAccountAlias()
+{
+    NSString* accountAlias = [FuseAPI getOriginalAccountAlias];
+	
+	const char* string = accountAlias.UTF8String;
+	char* copy = (char*)malloc(strlen(string) + 1);
+	strcpy(copy, string);
+	
+	return copy;
 }
 
 const char* FuseAPI_GetOriginalAccountId()

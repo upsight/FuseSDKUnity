@@ -183,7 +183,6 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
         
         overallscale = (1/overallscale) * 100;
 
-        Log.d("KASH", "Set initial scale of ad window.");
         //Set the webview scale to show the entire ad
         webView.setInitialScale((int)overallscale);
         

@@ -9,6 +9,7 @@ import java.util.Locale;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.fusepowered.fuseactivities.FuseApiAdBrowser;
@@ -19,10 +20,10 @@ import com.fusepowered.util.GameValue;
 import com.fusepowered.util.Mail;
 import com.fusepowered.util.Player;
 import com.fusepowered.util.VerifiedPurchase;
-import com.google.android.gcm.GCMRegistrar;
 import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerActivity;
 
+//@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 public class FuseUnityAPI extends UnityPlayerActivity implements Thread.UncaughtExceptionHandler
 {
 	public void onCreate(Bundle savedInstanceState)
@@ -157,8 +158,6 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 		FuseAPI.setupGCM(projectID, forGCM, _this);
 	}
 
-
-
 // +-----------------+
 // | Analytics Event |
 // +-----------------+
@@ -216,17 +215,17 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 // | In-App Purchase Logging |
 // +-------------------------+
 
-	public static void registerInAppPurchase(String purchaseState, String notifyId, String productId, String orderId, long purchaseTime, String developerPayload)
+	public static void registerInAppPurchase(String purchaseState, String purchaseToken, String productId, String orderId, long purchaseTime, String developerPayload)
 	{
-		Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + notifyId + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + ")");
-		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, notifyId, productId, orderId, purchaseTime, developerPayload);
+		Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + ")");
+		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, purchaseToken, productId, orderId, purchaseTime, developerPayload);
 		FuseAPI.registerInAppPurchase(purchase);
 	}
 
-	public static void registerInAppPurchase(String purchaseState, String notifyId, String productId, String orderId, long purchaseTime, String developerPayload, double price, String currency)
+	public static void registerInAppPurchase(String purchaseState, String purchaseToken, String productId, String orderId, long purchaseTime, String developerPayload, double price, String currency)
 	{
 		// If we haven't been passed a currency string, make a guess based on the current locale
-		if (currency.isEmpty())
+		if( TextUtils.isEmpty(currency) ) 
 		{
 			Locale locale = Locale.getDefault();
 
@@ -241,8 +240,8 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 			}
 		}
 
-		Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + notifyId + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + "," + price + "," + currency + ")");
-		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, notifyId, productId, orderId, purchaseTime, developerPayload);
+		Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + "," + price + "," + currency + ")");
+		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, purchaseToken, productId, orderId, purchaseTime, developerPayload);
 		FuseAPI.registerInAppPurchase(purchase, price, currency);
 	}
 
@@ -587,16 +586,16 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 		FuseAPI.setMailAsReceived(messageId);
 	}
 
-	public static void sendMailWithGift(String fuseId, String message, int giftId, int giftAmount)
+	public static int sendMailWithGift(String fuseId, String message, int giftId, int giftAmount)
 	{
 		Log.d(_logTag, "sendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
-		FuseAPI.sendMailWithGift(fuseId, message, giftId, giftAmount, _gameDataCallback);
+		return FuseAPI.sendMailWithGift(fuseId, message, giftId, giftAmount, _gameDataCallback);
 	}
 
-	public static void sendMail(String fuseId, String message)
+	public static int sendMail(String fuseId, String message)
 	{
 		Log.d(_logTag, "sendMailWithGift(" + fuseId + "," + message + ")");
-		FuseAPI.sendMail(fuseId, message, _gameDataCallback);
+		return FuseAPI.sendMail(fuseId, message, _gameDataCallback);
 	}
 
 
