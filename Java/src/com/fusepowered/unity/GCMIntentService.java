@@ -1,12 +1,17 @@
 package com.fusepowered.unity;
 
 import com.unity3d.player.UnityPlayer;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
+import android.os.Bundle;
 import android.os.Handler;
 import com.fusepowered.fuseapi.Constants;
 
@@ -19,6 +24,8 @@ public class GCMIntentService extends GCMBaseIntentService
 	private static final String TAG = "FuseUnityGCMIntentService";
 
 	public static String message = "";
+	
+	private static String mainClass = "com.unity3d.player.UnityPlayerNativeActivity";
 
 	private Handler handler = new Handler();
 
@@ -87,6 +94,27 @@ public class GCMIntentService extends GCMBaseIntentService
 	 */
 	private void generateNotification(Context context, final Intent m)
 	{
+		// get the class name for the native unity player
+		// it can be overridden, so we need to parse the manifest for it
+		try 
+		{
+			PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_ACTIVITIES | PackageManager.GET_META_DATA);
+			for( int i = 0; i < pInfo.activities.length; i++ )
+			{				
+				Bundle meta = pInfo.activities[i].metaData;
+				if( meta != null && meta.containsKey("unityplayer.ForwardNativeEventsToDalvik") )									
+				{
+					mainClass = pInfo.activities[i].name;
+				}
+			}
+			
+		} 
+		catch (NameNotFoundException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		//message = m;
 		handler.post(new Runnable()
 		{
@@ -97,11 +125,8 @@ public class GCMIntentService extends GCMBaseIntentService
 				String msg = m.getStringExtra("text");
 				//final int NOTIF_ID = 123477884; 
 
-
 				//int stringId = FuseAPI.getContext().getApplicationInfo().labelRes;
 				//String AppName = FuseAPI.getContext().getString(stringId);
-
-
 				Context context = GCMIntentService.this;
 				int icon = getResources().getIdentifier("ic_launcher", "drawable", context.getPackageName());//R.drawable.ic_launcher;
 				long when = System.currentTimeMillis();
@@ -109,9 +134,17 @@ public class GCMIntentService extends GCMBaseIntentService
 				//Notification notification = new Notification(icon, message, when);
 				Notification notification = new Notification(icon, msg, when);
 
-				//KASH - use FuseUnityAPI
-				//Intent notificationIntent = new Intent(GCMIntentService.this, UnityPlayerActivity.class);
-				Intent notificationIntent = new Intent(GCMIntentService.this, FuseUnityAPI.class);
+				// attempt to use the Unity Native Player class as defined in the manifest file	
+				Intent notificationIntent = null;
+				try 
+				{
+					notificationIntent = new Intent(GCMIntentService.this, Class.forName(mainClass));
+				} 
+				catch (ClassNotFoundException e) 
+				{
+					Log.e(TAG, "Unity native player class not found: " + mainClass);
+					e.printStackTrace();
+				}
 
 				// set intent so it does not start a new activity
 				notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
@@ -126,7 +159,8 @@ public class GCMIntentService extends GCMBaseIntentService
 				notification.flags |= Notification.FLAG_AUTO_CANCEL;
 				//notification.defaults |= Notification.DEFAULT_SOUND;
 				//notification.defaults |= Notification.DEFAULT_VIBRATE; // uncomment and add VIBRATE permissions on manifest to get vibrating notifications
-				notificationManager.notify(Integer.getInteger(FuseAPI.notificationID), notification);
+				
+				notificationManager.notify(Integer.parseInt(FuseAPI.notificationID), notification);
 			}
 		});        
 	}

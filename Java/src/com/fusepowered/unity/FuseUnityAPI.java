@@ -6,9 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -24,39 +24,50 @@ import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerActivity;
 
 //@TargetApi(Build.VERSION_CODES.GINGERBREAD)
-public class FuseUnityAPI extends UnityPlayerActivity implements Thread.UncaughtExceptionHandler
-{
-	public void onCreate(Bundle savedInstanceState)
+public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
+{	
+	public FuseUnityAPI()
 	{
-		Log.d(_logTag, "onCreate()");
-		super.onCreate(savedInstanceState);
+		_this = this;
+		_activity = UnityPlayer.currentActivity;
+	}
+	
+	public static void setUnityActivity(UnityPlayerActivity activity)
+	{
+		_activity = activity;
+	}
+	
+	public static FuseUnityAPI instance()
+	{
+		if( _this == null )
+		{
+			new FuseUnityAPI();
+		}
+		
+		return _this;
+	}
+	
+	public void Initialize()
+	{
+		Log.d(_logTag, "Initialize()");
 		
 		_this = this;
 		_gameDataCallback = new FuseUnityGameDataCallback();
 		_adCallback = new FuseUnityAdCallback();
 		
-//		Thread.currentThread().setUncaughtExceptionHandler(this);
-//		Thread.setDefaultUncaughtExceptionHandler(this);
-
-		FuseAPI.initializeFuseAPI(this, getApplicationContext());
-
-//		getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+		FuseAPI.initializeFuseAPI(_activity, _activity.getApplicationContext());
 	}
 	
 	public void onRestart()
 	{
 		Log.d(_logTag, "onRestart()");
-		super.onRestart();
 
-		FuseAPI.initializeFuseAPI(this, getApplicationContext());
-
-//		getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+		FuseAPI.initializeFuseAPI(_activity, _activity.getApplicationContext());
 	}
 	
 	public void onDestroy()
 	{
 		Log.d(_logTag, "onDestroy()");
-		super.onDestroy();
 
 		if (_sessionStarted)
 		{
@@ -65,10 +76,9 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 		}
 	}
 	
-	public void onPause()
+	public static void onPause()
 	{
 		Log.d(_logTag, "onPause()");
-		super.onPause();
 		
 		if (_sessionStarted)
 		{
@@ -76,29 +86,25 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 		}
 	}
 	
-	public void onResume()
+	public static void onResume()
 	{
 		Log.d(_logTag, "onResume()");
-		super.onResume();
 
 		if (_sessionStarted)
 		{
 			FuseAPI.resumeSession(_gameDataCallback);
 		}
-
-//		getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
 	}
 	
 	public void onBackPressed()
 	{
 		Log.d(_logTag, "onBackPressed()");
-		super.onBackPressed();
 	}
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data)
 	{
 		Log.d(_logTag, "onActivityResult()");
-		super.onActivityResult(requestCode, resultCode, data);
+//		super.onActivityResult(requestCode, resultCode, data);
 		/*
 		if (resultCode == RESULT_OK)
 		{
@@ -146,7 +152,7 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	public static void startSession(String gameId)
 	{
 		Log.d(_logTag, "startSession(" + gameId + ")");
-		FuseAPI.startSession(gameId, _this, _this.getApplicationContext(), _gameDataCallback);
+		FuseAPI.startSession(gameId, _activity, _activity.getApplicationContext(), _gameDataCallback);
 		_sessionStarted = true;
 	}
 	
@@ -155,7 +161,7 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 		Log.d(_logTag, "registerForPushNotifications(" + projectID + ")");	
 		
 		Intent forGCM = new Intent(UnityPlayer.currentActivity.getApplicationContext(), FuseUnityAPI.class);
-		FuseAPI.setupGCM(projectID, forGCM, _this);
+		FuseAPI.setupGCM(projectID, forGCM, _activity, 0, 0);
 	}
 
 // +-----------------+
@@ -261,7 +267,7 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	{
 		Log.d(_logTag, "showAd()");
 
-		_this.runOnUiThread(new Runnable() {
+		_activity.runOnUiThread(new Runnable() {
 		    public void run() {
 //		    	FuseAPI.getAd(new FuseApiAdBrowser(), _adCallback);
 		    	FuseAPI.displayAd(new FuseApiAdBrowser(), _adCallback);
@@ -279,9 +285,9 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	{
 		Log.d(_logTag, "displayNotifications()");
 
-		_this.runOnUiThread(new Runnable() {
+		_activity.runOnUiThread(new Runnable() {
 		    public void run() {
-		    	FuseAPI.displayNotifications(new AlertDialog.Builder(_this));
+		    	FuseAPI.displayNotifications(new AlertDialog.Builder(_activity));
 		    }
 		});
 	}
@@ -296,7 +302,7 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 	{
 		Log.d(_logTag, "displayMoreGames()");
 
-		_this.runOnUiThread(new Runnable() {
+		_activity.runOnUiThread(new Runnable() {
 		    public void run() {
 		    	FuseAPI.displayMoreGames(new FuseApiMoregamesBrowser());
 		    }
@@ -655,6 +661,9 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 
 	public static void SetGameObjectCallback(String gameObject)
 	{
+		// initialize the unity plugin
+		instance().Initialize();
+		
 		Log.d(_logTag, "Callback object set to: " + gameObject);
 		callbackObj = gameObject;
 	}
@@ -682,7 +691,8 @@ public class FuseUnityAPI extends UnityPlayerActivity implements Thread.Uncaught
 
 	static String callbackObj = "FuseAPI";
 	private static final String _logTag = "FuseUnityAPI";
-	private static UnityPlayerActivity _this;
+	private static FuseUnityAPI _this = null;
+	private static Activity _activity;
 	private static FuseUnityGameDataCallback _gameDataCallback;
 	private static FuseUnityAdCallback _adCallback;
 	private static boolean _sessionStarted = false;

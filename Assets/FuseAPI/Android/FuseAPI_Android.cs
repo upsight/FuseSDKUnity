@@ -29,6 +29,18 @@ public class FuseAPI_Android : FuseAPI
 		}
 	}
 	
+	void OnApplicationPause(bool pausing)
+	{
+		if( pausing )
+		{
+			_fuseUnityPlugin.CallStatic("onPause");
+		}
+		else
+		{
+			_fuseUnityPlugin.CallStatic("onResume");
+		}
+	}
+	
 #region Session Creation
 	new public static void StartSession(string gameId)
 	{
