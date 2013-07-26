@@ -993,7 +993,7 @@ enum kFuseEventErrors
  @code
  -(void) recordTransaction:(SKPaymentTransaction *)transaction
  {
-    [FuseAPI registerInAppPurchase:transaction.transactionReceipt TxState:transaction.transactionState Price:@"10.99" Currency:@"USD"];
+    [FuseAPI registerInAppPurchase:transaction.transactionReceipt TxState:transaction.transactionState Price:@"10.99" Currency:@"USD" ProductID:transaction.payment.productIdentifier];
  
  ...
  }
@@ -1003,12 +1003,13 @@ enum kFuseEventErrors
  @param _tx_state [NSInteger] The transaction state of the purchase.  This corresponds to the transactionState member of the SKPaymentTransaction class.
  @param _price [NSString *] The price, without the currency symbol. (i.e. "1.99")
  @param _currency [NSString *] The currency of the transaction.  This must be of the form "USD" or "CAD" (for example) which correspond to ISO 4217 specifications.
+ @param _product_id [NSString *] The product ID of the transaction.  This corresponds to the payment.productIdentifier field of the SKPaymentTransaction class.
  @see FuseDelegate::purchaseVerification:TransactionID:OriginalTransactionID: for more information on the \<FuseDelegate\> callback indicating whether the transaction was verified by Apple's servers
  @see http://en.wikipedia.org/wiki/ISO_4217 for more information on ISO 4217 currency codes.
  @see registerInAppPurchase: for more information on calling this function with the SKPaymentTransaction object.
  @since Fuse API version 1.29
  */
-+(void) registerInAppPurchase:(NSData*)_receipt_data TxState:(NSInteger)_tx_state Price:(NSString*)_price Currency:(NSString*)_currency;
++(void) registerInAppPurchase:(NSData*)_receipt_data TxState:(NSInteger)_tx_state Price:(NSString*)_price Currency:(NSString*)_currency ProductID:(NSString*)_product_id;
 
 #pragma mark Fuse Interstitial Ads
 /*!
