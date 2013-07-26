@@ -847,10 +847,9 @@ enum kFuseEventErrors
  
  * @param _message [NSString*] The event name to be logged
  * @param _dict [NSDictionary*] A dictionary of values associated with the event
- * @deprecated Since Fuse API version 1.26
- * @undeprecated in Fuse API version 1.29
+ * @retval [int] Indicates whether the event information is valid.  Corresponds to kFuseEventErrors.
  */
-+(void) registerEvent:(NSString *)_message withDict:(NSDictionary*)_dict;
++(int) registerEvent:(NSString *)_message withDict:(NSDictionary*)_dict;
 
 /*!
  * @brief This method will send a named event (with values) to the Fuse system for tracking
@@ -985,6 +984,31 @@ enum kFuseEventErrors
  @see FuseDelegate::purchaseVerification:TransactionID:OriginalTransactionID: for more information on the \<FuseDelegate\> callback indicating whether the transaction was verified by Apple's servers
  */
 +(void) registerInAppPurchase:(SKPaymentTransaction *)_transaction;
+
+/*!
+ @brief This method records in-app purchases in the Fuse system without using the SKPaymentTransaction data type. 
+ 
+ @details Call this method directly after an in-app purchase is made once it has been confirmed that the transaction has occurred successfully.  Optimally, this should be done in the recordTransaction method in your SKPaymentTransactionObserver delegate.  However, since this version does not use the SKPaymentTransaction object, call this at the appropriate point just after a transaction has been completed by the user.  If SKPaymentTransaction is available, this function should use the registerInAppPurchase: method (that function is used in conjuntion with registerInAppPurchaseList: to automatically select the price and currency).  A callback is sent to the \<FuseDelegate\> delegate indicating whether the transaction was confirmed by Apple's in-app purchase system or whether it should be treated as suspect (optional).
+ 
+ @code
+ -(void) recordTransaction:(SKPaymentTransaction *)transaction
+ {
+    [FuseAPI registerInAppPurchase:transaction.transactionReceipt TxState:transaction.transactionState Price:@"10.99" Currency:@"USD"];
+ 
+ ...
+ }
+ @endcode
+ 
+ @param _receipt_data [NSData *] The data payload associated with the purchase.  This corresponds to the transactionReceipt member of the SKPaymentTransaction class.
+ @param _tx_state [NSInteger] The transaction state of the purchase.  This corresponds to the transactionState member of the SKPaymentTransaction class.
+ @param _price [NSString *] The price, without the currency symbol. (i.e. "1.99")
+ @param _currency [NSString *] The currency of the transaction.  This must be of the form "USD" or "CAD" (for example) which correspond to ISO 4217 specifications.
+ @see FuseDelegate::purchaseVerification:TransactionID:OriginalTransactionID: for more information on the \<FuseDelegate\> callback indicating whether the transaction was verified by Apple's servers
+ @see http://en.wikipedia.org/wiki/ISO_4217 for more information on ISO 4217 currency codes.
+ @see registerInAppPurchase: for more information on calling this function with the SKPaymentTransaction object.
+ @since Fuse API version 1.29
+ */
++(void) registerInAppPurchase:(NSData*)_receipt_data TxState:(NSInteger)_tx_state Price:(NSString*)_price Currency:(NSString*)_currency;
 
 #pragma mark Fuse Interstitial Ads
 /*!
