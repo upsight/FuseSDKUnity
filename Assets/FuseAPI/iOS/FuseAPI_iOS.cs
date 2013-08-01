@@ -111,18 +111,28 @@ public class FuseAPI_iOS : FuseAPI
 	{
 		Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");
 		
+		if( values == null )
+		{
+			RegisterEvent(message);
+			return;
+		}
+		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			int numValues = values.Keys.Count;
-			string[] keys = new string[numValues];			
-			string[] attributes = new string[numValues];
+			int max_entries = values.Keys.Count;
+			string[] keys = new string[max_entries];			
+			string[] attributes = new string[max_entries];
 			keys.Initialize();
 			attributes.Initialize();
 			int numEntries = 0;
 			foreach (DictionaryEntry entry in values)
 			{
 				string entryKey = entry.Key as string;
-				string entryValue = entry.Value as string;
+				string entryValue = "";
+				if( entry.Value != null )
+				{
+					entry.Value.ToString();
+				}
 				
 				keys[numEntries] = entryKey;
 				attributes[numEntries] = entryValue;
@@ -140,13 +150,28 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			FuseAPI_RegisterEventStart();
 			
+			Debug.Log("Registering KVPs");
 			foreach (DictionaryEntry entry in variables)
 			{
 				string entryKey = entry.Key as string;
-				double entryValue = (double)entry.Value;
-				FuseAPI_RegisterEventKeyValue(entryKey, entryValue);
+				double entryValue = 0.0;
+				try
+				{
+					if( entry.Value != null )
+					{
+						entryValue = (double)entry.Value;
+					}
+					FuseAPI_RegisterEventKeyValue(entryKey, entryValue);					
+				}
+				catch
+				{
+					string entryString = (entry.Value == null) ? "" : entry.Value.ToString();
+					Debug.LogWarning("Key/value pairs in FuseAPI::RegisterEvent must be String/Number");
+					Debug.LogWarning("For Key: " + entryKey + " and Value: " + entryString);
+				}				
 			}
-
+			
+			Debug.Log("End Register Event");
 			return FuseAPI_RegisterEventEnd(name, paramName, paramValue);
 		}
 
@@ -155,6 +180,11 @@ public class FuseAPI_iOS : FuseAPI
 
 	new public static int RegisterEvent(string name, string paramName, string paramValue, string variableName, double variableValue)
 	{
+		if( name == null || paramName == null || paramValue == null || variableName == null )
+		{
+			return -1;
+		}
+		
 		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{

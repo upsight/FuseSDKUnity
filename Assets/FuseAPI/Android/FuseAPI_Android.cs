@@ -77,7 +77,13 @@ public class FuseAPI_Android : FuseAPI
 	new public static void RegisterEvent(string message, Hashtable values)
 	{
 		Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");
-				
+		
+		if( values == null )
+		{
+			RegisterEvent(message);
+			return;
+		}
+		
 		int max_entries = values.Keys.Count;
 		string[] keys = new string[max_entries];			
 		string[] attributes = new string[max_entries];
@@ -86,8 +92,12 @@ public class FuseAPI_Android : FuseAPI
 		int numEntries = 0;
 		foreach (DictionaryEntry entry in values)
 		{
-			string entryKey = entry.Key as string;
-			string entryValue = entry.Value as string;
+			string entryKey = entry.Key.ToString();
+			string entryValue = "";
+			if( entry.Value != null )
+			{
+				entry.Value.ToString();
+			}
 			
 			keys[numEntries] = entryKey;
 			attributes[numEntries] = entryValue;
@@ -105,8 +115,19 @@ public class FuseAPI_Android : FuseAPI
 		foreach (DictionaryEntry entry in variables)
 		{
 			string entryKey = entry.Key as string;
-			double entryValue = (double)entry.Value;
-			_fuseUnityPlugin.CallStatic("registerEventKeyValue", entryKey, entryValue);
+			double entryValue = 0.0;
+			try
+			{
+				entryValue = (double)entry.Value;
+				_fuseUnityPlugin.CallStatic("registerEventKeyValue", entryKey, entryValue);
+			}
+			catch
+			{
+				string entryString = (entry.Value == null) ? "" : entry.Value.ToString();
+				Debug.LogWarning("Key/value pairs in FuseAPI::RegisterEvent must be String/Number");
+				Debug.LogWarning("For Key: " + entryKey + " and Value: " + entryString);				
+			}
+			
 		}
 
 		return _fuseUnityPlugin.CallStatic<int>("registerEventEnd", name, paramName, paramValue);

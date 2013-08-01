@@ -102,6 +102,7 @@ enum kFuseAdErrors
 {
     FUSE_AD_NO_ERROR = 0,
     FUSE_AD_NOT_CONNECTED,
+    FUSE_AD_SESSION_FAILURE,
 };
 
 enum kFuseEventErrors
