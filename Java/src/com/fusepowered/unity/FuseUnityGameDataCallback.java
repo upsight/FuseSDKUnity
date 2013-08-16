@@ -156,7 +156,7 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 		for (Player friend : friendsList)
 		{
 			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getFuseId());
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "" /* friend.getAccountId() */); // TODO Return the account ID
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getAccountId()); 
 			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getAlias());
 			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(friend.getPending()));
 		}

@@ -29,6 +29,8 @@ static void* _FuseAPI_MailListReceivedEnd = NULL;
 static void* _FuseAPI_MailListError = NULL;
 static void* _FuseAPI_MailAcknowledged = NULL;
 static void* _FuseAPI_MailError = NULL;
+static void* _FuseAPI_GameConfigInit = NULL;
+static void* _FuseAPI_UpdateGameConfig = NULL;
 
 static FuseAPI_ProductsResponse* _FuseAPI_productsResponse = nil;
 
@@ -74,6 +76,8 @@ void FuseAPI_Initialize()
 	_FuseAPI_MailListError = Mono_GetMethod("FuseAPI:_MailListError");
 	_FuseAPI_MailAcknowledged = Mono_GetMethod("FuseAPI:_MailAcknowledged");
 	_FuseAPI_MailError = Mono_GetMethod("FuseAPI:_MailError");
+    _FuseAPI_GameConfigInit = Mono_GetMethod("FuseAPI:_GameConfigInit");
+    _FuseAPI_UpdateGameConfig = Mono_GetMethod("FuseAPI:_UpdateGameConfig");
 	
 	_FuseAPI_delegate = [FuseAPI_Delegate new];
 }
@@ -299,9 +303,9 @@ void FuseAPI_FuseLogin(const char* fuseId, const char* alias)
 	[FuseAPI fuseLogin:[NSString stringWithUTF8String:fuseId] Alias:[NSString stringWithUTF8String:alias]];
 }
 
-void FuseAPI_GooglePlayLogin(const char* _id, const char* alias)
+void FuseAPI_GooglePlayLogin(const char* _id, const char* alias, const char* token)
 {
-    [FuseAPI googlePlayLogin:[NSString stringWithUTF8String:_id] Alias:[NSString stringWithUTF8String:alias]];
+    [FuseAPI googlePlayLogin:[NSString stringWithUTF8String:alias] AccessToken:[NSString stringWithUTF8String:token]];
 }
 
 const char* FuseAPI_GetOriginalAccountAlias()
@@ -546,6 +550,28 @@ void FuseAPI_GameDataReceivedKeyValue(const char* key, const char* value, bool i
 void FuseAPI_GameDataReceivedEnd()
 {
 	Mono_CallMethod(_FuseAPI_GameDataReceivedEnd, NULL);
+}
+
+void FuseAPI_RefreshGameConfiguration()
+{
+    // get the game config table
+    NSMutableDictionary* dict = [FuseAPI getGameConfiguration];
+    if( dict != nil && [dict count] > 0 )
+    {
+        // initialize game config by clearing the old dictionary
+        Mono_CallMethod(_FuseAPI_GameConfigInit, NULL);
+        
+        // iterate through each kvp in the dictionary and send them to mono
+        NSArray* keys = [dict allKeys];
+        for( int i = 0; i < [keys count]; i++ )
+        {
+            NSString* key = [keys objectAtIndex:i];
+            NSString* value = [dict objectForKey:key];
+            
+            void* argsForDict[] = { Mono_NewString(key.UTF8String), Mono_NewString([value UTF8String]) };
+            Mono_CallMethod(_FuseAPI_UpdateGameConfig, argsForDict);
+        }
+    }    
 }
 
 #pragma mark - Friends List

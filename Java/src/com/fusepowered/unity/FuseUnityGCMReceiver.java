@@ -1,10 +1,9 @@
 package com.fusepowered.unity;
 
 import android.content.Context;
-import com.google.android.gcm.GCMBroadcastReceiver;
-//import static com.google.android.gcm.GCMConstants.DEFAULT_INTENT_SERVICE_CLASS_NAME;
+import com.fusepowered.push.FuseGCMBroadcastReceiver;
 
-public class FuseUnityGCMReceiver extends GCMBroadcastReceiver
+public class FuseUnityGCMReceiver extends FuseGCMBroadcastReceiver
 {
 
 	

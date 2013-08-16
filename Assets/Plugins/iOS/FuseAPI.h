@@ -112,6 +112,15 @@ enum kFuseEventErrors
     FUSE_EVENT_NULL_PARAMETER
 };
 
+enum kFuseLoginErrors
+{
+    FUSE_ACCOUNT_NO_ERROR = 0,
+    FUSE_ACCOUNT_SERVER_ERROR,
+    FUSE_ACCOUNT_NOT_CONNECTED,
+    FUSE_ACCOUNT_REQUEST_FAILED,
+    FUSE_ACCOUNT_SESSION_FAILURE,
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief This is main Fuse API delegate
@@ -159,11 +168,21 @@ enum kFuseEventErrors
 /*!
  * @brief This method notifies the device that an account login request has been received by the server.
  * @details When a user logs in using one of the available FuseAPI account method, for instance FuseAPI::gameCenterLogin:, the server will send the client a notification once received.  This is to prevent any action being taken by the client before this has been received.
- * @param _type [int] Account type
- * @param _account_id [int] The account ID of the user logged in
+ * @param _type [(NSNumber*] Account type
+ * @param _account_id [NSString*] The account ID of the user logged in
  * @see FuseAPI::gameCenterLogin: for a sample login method
  */
 -(void) accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id;
+
+/*!
+ * @brief This method notifies the device that an account login request has failed
+ * @details When a user logs in using one of the available FuseAPI account method, for instance FuseAPI::gameCenterLogin:, the server will send the client a notification if there is any errors encountered.
+ * @param _error [NSNumber*] The error value corresponding to a value in kFuseLoginErrors
+ * @param _account_id [NSString*] The account ID of the user attempted to log in
+ * @see FuseAPI::gameCenterLogin: for a sample login method
+ * @since Fuse API version 1.29
+ */
+-(void) accountLoginError:(NSNumber*)_error Account:(NSString*)_account_id;
 
 /*!
  * @brief This method indicates that an action should be taken as a result of a notification being closed
@@ -1515,7 +1534,11 @@ enum kFuseEventErrors
 
 /*!
  * @brief Account registration using the google play login identifier
- * @details Uniquely track a user based upon their google play identifier.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user. 
+ * @details Uniquely track a user based upon their google play identifier.  This system can be used in conjunction with the 'set' and 'get' game data to persist per-user. When signing in to the Google Play system, the kGTLAuthScopePlusLogin scope must be specified to get the user's friends list:
+ 
+ GPPSignIn *signIn = [GPPSignIn sharedInstance];
+ signIn.clientID = kClientId;
+ signIn.scopes = [NSArray arrayWithObjects: kGTLAuthScopePlusLogin, nil];
  
  To call this method:
  
@@ -1526,8 +1549,7 @@ enum kFuseEventErrors
     // Ensure we have no errors and we have a valid auth object
     if (error.code == 0 && auth) {
  
-    NSLog(@"Player ID is %@", [auth propertyForKey:@"user_id"]);
-    [FuseAPI googlePlayLogin:[auth propertyForKey:@"user_id"] Alias:@"Tomboy22"];
+    [FuseAPI googlePlayLogin:@"TommyBoy" AccessToken:[auth accessToken]];
  
     ...
  
@@ -1546,14 +1568,14 @@ enum kFuseEventErrors
  
  @endcode
  
- @param _id [NSString*] The unique user ID provided by google of the user
  @param _alias [NSString*] The alias or 'handle' of the user
- @since Fuse API version 1.29
+ @param _token [NSString*] The user's access token.  Used to retrieve friends lists
  @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
  @see FuseDelegate::accountLoginComplete:Account: to see more information on the account complete callback
  @see getFuseID for more information on retrieving the user's Fuse ID once signed in
+ @since Fuse API version 1.29
  */
-+(void) googlePlayLogin:(NSString*)_id Alias:(NSString*)_alias;
++(void) googlePlayLogin:(NSString*)_alias AccessToken:(NSString*)_token;
 
 /*!
  * @brief Get the original account ID used to log in to the Fuse system that corresponds to the Fuse ID
@@ -2700,7 +2722,7 @@ enum kFuseEventErrors
  {
     has_game_config_returned = YES;
  
-    // You can now access your server-side data, either here or somewhere else in your code
+    // You can now access your updated server-side data, either here or somewhere else in your code
     NSString *funny_val = [FuseAPI getGameConfigurationValue:@"not_funny"];
  }
  
@@ -2713,6 +2735,61 @@ enum kFuseEventErrors
  @see startSession:Delegate: for information on setting up the \<FuseDelegate\>
  */
 +(NSString*) getGameConfigurationValue:(NSString*)_key;
+
+/*!
+ @brief This method retrieves the entire server configuration value list.
+ @details The Fuse API provides a method to store game configuration variables that are provided to the application on start.  These are different than "Game Data" values since they are stored on a per-game basis, and not a per-user basis.
+ 
+ In the Fuse dashboard, navigate to the 'configuration' tab in your game view.  You can edit the "Game Data" section by adding keys and associated data values.  Values can be 256 characters in length and support UTF-8 characters.
+ 
+ @code
+ 
+ NSMutableDictionary *my_vals = [FuseAPI getGameConfiguration];
+ 
+ if (my_vals != nil)
+ {
+    // always check against 'nil' before using the value
+ }
+ 
+ @endcode
+ 
+ Values are update in the client each time a session is started from the Springboard or system tray. To find out when values are valid in the device, you can use the following \<FuseDelegate\> callback method that indicates when the values are ready to be inspected.
+ 
+ @code
+ 
+ BOOL has_game_config_returned = NO;
+ 
+ -(void) gameConfigurationReceived
+ {
+    has_game_config_returned = YES;
+ 
+    // You can now access your updated server-side data, either here or somewhere else in your code
+    NSMutableDictionary *my_vals = [FuseAPI getGameConfiguration];
+ 
+    if (my_vals != nil && [my_vals count] > 0)
+    {
+        NSArray *keys = [my_vals allKeys];
+ 
+        for (int i = 0; i < [keys count]; i++)
+        {
+            NSString *key = [keys objectAtIndex:i];
+            NSString *value = [my_vals objectForKey:key];
+ 
+            NSLog(@"Key: %@, Value: %@", key, value);
+        }
+    } 
+ }
+ 
+ @endcode
+ 
+ It is recommended that a default value be present on the device in case the user has not or never connects to the Internet.
+ 
+ @param _key [NSString*] This is the key for which the value is requested.
+ @retval [NSString*] This is the value for the corresponding key.
+ @see startSession:Delegate: for information on setting up the \<FuseDelegate\>
+ */
+
++(NSMutableDictionary*) getGameConfiguration;
 
 #pragma mark Public Methods
 /*!

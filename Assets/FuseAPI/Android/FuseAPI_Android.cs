@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public class FuseAPI_Android : FuseAPI
 {
 	public bool persistent = true;
-#if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR	
 	void Awake()
 	{
 		// preserve the prefab and all attached scripts through level loads
@@ -116,18 +116,23 @@ public class FuseAPI_Android : FuseAPI
 		{
 			string entryKey = entry.Key as string;
 			double entryValue = 0.0;
-			try
+			if( entryKey != null )
 			{
-				entryValue = (double)entry.Value;
-				_fuseUnityPlugin.CallStatic("registerEventKeyValue", entryKey, entryValue);
-			}
-			catch
-			{
-				string entryString = (entry.Value == null) ? "" : entry.Value.ToString();
-				Debug.LogWarning("Key/value pairs in FuseAPI::RegisterEvent must be String/Number");
-				Debug.LogWarning("For Key: " + entryKey + " and Value: " + entryString);				
-			}
-			
+				if( entry.Value != null )
+				{
+					try
+					{
+						entryValue = Convert.ToDouble(entry.Value);
+					}
+					catch
+					{
+						string entryString = (entry.Value == null) ? "" : entry.Value.ToString();
+						Debug.LogWarning("Key/value pairs in FuseAPI::RegisterEvent must be String/Number");
+						Debug.LogWarning("For Key: " + entryKey + " and Value: " + entryString);
+					}
+				}
+				_fuseUnityPlugin.CallStatic("registerEventKeyValue", entryKey, entryValue);					
+			}			
 		}
 
 		return _fuseUnityPlugin.CallStatic<int>("registerEventEnd", name, paramName, paramValue);
@@ -260,15 +265,22 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.CallStatic("fuseLogin", fuseId, alias);
 	}
 	
-	new public static void GooglePlayLogin(string id, string alias)
+	new public static void GooglePlayLogin(string alias, string token)
 	{
-		//TODO
+		Debug.Log("FuseAPI:GooglePlayLogin(" + alias + "," + token + ")");
+		_fuseUnityPlugin.CallStatic("googlePlayLogin", alias, token);
+	}
+
+	public static void GameCenterLogin(string accountID, string alias)
+	{
+		// only for testing - does not actually log you into game center
+		_fuseUnityPlugin.CallStatic("gamecenterLogin", accountID, alias);
 	}
 	
 	new public static string GetOriginalAccountAlias()
 	{
-		//TODO
-		return "";
+		Debug.Log("FuseAPI:GetOriginalAccountAlias()");
+		return _fuseUnityPlugin.CallStatic<string>("getOriginalAccountAlias");
 	}
 	
 	new public static string GetOriginalAccountId()
@@ -604,6 +616,21 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.SetStatic<string>("_stringConduit", key);
 		_fuseUnityPlugin.CallStatic("getGameConfigurationValue");
 		return _fuseUnityPlugin.GetStatic<string>("_stringConduit");
+	}
+	
+	new public static Dictionary<string, string> GetGameConfig()
+	{
+		//Debug.Log("FuseAPI:GetGameConfig()");		
+	
+		Dictionary<string, string> gameConfig = new Dictionary<string, string>();
+		// get a list of all the keys:
+		string[] keys = _fuseUnityPlugin.CallStatic<string[]>("getGameConfigKeys");
+		for( int i = 0; i < keys.Length; i++ )
+		{
+			gameConfig.Add(keys[i], GetGameConfigurationValue(keys[i]));
+		}
+		
+		return gameConfig;
 	}
 
 	private void _GameConfigurationReceived(string dummy)

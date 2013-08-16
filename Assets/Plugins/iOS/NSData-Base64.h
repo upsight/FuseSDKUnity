@@ -34,9 +34,9 @@ char *NewBase64Encode(
 	bool separateLines,
 	size_t *outputLength);
 
-@interface NSData (Base64)
+@interface NSData (FuseUnityBase64)
 
-+ (NSData *)dataFromBase64String:(NSString *)aString;
-- (NSString *)base64EncodedString;
++ (NSData *)fuseUnityDataFromBase64String:(NSString *)aString;
+- (NSString *)fuseUnityBase64EncodedString;
 
 @end

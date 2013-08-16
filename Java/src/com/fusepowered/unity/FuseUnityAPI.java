@@ -354,17 +354,35 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 		Log.d(_logTag, "fuseLogin(" + fuseId + "," + alias + ")");
 		FuseAPI.fuseLogin(fuseId, alias, _gameDataCallback);
 	}
-
-	public static String getOriginalAccountId() // TODO Return the account ID when the Fuse API supports this call
+	
+	public static void googlePlayLogin(String alias, String token)
 	{
-		Log.d(_logTag, "*** NOT IMPLEMENTED *** getOriginalAccountId()");
-		return "";
+		Log.d(_logTag, "googlePlayLogin(" + alias + "," + token + ")");		
+		FuseAPI.googlePlayLogin(alias, token, _gameDataCallback);
+	}
+	
+	public static void gamecenterLogin(String accountID, String alias)
+	{
+		Log.d(_logTag, "gamecenterLogin(" + accountID + "," + alias + ")");
+		FuseAPI.gamecenterLogin(accountID, alias, _gameDataCallback);
 	}
 
-	public static int getOriginalAccountType() // TODO Return the account type when the Fuse API supports this call
+	public static String getOriginalAccountId()
 	{
-		Log.d(_logTag, "*** NOT IMPLEMENTED *** getOriginalAccountType()");
-		return 0;
+		Log.d(_logTag, "getOriginalAccountId()");
+		return FuseAPI.getOriginalAccountId();
+	}
+	
+	public static String getOriginalAccountAlias()
+	{
+		Log.d(_logTag, "getOriginalAccountAlias()");
+		return FuseAPI.getOriginalAccountAlias();
+	}
+
+	public static int getOriginalAccountType()
+	{
+		Log.d(_logTag, "getOriginalAccountType()");
+		return FuseAPI.getOriginalAccountType();
 	}
 
 
@@ -533,17 +551,19 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	{
 		Log.d(_logTag, "getFriendsList()");
 		List<Player> friendsList = FuseAPI.getFriendsList();
-
-		String returnValue = "";
+		String returnValue = "";		
+		if( friendsList == null )
+		{
+			return returnValue;
+		}
 
 		for (Player friend : friendsList)
 		{
 			returnValue += MakeReturnComponent(friend.getFuseId());
-			returnValue += MakeReturnComponent("" /* friend.getAccountId() */); // TODO Return the account ID
+			returnValue += MakeReturnComponent(friend.getAccountId());
 			returnValue += MakeReturnComponent(friend.getAlias());
 			returnValue += MakeReturnComponent(friend.getPending());
 		}
-
 		return returnValue;
 	}
 
@@ -615,6 +635,32 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	{
 //		Log.d(_logTag, "getGameConfigurationValue(" + _stringConduit + ") = " + FuseAPI.getGameConfigurationValue(_stringConduit));
 		_stringConduit = FuseAPI.getGameConfigurationValue(_stringConduit);
+	}		
+	
+	public static String[] getGameConfigKeys()
+	{
+		//Log.d(_logTag, "getGameConfigKeys()");		
+		
+		HashMap<String, String> gameConfig = FuseAPI.getGameConfiguration();
+		if( gameConfig == null )
+		{
+			//Log.d(_logTag, "No gameConfig");
+			return null;
+		}
+		Object[] keys = gameConfig.keySet().toArray();
+		if( keys == null || keys.length == 0 )
+		{
+			//Log.d(_logTag, "No keys");
+			return null;
+		}
+		String[] ret = new String[keys.length];		
+		
+		//Log.d(_logTag, "Number of keys: " + keys.length);
+		for( int i = 0; i < keys.length; i++ )
+		{
+			ret[i]  = (String)keys[i];
+		}
+		return ret;
 	}
 
 

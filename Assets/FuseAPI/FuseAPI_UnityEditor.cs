@@ -94,26 +94,37 @@ public class FuseAPI_UnityEditor : FuseAPI
 			FuseAPI_RegisterEventWithDictionary(message, keys, attributes, numEntries);
 		}
 	}
-
+	
 	new public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
 	{
 		Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");
 
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		//if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_RegisterEventStart();
+			//FuseAPI_RegisterEventStart();
 			
 			foreach (DictionaryEntry entry in variables)
 			{
 				string entryKey = entry.Key as string;
-				double entryValue = (double)entry.Value;
-				FuseAPI_RegisterEventKeyValue(entryKey, entryValue);
+				try
+				{
+					//double entryValue = // commented out to remove a 'variable never used' warning
+					Convert.ToDouble(entry.Value);
+				}
+				catch
+				{
+					string entryString = (entry.Value == null) ? "" : entry.Value.ToString();
+					Debug.LogWarning("Key/value pairs in FuseAPI::RegisterEvent must be String/Number");
+					Debug.LogWarning("For Key: " + entryKey + " and Value: " + entryString);
+				}
+				//FuseAPI_RegisterEventKeyValue(entryKey, entryValue);
 			}
-
-			return FuseAPI_RegisterEventEnd(name, paramName, paramValue);
+			
+			return -1;
+			//return FuseAPI_RegisterEventEnd(name, paramName, paramValue);
 		}
 
-		return -1;
+		//return -1;
 	}
 
 	new public static int RegisterEvent(string name, string paramName, string paramValue, string variableName, double variableValue)
@@ -417,19 +428,19 @@ public class FuseAPI_UnityEditor : FuseAPI
 	}
 	
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_GooglePlayLogin(string id, string alias);
+	private static extern void FuseAPI_GooglePlayLogin(string alias, string token);
 	
-	new public static void GooglePlayLogin(string id, string alias)
+	new public static void GooglePlayLogin(string alias, string token)
 	{		
-		Debug.Log ("FuseAPI:GooglePlayLogin(" + id + "," + alias + ")");
+		Debug.Log ("FuseAPI:GooglePlayLogin(" + alias + "," + token + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_GooglePlayLogin(id, alias);
+			FuseAPI_GooglePlayLogin(alias, token);
 		}
 		else
 		{
-			_AccountLoginComplete(AccountType.GOOGLE_PLAY, id);
+			_AccountLoginComplete(AccountType.GOOGLE_PLAY, alias);
 		}
 	}
 	
@@ -1142,6 +1153,13 @@ public class FuseAPI_UnityEditor : FuseAPI
 		Debug.Log("FuseAPI:GetGameConfigurationValue(" + key + ")");		
 		
 		return FuseNative.GetGameConfigurationValue(key);
+	}
+	
+	new public static Dictionary<string, string> GetGameConfig()
+	{
+		Debug.Log("FuseAPI:GetGameConfig()");
+		
+		return FuseNative.GetCameConfiguration();
 	}
 	
 	private static void _GameConfigurationReceived()

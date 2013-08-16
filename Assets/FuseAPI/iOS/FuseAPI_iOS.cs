@@ -17,6 +17,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private bool waitingForToken = false;	
 	private static bool _registerForPushNotificationsCalled = false;
+	private static Dictionary<string, string> gameConfig = new Dictionary<string, string>();
 	
 	void Awake()
 	{
@@ -155,20 +156,23 @@ public class FuseAPI_iOS : FuseAPI
 			{
 				string entryKey = entry.Key as string;
 				double entryValue = 0.0;
-				try
+				if( entryKey != null )
 				{
 					if( entry.Value != null )
 					{
-						entryValue = (double)entry.Value;
+						try
+						{
+							entryValue = Convert.ToDouble(entry.Value);
+						}
+						catch
+						{
+							string entryString = (entry.Value == null) ? "" : entry.Value.ToString();
+							Debug.LogWarning("Key/value pairs in FuseAPI::RegisterEvent must be String/Number");
+							Debug.LogWarning("For Key: " + entryKey + " and Value: " + entryString);
+						}
 					}
 					FuseAPI_RegisterEventKeyValue(entryKey, entryValue);					
 				}
-				catch
-				{
-					string entryString = (entry.Value == null) ? "" : entry.Value.ToString();
-					Debug.LogWarning("Key/value pairs in FuseAPI::RegisterEvent must be String/Number");
-					Debug.LogWarning("For Key: " + entryKey + " and Value: " + entryString);
-				}				
 			}
 			
 			Debug.Log("End Register Event");
@@ -464,19 +468,19 @@ public class FuseAPI_iOS : FuseAPI
 	}
 	
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_GooglePlayLogin(string id, string alias);
+	private static extern void FuseAPI_GooglePlayLogin(string alias, string token);
 	
-	new public static void GooglePlayLogin(string id, string alias)
+	new public static void GooglePlayLogin(string alias, string token)
 	{		
-//		Debug.Log ("FuseAPI:GooglePlayLogin(" + id + "," + alias + ")");
+//		Debug.Log ("FuseAPI:GooglePlayLogin(" + alias + "," + token + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_GooglePlayLogin(id, alias);
+			FuseAPI_GooglePlayLogin(alias, token);
 		}
 		else
 		{
-			_AccountLoginComplete(AccountType.GOOGLE_PLAY, id);
+			_AccountLoginComplete(AccountType.GOOGLE_PLAY, alias);
 		}
 	}
 	
@@ -844,6 +848,35 @@ public class FuseAPI_iOS : FuseAPI
 	}
 	
 	[DllImport("__Internal")]
+	private static extern void FuseAPI_RefreshGameConfiguration();
+
+	new public static Dictionary<string, string> GetGameConfig()
+	{
+		Debug.Log("FuseAPI:GetGameConfig()");
+		
+		// re-populate the game config
+		FuseAPI_RefreshGameConfiguration();		
+				
+		return gameConfig;
+	}
+	
+	private static void _GameConfigInit()
+	{
+		Debug.Log("FuseAPI:GameConfigInit()");
+		
+		// clear the dictionary
+		gameConfig.Clear();
+	}
+	
+	private static void _UpdateGameConfig(string key, string value)
+	{
+		Debug.Log("FuseAPI:UpdateGameConfig()");
+		
+		// add value for key here
+		gameConfig.Add(key, value);
+	}	
+	
+	[DllImport("__Internal")]
 	private static extern string FuseAPI_GetFuseId();
 	
 	new public static string GetFuseId()
@@ -1187,7 +1220,7 @@ public class FuseAPI_iOS : FuseAPI
 
 	#region Game Configuration Data
 	[DllImport("__Internal")]
-	private static extern string FuseAPI_GetGameConfigurationValue(string key);
+	private static extern string FuseAPI_GetGameConfigurationValue(string key);	
 	
 	new public static string GetGameConfigurationValue(string key)
 	{

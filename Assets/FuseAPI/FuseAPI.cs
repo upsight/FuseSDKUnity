@@ -201,9 +201,9 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.FuseLogin(fuseId, alias);
 	}
 	
-	public static void GooglePlayLogin(string id, string alias)
+	public static void GooglePlayLogin(string alias, string token)
 	{
-		FusePlatformAPI.GooglePlayLogin(id, alias);
+		FusePlatformAPI.GooglePlayLogin(alias, token);
 	}
 	
 	public static string GetOriginalAccountAlias()
@@ -415,6 +415,11 @@ public class FuseAPI : MonoBehaviour
 	public static string GetGameConfigurationValue(string key)
 	{
 		return FusePlatformAPI.GetGameConfigurationValue(key);
+	}		
+	
+	public static Dictionary<string, string> GetGameConfig()
+	{
+		return FusePlatformAPI.GetGameConfig();
 	}
 	
 	public static event Action GameConfigurationReceived;

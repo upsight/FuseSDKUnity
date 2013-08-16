@@ -57,11 +57,26 @@ public static class FusePostProcess
             updateXcodeProject(xcodeprojPath, myFrameworks);			
         }
 #endif // UNITY IPHONE
+		
 		Debug.Log("FusePostProcess - STOP");
-    }
-#endif // UNITY_EDITOR
-    
-    
+    }    
+	
+    [PostProcessScene] // <- for Android cleanup
+	public static void OnPostProcessScene()
+	{
+#if UNITY_ANDROID
+		// delete older versions of API jar
+		for( int i = 0; i < 10; i++ )
+		{
+			string oldAPIjar = "Assets/Plugins/Android/FuseAndroidAPI_v1.2" + i + ".jar";
+			if(AssetDatabase.DeleteAsset(oldAPIjar))
+			{
+				//Debug.Log("Deleted obsolete API: " + oldAPIjar);
+			}
+		}
+#endif//UNITY_ANDROID
+	}
+#endif // UNITY_EDITOR		
     
     // MAIN FUNCTION
     // xcodeproj_filename - filename of the Xcode project to change
@@ -241,7 +256,7 @@ public static class FusePostProcess
         string subsection = "Frameworks";
         
         // optional frameworks (currently all)
-		file.Write("\t\t"+id+" /* "+name+" in "+subsection+" */ = {isa = PBXBuildFile; fileRef = "+fileref+" /* "+name+" */; settings = {ATTRIBUTES = (Weak, ); }; };");
+		file.Write("\t\t"+id+" /* "+name+" in "+subsection+" */ = {isa = PBXBuildFile; fileRef = "+fileref+" /* "+name+" */; settings = {ATTRIBUTES = (Weak, ); }; };\n");
 //        else // required frameworks
 //            file.Write("\t\t"+id+" /* "+name+" in "+subsection+" */ = {isa = PBXBuildFile; fileRef = "+fileref+" /* "+name+" */; };\n");
     }

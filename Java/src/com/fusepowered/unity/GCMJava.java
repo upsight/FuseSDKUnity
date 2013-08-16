@@ -1,6 +1,6 @@
 package com.fusepowered.unity;
 
-import com.google.android.gcm.GCMRegistrar;
+import com.fusepowered.push.FuseGCMRegistrar;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,7 +22,7 @@ public class GCMJava extends Activity
         if(!isRegistration) 
         {
           // Unregister device
-           GCMRegistrar.unregister(StaticApplicationContext.getCustomAppContext());
+        	FuseGCMRegistrar.unregister(StaticApplicationContext.getCustomAppContext());
         } 
         else
         {
@@ -30,26 +30,26 @@ public class GCMJava extends Activity
           String SENDER_ID = i.getStringExtra("senderID");
           
           // Checking device and manifest dependencies
-          GCMRegistrar.checkDevice(this);
-          GCMRegistrar.checkManifest(this);
+          FuseGCMRegistrar.checkDevice(this);
+          FuseGCMRegistrar.checkManifest(this);
           
           // Get GCM registration id
-          final String regId = GCMRegistrar.getRegistrationId(this);
+          final String regId = FuseGCMRegistrar.getRegistrationId(this);
           
           // Check if regid already presents
           if (regId.equals(""))
           {
             // Registration is not present, register now with GCM
-            GCMRegistrar.register(this, SENDER_ID);
+        	  FuseGCMRegistrar.register(this, SENDER_ID);
           }
           else
           {
             // Send ID to Unity
             sendConfirmRegistration(regId);
             // if registeredOnServer flag is not set, send info to Unity
-            if (!GCMRegistrar.isRegisteredOnServer(this))
+            if (!FuseGCMRegistrar.isRegisteredOnServer(this))
             {
-              GCMRegistrar.setRegisteredOnServer(this, true);
+            	FuseGCMRegistrar.setRegisteredOnServer(this, true);
             }
           }
         }
