@@ -65,13 +65,16 @@ public static class FusePostProcess
 	public static void OnPostProcessScene()
 	{
 #if UNITY_ANDROID
-		// delete older versions of API jar
-		for( int i = 0; i < 10; i++ )
+		if( Application.platform == RuntimePlatform.Android )
 		{
-			string oldAPIjar = "Assets/Plugins/Android/FuseAndroidAPI_v1.2" + i + ".jar";
-			if(AssetDatabase.DeleteAsset(oldAPIjar))
+			// delete older versions of API jar
+			for( int i = 0; i < 10; i++ )
 			{
-				//Debug.Log("Deleted obsolete API: " + oldAPIjar);
+				string oldAPIjar = "Assets/Plugins/Android/FuseAndroidAPI_v1.2" + i + ".jar";
+				if(AssetDatabase.DeleteAsset(oldAPIjar))
+				{
+					//Debug.Log("Deleted obsolete API: " + oldAPIjar);
+				}
 			}
 		}
 #endif//UNITY_ANDROID

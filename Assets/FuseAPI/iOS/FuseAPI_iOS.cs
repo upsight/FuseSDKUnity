@@ -132,7 +132,7 @@ public class FuseAPI_iOS : FuseAPI
 				string entryValue = "";
 				if( entry.Value != null )
 				{
-					entry.Value.ToString();
+					entryValue = entry.Value.ToString();
 				}
 				
 				keys[numEntries] = entryKey;

@@ -96,7 +96,7 @@ public class FuseAPI_Android : FuseAPI
 			string entryValue = "";
 			if( entry.Value != null )
 			{
-				entry.Value.ToString();
+				entryValue = entry.Value.ToString();
 			}
 			
 			keys[numEntries] = entryKey;
@@ -686,6 +686,7 @@ public class FuseAPI_Android : FuseAPI
 
 	private void _AddArgument(string message)
 	{
+		Debug.Log("_AddArgument: " + message);
 		_args.Add(message);
 	}
 
