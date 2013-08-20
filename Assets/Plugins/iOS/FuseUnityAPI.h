@@ -30,6 +30,9 @@ int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const
 @property(nonatomic, assign) NSLocale *priceLocale;
 @property(nonatomic, assign) NSDecimalNumber *price;
 
+-(void)setFloatPrice:(float)price;
+-(void)setLocale:(const char*)locale;
+
 @end
 
 @interface FuseAPI_ProductsResponse : NSObject
@@ -52,6 +55,8 @@ void FuseAPI_RegisterInAppPurchaseListEnd();
 
 @property(nonatomic, copy) NSString* productIdentifier;
 
+-(void)setIdentifier:(const char*)identifier;
+
 @end
 
 @interface FuseAPI_PaymentTransaction : NSObject
@@ -62,6 +67,8 @@ void FuseAPI_RegisterInAppPurchaseListEnd();
 @property(nonatomic, assign) FuseAPI_Payment* payment;
 @property(nonatomic, assign) NSData* transactionReceipt;
 @property(nonatomic, assign) SKPaymentTransactionState transactionState;
+
+-(void)setTransactionReceiptWithBuffer:(void*)transactionReceiptBuffer length:(int)transactionReceiptLength;
 
 @end
 

@@ -154,54 +154,165 @@ int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const
 
 @implementation FuseAPI_Product
 
+-(id)init
+{
+    self = [super init];
+    
+	if (self)
+    {
+        _price = NULL;
+        _priceLocale = NULL;
+    }
+    
+    return self;
+}
+
+-(void)setFloatPrice:(float)price
+{
+    if( _price == NULL )
+    {
+        _price = [NSDecimalNumber decimalNumberWithDecimal:[[NSNumber numberWithFloat:price] decimalValue]];
+    }
+}
+
+-(void)setLocale:(const char *)locale
+{
+    if( _priceLocale == NULL )
+    {
+        NSString* formattedLocale = [NSString stringWithFormat:@"en_CA@currency=%@", [NSString stringWithUTF8String:locale]];
+        _priceLocale = [[NSLocale alloc] initWithLocaleIdentifier:formattedLocale];
+    }
+}
+
+-(void)dealloc
+{
+    [super dealloc];
+    
+    [_price release];
+    [_priceLocale release];
+}
+
 @end
 
 @implementation FuseAPI_ProductsResponse
+
+-(id)init
+{
+    self = [super init];
+    
+	if (self)
+    {
+        _products = [[NSMutableArray alloc] init];
+    }
+    
+    return self;
+}
+
+-(void)dealloc
+{
+    [super dealloc];
+    
+    [_products release];
+}
 
 @end
 
 void FuseAPI_RegisterInAppPurchaseListStart()
 {
 	_FuseAPI_productsResponse = [[FuseAPI_ProductsResponse alloc] init];
-	_FuseAPI_productsResponse.products = [[NSMutableArray alloc] init];
+	//_FuseAPI_productsResponse.products = [[NSMutableArray alloc] init];
 }
 
 void FuseAPI_RegisterInAppPurchaseListProduct(const char* productId, const char* priceLocale, float price)
 {
 	FuseAPI_Product* product = [[FuseAPI_Product alloc] init];
 	product.productIdentifier = [NSString stringWithUTF8String:productId];
-	NSString* formattedLocale = [NSString stringWithFormat:@"en_CA@currency=%@", [NSString stringWithUTF8String:priceLocale]];
-	product.priceLocale = [[NSLocale alloc] initWithLocaleIdentifier:formattedLocale];
-	product.price = [NSDecimalNumber decimalNumberWithDecimal:[[NSNumber numberWithFloat:price] decimalValue]];
+    [product setLocale:priceLocale];
+    [product setFloatPrice:price];
 	
 	[_FuseAPI_productsResponse.products addObject:product];
+    [product release];
 }
 
 void FuseAPI_RegisterInAppPurchaseListEnd()
 {
 	[FuseAPI registerInAppPurchaseList:(SKProductsResponse*)_FuseAPI_productsResponse];
 	
-	[_FuseAPI_productsResponse.products release];
+	//[_FuseAPI_productsResponse.products release];
 	[_FuseAPI_productsResponse release];
 }
 
 @implementation FuseAPI_Payment
 
+-(id)init
+{
+    self = [super init];
+    
+	if (self)
+    {
+        _productIdentifier = NULL;
+    }
+    
+    return self;
+}
+
+-(void)dealloc
+{
+    [super dealloc];
+    
+    [_productIdentifier release];
+}
+
+-(void)setIdentifier:(const char*)identifier
+{
+    _productIdentifier = [NSString stringWithUTF8String:identifier];
+}
+
 @end
 
 @implementation FuseAPI_PaymentTransaction
+
+-(id)init
+{
+    self = [super init];
+    
+	if (self)
+    {
+        _payment = [[FuseAPI_Payment alloc] init];
+        _transactionReceipt = NULL;
+    }
+    
+    return self;
+}
+
+-(void)dealloc
+{
+    [super dealloc];
+    
+    [_payment release];
+    [_transactionReceipt release];
+}
+
+-(void)setTransactionReceiptWithBuffer:(void*)transactionReceiptBuffer length:(int)transactionReceiptLength
+{
+    if( _transactionReceipt == NULL )
+    {
+        _transactionReceipt = [[NSData alloc] initWithBytesNoCopy:(void*)transactionReceiptBuffer length:transactionReceiptLength];
+    }
+}
+
 
 @end
 
 void FuseAPI_RegisterInAppPurchase(const char* productId, const unsigned char* transactionReceiptBuffer, int transactionReceiptLength, int transactionState)
 {
 	FuseAPI_PaymentTransaction* paymentTransaction = [[FuseAPI_PaymentTransaction alloc] init];
-	paymentTransaction.payment = [[FuseAPI_Payment alloc] init];
-	paymentTransaction.payment.productIdentifier = [NSString stringWithUTF8String:productId];
-	paymentTransaction.transactionReceipt = [[NSData alloc] initWithBytesNoCopy:(void*)transactionReceiptBuffer length:transactionReceiptLength];
+	[paymentTransaction.payment setIdentifier:productId];
+	[paymentTransaction setTransactionReceiptWithBuffer:(void*)transactionReceiptBuffer length:transactionReceiptLength];
 	paymentTransaction.transactionState = transactionState;
 	
 	[FuseAPI registerInAppPurchase:(SKPaymentTransaction*)paymentTransaction];
+    [paymentTransaction release];
 }
 
 void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, const char* originalTransactionId)
@@ -449,7 +560,7 @@ void FuseAPI_SetGameDataKeyValue(const char* key, const char* value, bool isBina
 {
 	if (isBinary)
 	{
-		NSData* buffer = [NSData dataFromBase64String:[NSString stringWithUTF8String:value]];
+		NSData* buffer = [NSData fuseUnityDataFromBase64String:[NSString stringWithUTF8String:value]];
 		[_FuseAPI_gameData setValue:buffer forKey:[NSString stringWithUTF8String:key]];
 	}
 	else
@@ -571,7 +682,7 @@ void FuseAPI_RefreshGameConfiguration()
             void* argsForDict[] = { Mono_NewString(key.UTF8String), Mono_NewString([value UTF8String]) };
             Mono_CallMethod(_FuseAPI_UpdateGameConfig, argsForDict);
         }
-    }    
+    }
 }
 
 #pragma mark - Friends List
@@ -945,7 +1056,7 @@ void FuseAPI_RegisterTapjoyReward(int amount)
 		{
 			NSData* buffer = (NSData*)value;
 			
-			NSString* string = buffer.base64EncodedString;
+			NSString* string = buffer.fuseUnityBase64EncodedString;
             
 			FuseAPI_GameDataReceivedKeyValue(key.UTF8String, string.UTF8String, true);
 		}
