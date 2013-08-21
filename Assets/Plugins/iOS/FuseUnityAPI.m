@@ -4,6 +4,10 @@
 #import "NSData-Base64.h"
 #include "Mono.h"
 
+#define FuseSafeRelease(obj) if (obj != nil){ \
+[obj release]; \
+obj = nil;}
+
 static void* _FuseAPI_SessionStartReceived = NULL;
 static void* _FuseAPI_SessionLoginError = NULL;
 static void* _FuseAPI_TimeUpdated = NULL;
@@ -120,7 +124,7 @@ void FuseAPI_RegisterEventWithDictionary(const char* message, const char** keys,
         [values setObject:[NSString stringWithUTF8String:attributes[i]] forKey:[NSString stringWithUTF8String:keys[i]]];
     }
     [FuseAPI registerEvent:[NSString stringWithUTF8String:message] withDict:values];
-    [values release];
+    FuseSafeRelease(values);
 }
 
 void FuseAPI_RegisterEvent(const char* message)
@@ -141,7 +145,7 @@ void FuseAPI_RegisterEventKeyValue(const char* entryKey, double entryValue)
 int FuseAPI_RegisterEventEnd(const char* name, const char* paramName, const char* paramValue)
 {
 	int result = [FuseAPI registerEvent:[NSString stringWithUTF8String:name] ParameterName:[NSString stringWithUTF8String:paramName] ParameterValue:[NSString stringWithUTF8String:paramValue] Variables:_FuseAPI_registerEventData];
-	[_FuseAPI_registerEventData release];
+    FuseSafeRelease(_FuseAPI_registerEventData);
 	return result;
 }
 
@@ -188,8 +192,8 @@ int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const
 {
     [super dealloc];
     
-    [_price release];
-    [_priceLocale release];
+    FuseSafeRelease(_price);
+    FuseSafeRelease(_priceLocale);
 }
 
 @end
@@ -212,7 +216,7 @@ int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const
 {
     [super dealloc];
     
-    [_products release];
+    FuseSafeRelease(_products);
 }
 
 @end
@@ -231,15 +235,14 @@ void FuseAPI_RegisterInAppPurchaseListProduct(const char* productId, const char*
     [product setFloatPrice:price];
 	
 	[_FuseAPI_productsResponse.products addObject:product];
-    [product release];
+    FuseSafeRelease(product);
 }
 
 void FuseAPI_RegisterInAppPurchaseListEnd()
 {
 	[FuseAPI registerInAppPurchaseList:(SKProductsResponse*)_FuseAPI_productsResponse];
 	
-	//[_FuseAPI_productsResponse.products release];
-	[_FuseAPI_productsResponse release];
+    FuseSafeRelease(_FuseAPI_productsResponse);
 }
 
 @implementation FuseAPI_Payment
@@ -259,8 +262,7 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 -(void)dealloc
 {
     [super dealloc];
-    
-    [_productIdentifier release];
+    FuseSafeRelease(_productIdentifier);
 }
 
 -(void)setIdentifier:(const char*)identifier
@@ -289,8 +291,8 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 {
     [super dealloc];
     
-    [_payment release];
-    [_transactionReceipt release];
+    FuseSafeRelease(_payment);
+    FuseSafeRelease(_transactionReceipt);
 }
 
 -(void)setTransactionReceiptWithBuffer:(void*)transactionReceiptBuffer length:(int)transactionReceiptLength
@@ -312,7 +314,7 @@ void FuseAPI_RegisterInAppPurchase(const char* productId, const unsigned char* t
 	paymentTransaction.transactionState = transactionState;
 	
 	[FuseAPI registerInAppPurchase:(SKPaymentTransaction*)paymentTransaction];
-    [paymentTransaction release];
+    FuseSafeRelease(paymentTransaction);
 }
 
 void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, const char* originalTransactionId)
@@ -583,7 +585,7 @@ int FuseAPI_SetGameDataEnd()
 	
 	_FuseAPI_gameDataFuseId = nil;
 	_FuseAPI_gameDataIsCollection = NO;
-	[_FuseAPI_gameData release];
+    FuseSafeRelease(_FuseAPI_gameData);
 	_FuseAPI_gameDataKey = nil;
 	
 	return requestId;
@@ -638,7 +640,7 @@ int FuseAPI_GetGameDataEnd()
 			requestId = [FuseAPI getGameData:_FuseAPI_gameDataKeys Delegate:_FuseAPI_delegate];
 		}
 	}
-	[_FuseAPI_gameDataKeys release];
+    FuseSafeRelease(_FuseAPI_gameDataKeys);
 	_FuseAPI_gameDataFuseId = nil;
 	_FuseAPI_gameDataKey = nil;
 	
