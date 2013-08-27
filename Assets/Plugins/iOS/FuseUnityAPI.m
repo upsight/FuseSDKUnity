@@ -191,9 +191,6 @@ int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const
 -(void)dealloc
 {
     [super dealloc];
-    
-    FuseSafeRelease(_price);
-    FuseSafeRelease(_priceLocale);
 }
 
 @end
@@ -221,10 +218,16 @@ int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const
 
 @end
 
+bool g_bRegistering = false;
 void FuseAPI_RegisterInAppPurchaseListStart()
 {
+    if( g_bRegistering )
+    {
+        //NSLog(@"FuseAPI_productsResponse is already in use!");
+        return;
+    }
+    g_bRegistering = true;
 	_FuseAPI_productsResponse = [[FuseAPI_ProductsResponse alloc] init];
-	//_FuseAPI_productsResponse.products = [[NSMutableArray alloc] init];
 }
 
 void FuseAPI_RegisterInAppPurchaseListProduct(const char* productId, const char* priceLocale, float price)
@@ -241,8 +244,8 @@ void FuseAPI_RegisterInAppPurchaseListProduct(const char* productId, const char*
 void FuseAPI_RegisterInAppPurchaseListEnd()
 {
 	[FuseAPI registerInAppPurchaseList:(SKProductsResponse*)_FuseAPI_productsResponse];
-	
-    FuseSafeRelease(_FuseAPI_productsResponse);
+    g_bRegistering = false;
+    //FuseSafeRelease(_FuseAPI_productsResponse);
 }
 
 @implementation FuseAPI_Payment
