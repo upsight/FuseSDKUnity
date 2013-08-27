@@ -213,6 +213,9 @@ public class FuseAPI_iOS : FuseAPI
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
+			if( products.Length == 0 )
+				return;
+			
 			FuseAPI_RegisterInAppPurchaseListStart();
 			
 			foreach (Product product in products)
