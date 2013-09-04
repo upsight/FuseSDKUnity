@@ -74,9 +74,13 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void accountLoginComplete(final int accountType, final String accountId)
 	{
-		Log.d(_logTag, "accountLoginComplete(" + accountType + "," + accountId + ")");
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(accountType));
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_AccountLoginComplete",         accountId);
+		synchronized(_sync)
+		{
+			Log.d(_logTag, "START: accountLoginComplete(" + accountType + "," + accountId + ")");
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(accountType));
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AccountLoginComplete",         accountId);
+			Log.d(_logTag, "END: accountLoginComplete(" + accountType + "," + accountId + ")");
+		}
 	}
 
 
@@ -104,23 +108,28 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void gameDataReceived(String accountId, GameKeyValuePairs gameKeyValuePairs, int requestId)
 	{
-		Log.d(_logTag, "gameDataReceived(" + accountId + ",[data]," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
-
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", accountId);
-
-		HashMap<String,GameValue> hashMap = gameKeyValuePairs.getMap();
-		for (Map.Entry<String,GameValue> entry : hashMap.entrySet())
+		synchronized(_sync)
 		{
-			boolean isBinary = entry.getValue().isBinary();
-			String key = entry.getKey();
-			String value = entry.getValue().getValue();
+			Log.d(_logTag, "START: gameDataReceived(" + accountId + ",[data]," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
 
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", isBinary ? "1" : "0");
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", key);
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", value);
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", accountId);
+
+			HashMap<String,GameValue> hashMap = gameKeyValuePairs.getMap();
+			for (Map.Entry<String,GameValue> entry : hashMap.entrySet())
+			{
+				boolean isBinary = entry.getValue().isBinary();
+				String key = entry.getKey();
+				String value = entry.getValue().getValue();
+	
+				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", isBinary ? "1" : "0");
+				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", key);
+				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", value);
+			}
+
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_GameDataReceived", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
+
+			Log.d(_logTag, "END: gameDataReceived(" + accountId + ",[data]," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
 		}
-
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_GameDataReceived", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
 	}
 
 	public void gameDataError(FuseGameDataError fuseGameDataError)
@@ -130,9 +139,13 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void gameDataError(FuseGameDataError fuseGameDataError, int requestId)
 	{
-		Log.d(_logTag, "gameDataError(" + fuseGameDataError + "," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_GameDataError",                Integer.toString(fuseGameDataError.ordinal()));
+		synchronized(_sync)
+		{
+			Log.d(_logTag, "START: gameDataError(" + fuseGameDataError + "," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_GameDataError",                Integer.toString(fuseGameDataError.ordinal()));
+			Log.d(_logTag, "END: gameDataError(" + fuseGameDataError + "," + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
+		}
 	}
 
 	public void gameDataSetAcknowledged(int requestId)
@@ -149,19 +162,24 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void friendsListUpdated(ArrayList<Player> friendsList)
 	{
-		Log.d(_logTag, "friendsListUpdated([data])");
-
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentList", "");
-
-		for (Player friend : friendsList)
+		synchronized(_sync)
 		{
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getFuseId());
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getAccountId()); 
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getAlias());
-			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(friend.getPending()));
-		}
+			Log.d(_logTag, "START: friendsListUpdated([data])");
 
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_FriendsListUpdated", "");
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentList", "");
+
+			for (Player friend : friendsList)
+			{
+				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getFuseId());
+				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getAccountId()); 
+				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", friend.getAlias());
+				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(friend.getPending()));
+			}
+
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_FriendsListUpdated", "");
+
+			Log.d(_logTag, "END: friendsListUpdated([data])");
+		}
 	}
 
 	public void friendsListError(FuseFriendsListError fuseFriendsListError)
@@ -178,35 +196,40 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void mailListReceived(ArrayList<Mail> mailList, String fuseId)
 	{
-		Log.d(_logTag, "mailListReceived([data]," + fuseId + ")");
-
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentList", "");
-
-		if (mailList != null)
+		synchronized(_sync)
 		{
-			for (Mail mail : mailList)
+			Log.d(_logTag, "START: mailListReceived([data]," + fuseId + ")");
+
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentList", "");
+
+			if (mailList != null)
 			{
-				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getId()));
-				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getDate());
-				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getAlias());
-				FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getMessage());
-				if( mail.getGift() != null )
+				for (Mail mail : mailList)
 				{
-					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getId()));
-					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getGift().getName());
-					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getAmount()));
-				}
-				else
-				{
-					// No Gift
-					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "0");
-					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "");
-					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "0");
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getId()));
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getDate());
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getAlias());
+					FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getMessage());
+					if( mail.getGift() != null )
+					{
+						FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getId()));
+						FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", mail.getGift().getName());
+						FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(mail.getGift().getAmount()));
+					}
+					else
+					{
+						// No Gift
+						FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "0");
+						FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "");
+						FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", "0");
+					}
 				}
 			}
-		}
 
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_MailListReceived", fuseId);
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_MailListReceived", fuseId);
+
+			Log.d(_logTag, "END: mailListReceived([data]," + fuseId + ")");
+		}
 	}
 
 	public void mailListError(FuseMailError fuseMailError)
@@ -217,11 +240,15 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void mailAcknowledged(int messageId, String fuseId, int requestID)
 	{
-		Log.d(_logTag, "mailAcknowledged(" + messageId + "," + fuseId + "," + requestID + ")");
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(messageId));
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", fuseId);
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(requestID));
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_MailAcknowledged", "");
+		synchronized(_sync)
+		{
+			Log.d(_logTag, "START: mailAcknowledged(" + messageId + "," + fuseId + "," + requestID + ")");
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(messageId));
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", fuseId);
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(requestID));
+			FuseUnityAPI.SendMessage("FuseAPI_Android", "_MailAcknowledged", "");
+			Log.d(_logTag, "END: mailAcknowledged(" + messageId + "," + fuseId + "," + requestID + ")");
+		}
 	}
 
 	public void mailError(FuseMailError fuseMailError)
@@ -267,4 +294,5 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 	private static final String _logTag = "FuseUnityGameDataCallback";
 	private int _ourRequestId = 0;
 	private static int _nextRequestId = 1;
+	private static Object _sync = new Object();
 }
