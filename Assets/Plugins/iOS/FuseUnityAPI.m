@@ -211,9 +211,8 @@ int FuseAPI_RegisterEventVariable(const char* name, const char* paramName, const
 
 -(void)dealloc
 {
-    [super dealloc];
-    
     FuseSafeRelease(_products);
+    [super dealloc];
 }
 
 @end
@@ -245,7 +244,7 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 {
 	[FuseAPI registerInAppPurchaseList:(SKProductsResponse*)_FuseAPI_productsResponse];
     g_bRegistering = false;
-    //FuseSafeRelease(_FuseAPI_productsResponse);
+    FuseSafeRelease(_FuseAPI_productsResponse);
 }
 
 @implementation FuseAPI_Payment
@@ -264,8 +263,8 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 
 -(void)dealloc
 {
+    //FuseSafeRelease(_productIdentifier);
     [super dealloc];
-    FuseSafeRelease(_productIdentifier);
 }
 
 -(void)setIdentifier:(const char*)identifier
@@ -292,17 +291,16 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 
 -(void)dealloc
 {
-    [super dealloc];
-    
     FuseSafeRelease(_payment);
-    FuseSafeRelease(_transactionReceipt);
+    //    FuseSafeRelease(_transactionReceipt);
+    [super dealloc];
 }
 
 -(void)setTransactionReceiptWithBuffer:(void*)transactionReceiptBuffer length:(int)transactionReceiptLength
 {
     if( _transactionReceipt == NULL )
     {
-        _transactionReceipt = [[NSData alloc] initWithBytesNoCopy:(void*)transactionReceiptBuffer length:transactionReceiptLength];
+        _transactionReceipt = [[NSData alloc] initWithBytes:(void*)transactionReceiptBuffer length:transactionReceiptLength];
     }
 }
 

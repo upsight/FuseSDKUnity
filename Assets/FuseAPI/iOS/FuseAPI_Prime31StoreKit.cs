@@ -12,6 +12,8 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	
 	// cached in order to send failed and cancelled messages
 	private StoreKitTransaction currentTransaction = null;
+	private static string transactionIDPurchasing = "";
+	private static string transactionIDPurchased = ""; 
 	
 	void Start () 
 	{
@@ -61,6 +63,12 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	{
 		//Debug.Log( "productPurchaseAwaitingConfirmationEvent: " + transaction );
 		
+		if( transactionIDPurchasing == transaction.transactionIdentifier )
+		{
+			//Debug.Log("Duplicate transaction " + transactionID);
+			return;
+		}
+		transactionIDPurchasing = transaction.transactionIdentifier;
 		currentTransaction = transaction;
 		byte[] reciept = Convert.FromBase64String(transaction.base64EncodedTransactionReceipt);
 		FuseAPI.RegisterInAppPurchase(transaction.productIdentifier, reciept, FuseAPI.TransactionState.PURCHASING);		
@@ -91,7 +99,14 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	
 	void purchaseSuccessful( StoreKitTransaction transaction )
 	{
-		//Debug.Log( "purchased product: " + transaction );
+		if( transactionIDPurchased == transaction.transactionIdentifier )
+		{
+			//Debug.Log("Duplicate transaction " + transactionID);
+			return;
+		}
+		transactionIDPurchased = transaction.transactionIdentifier;
+		
+		Debug.Log( "purchased product: " + transaction );
 		
 		currentTransaction = null;
 		byte[] reciept = Convert.FromBase64String(transaction.base64EncodedTransactionReceipt);
