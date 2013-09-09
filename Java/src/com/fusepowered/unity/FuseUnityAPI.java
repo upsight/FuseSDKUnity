@@ -267,9 +267,10 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	{
 		Log.d(_logTag, "showAd()");
 
-		_activity.runOnUiThread(new Runnable() {
-		    public void run() {
-//		    	FuseAPI.getAd(new FuseApiAdBrowser(), _adCallback);
+		_activity.runOnUiThread(new Runnable() 
+		{
+		    public void run() 
+		    {
 		    	FuseAPI.displayAd(new FuseApiAdBrowser(), _adCallback);
 		    }
 		});
@@ -365,6 +366,18 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	{
 		Log.d(_logTag, "gamecenterLogin(" + accountID + "," + alias + ")");
 		FuseAPI.gamecenterLogin(accountID, alias, _gameDataCallback);
+	}
+	
+	public static void deviceLogin(String alias)
+	{
+		Log.d(_logTag, "deviceLogin(" + alias + ")");
+		FuseAPI.deviceLogin(alias, _gameDataCallback);
+	}
+	
+	public static String getFuseID()
+	{
+		Log.d(_logTag, "getFuseID() = " + FuseAPI.getFuseID());
+		return FuseAPI.getFuseID();
 	}
 
 	public static String getOriginalAccountId()
@@ -478,17 +491,10 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 		_setGameData = null;
 
-		return callback.getRequestId(); // TODO Use Fuse provided requestId when they change the API to provide it
+		return callback.getRequestId();
 	}
-
-	public static String getFuseID()
-	{
-		Log.d(_logTag, "getFuseID() = " + FuseAPI.getFuseID());
-		return FuseAPI.getFuseID();
-	}
-
+	
 	private static ArrayList<String> _getGameData;
-
 	public static void getGameDataStart()
 	{
 		Log.d(_logTag, "getGameDataStart()");
@@ -532,7 +538,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 		_getGameData = null;
 
-		return callback.getRequestId(); // TODO Use Fuse provided requestId when they change the API to provide it
+		return callback.getRequestId();
 	}
 
 

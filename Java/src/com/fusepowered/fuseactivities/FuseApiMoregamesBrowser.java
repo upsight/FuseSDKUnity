@@ -6,7 +6,7 @@ import android.content.Intent;
 //import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-//import android.util.Log;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -45,13 +45,13 @@ public class FuseApiMoregamesBrowser extends FuseApiBrowser {
        
 
         LayoutParams params = new FrameLayout.LayoutParams(
-        		LayoutParams.WRAP_CONTENT,
-        		LayoutParams.WRAP_CONTENT);
+        		LayoutParams.MATCH_PARENT,
+        		LayoutParams.MATCH_PARENT);
         DisplayMetrics dm = this.getResources().getDisplayMetrics();
-        
+             
         LayoutParams paramsBTN = new FrameLayout.LayoutParams(
-        		(int) Math.floor(47 * dm.density),
-        		(int) Math.floor(36 * dm.density));
+        		66,
+        		45);
         
         AnimationSet set = new AnimationSet(true);
         Animation animation = new AlphaAnimation(0.0f, 1.0f);
@@ -73,6 +73,10 @@ public class FuseApiMoregamesBrowser extends FuseApiBrowser {
        
         WebView webView = new WebView(this);
         webView.setWebViewClient(new Callback());
+        webView.setHorizontalFadingEdgeEnabled(false);
+        webView.setVerticalFadingEdgeEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setVerticalScrollBarEnabled(false);
         webView.loadUrl(url.toString());
         webView.setLayoutParams(params);
         webView.setWebChromeClient(new WebChromeClient()); 
@@ -103,6 +107,7 @@ public class FuseApiMoregamesBrowser extends FuseApiBrowser {
         imageButton.setLayoutParams(paramsBTN);
         imageButton.bringToFront();
         String imageUrl = extras.getString(Constants.EXTRA_RETURN);
+        
         //Asynchronous call get an image (required for Android 3+)
         
         ns.createImageButton(imageUrl, imageButton);

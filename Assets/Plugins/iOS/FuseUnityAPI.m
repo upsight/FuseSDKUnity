@@ -407,6 +407,11 @@ void FuseAPI_TwitterLogin(const char* twitterId)
 	[FuseAPI twitterLogin:[NSString stringWithUTF8String:twitterId]];
 }
 
+void FuseAPI_DeviceLogin(const char* alias)
+{
+	[FuseAPI deviceLogin:[NSString stringWithUTF8String:alias]];
+}
+
 void FuseAPI_OpenFeintLogin(const char* openFeintId)
 {
 	[FuseAPI openFeintLogin:[NSString stringWithUTF8String:openFeintId]];

@@ -73,7 +73,7 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 // +---------------+
 
 	public void accountLoginComplete(final int accountType, final String accountId)
-	{
+	{		
 		synchronized(_sync)
 		{
 			Log.d(_logTag, "START: accountLoginComplete(" + accountType + "," + accountId + ")");
@@ -150,8 +150,8 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 
 	public void gameDataSetAcknowledged(int requestId)
 	{
-		Log.d(_logTag, "gameDataSetAcknowledged(" + _ourRequestId + ")"); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_GameDataSetAcknowledged", Integer.toString(_ourRequestId)); // TODO Use Fuse provided requestId only when the function that initiates this callback also returns the requestId
+		Log.d(_logTag, "gameDataSetAcknowledged(" + requestId + ")");
+		FuseUnityAPI.SendMessage("FuseAPI_Android", "_GameDataSetAcknowledged", Integer.toString(requestId));
 	}
 
 

@@ -103,6 +103,7 @@ void FuseAPI_GameCenterLogin();
 void FuseAPI_FacebookLogin(const char* facebookId, const char* name, const char* accessToken);
 void FuseAPI_FacebookLoginGender(const char* facebookId, const char* name, int gender, const char* accessToken);
 void FuseAPI_TwitterLogin(const char* twitterId);
+void FuseAPI_DeviceLogin(const char* alias);
 void FuseAPI_OpenFeintLogin(const char* openFeintId);
 void FuseAPI_FuseLogin(const char* fuseId, const char* alias);
 const char* FuseAPI_GetOriginalAccountId();

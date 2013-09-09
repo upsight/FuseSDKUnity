@@ -437,6 +437,21 @@ public class FuseAPI_iOS : FuseAPI
 	}
 	
 	[DllImport("__Internal")]
+	private static extern void FuseAPI_DeviceLogin(string alias);
+	new public static void DeviceLogin(string alias)
+	{
+		Debug.Log ("FuseAPI:DeviceLogin(" + alias + ")");
+		if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			FuseAPI_DeviceLogin(alias);
+		}
+		else
+		{
+			_AccountLoginComplete(AccountType.DEVICE_ID, alias);
+		}
+	}
+	
+	[DllImport("__Internal")]
 	private static extern void FuseAPI_OpenFeintLogin(string openFeintId);
 	
 	new public static void OpenFeintLogin(string openFeintId)

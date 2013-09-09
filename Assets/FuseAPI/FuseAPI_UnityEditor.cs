@@ -20,7 +20,7 @@ public class FuseAPI_UnityEditor : FuseAPI
 		FuseNative.GameConfigurationReceived += _GameConfigurationReceived;
 		
 		Debug.Log("FuseAPI:StartSession(" + gameId + ")");
-		FuseNative.StartSession(gameId);		
+		FuseNative.StartSession(gameId);
 	}
 	
 	private static void _SessionStartReceived()
@@ -392,6 +392,14 @@ public class FuseAPI_UnityEditor : FuseAPI
 			_AccountLoginComplete(AccountType.TWITTER, twitterId);
 		}
 	}
+	
+	new public static void DeviceLogin(string alias)
+	{
+		Debug.Log ("FuseAPI:DeviceLogin(" + alias + ")");
+				
+		_AccountLoginComplete(AccountType.DEVICE_ID, alias);
+	}
+	
 	
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_OpenFeintLogin(string openFeintId);

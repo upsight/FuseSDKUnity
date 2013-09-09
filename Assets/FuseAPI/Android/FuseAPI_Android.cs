@@ -251,6 +251,12 @@ public class FuseAPI_Android : FuseAPI
 	{
 		Debug.Log("FuseAPI:TwitterLogin(" + twitterId + ")");
 		_fuseUnityPlugin.CallStatic("twitterLogin", twitterId);
+	}	
+	
+	new public static void DeviceLogin(string alias)
+	{
+		Debug.Log("FuseAPI:DeviceLogin(" + alias + ")");
+		_fuseUnityPlugin.CallStatic("deviceLogin", alias);
 	}
 	
 	new public static void OpenFeintLogin(string openFeintId)

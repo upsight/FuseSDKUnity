@@ -191,6 +191,11 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.TwitterLogin(twitterId);
 	}
 	
+	public static void DeviceLogin(string alias)
+	{
+		FusePlatformAPI.DeviceLogin(alias);
+	}
+	
 	public static void OpenFeintLogin(string openFeintId)
 	{
 		FusePlatformAPI.OpenFeintLogin(openFeintId);
