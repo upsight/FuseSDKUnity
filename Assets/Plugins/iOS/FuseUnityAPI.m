@@ -129,7 +129,7 @@ void FuseAPI_RegisterEventWithDictionary(const char* message, const char** keys,
 
 void FuseAPI_RegisterEvent(const char* message)
 {
-	[FuseAPI registerEvent:[NSString stringWithUTF8String:message] withDict:NULL];
+	[FuseAPI registerEvent:[NSString stringWithUTF8String:message]];
 }
 
 void FuseAPI_RegisterEventStart()

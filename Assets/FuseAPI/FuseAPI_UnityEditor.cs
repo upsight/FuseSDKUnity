@@ -3,9 +3,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+#if UNITY_EDITOR
 using FuseNativeAPI;
 
-#if UNITY_EDITOR
+
 public class FuseAPI_UnityEditor : FuseAPI
 {
 	#region Session Creation
