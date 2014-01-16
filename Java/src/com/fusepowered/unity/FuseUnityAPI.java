@@ -167,12 +167,14 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 // +-----------------+
 // | Analytics Event |
 // +-----------------+
-
+	
+	//@SuppressWarnings("deprecation")
 	public static void registerEvent(String message)
 	{
 		Log.d(_logTag, "registerEvent(" + message + ")");
 		//FuseAPI.registerEvent(message);
-		registerEventWithDictionary(message, null, null, 0);
+		//registerEventWithDictionary(message, null, null, 0);
+		FuseAPI.registerEvent(message, "", "", "", null);
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -259,8 +261,12 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void checkAdAvailable()
 	{
-		Log.d(_logTag, "checkAdAvailable()");
-    	FuseAPI.checkAdAvailable(_adCallback);
+		_activity.runOnUiThread(new Runnable() {
+		    public void run() {
+				Log.d(_logTag, "checkAdAvailable()");
+		    	FuseAPI.checkAdAvailable(_adCallback);
+   		    }
+		});
 	}
 
 	public static void showAd()
@@ -292,7 +298,20 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 		    }
 		});
 	}
-
+	
+	public static void userPushNotification(String fuse_id, String message)
+	{
+		Log.d(_logTag, "userPushNotification(" + fuse_id + ", " + message + ")");
+		
+		FuseAPI.userPushNotification(fuse_id, message);
+	}
+	
+	public static void friendsPushNotification(String message)
+	{
+		Log.d(_logTag, "friendsPushNotification(" + message + ")");
+		
+		FuseAPI.friendsPushNotification(message);
+	}
 
 
 // +------------+

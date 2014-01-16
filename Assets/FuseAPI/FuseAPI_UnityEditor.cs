@@ -167,7 +167,7 @@ public class FuseAPI_UnityEditor : FuseAPI
 	}
 
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_RegisterInAppPurchase(string productId, byte[] transactionReceiptBuffer, int transactionReceiptLength, int transactionState);
+	private static extern void FuseAPI_RegisterInAppPurchase(string productId, string transactionId, byte[] transactionReceiptBuffer, int transactionReceiptLength, int transactionState);
 
 #if UNITY_IPHONE
 	new public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }
@@ -175,13 +175,13 @@ public class FuseAPI_UnityEditor : FuseAPI
 	public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }
 #endif
 
-	public static void RegisterInAppPurchase(string productId, byte[] transactionReceipt, TransactionState transactionState)
+	public static void RegisterInAppPurchase(string productId, string transactionId, byte[] transactionReceipt, TransactionState transactionState)
 	{
 		Debug.Log("FuseAPI:RegisterInAppPurchase(" + productId + "," + transactionReceipt.Length + "," + transactionState + ")");
 
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_RegisterInAppPurchase(productId, transactionReceipt, transactionReceipt.Length, (int)transactionState);
+			FuseAPI_RegisterInAppPurchase(productId, transactionId, transactionReceipt, transactionReceipt.Length, (int)transactionState);
 		}
 		else
 		{

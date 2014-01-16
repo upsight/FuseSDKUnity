@@ -94,11 +94,11 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.RegisterInAppPurchase(purchaseState, notifyId, productId, orderId, purchaseTime, developerPayload, price, currency);
 	}
 	#else
-	public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }
-	
-	public static void RegisterInAppPurchase(string productId, byte[] transactionReceipt, TransactionState transactionState)
-	{		
-		FusePlatformAPI.RegisterInAppPurchase(productId, transactionReceipt, transactionState);
+	public enum TransactionState { PURCHASING, PURCHASED, FAILED, RESTORED }	
+		
+	public static void RegisterInAppPurchase(string productId, string transactionId, byte[] transactionReceipt, TransactionState transactionState)
+	{
+		FusePlatformAPI.RegisterInAppPurchase(productId, transactionId, transactionReceipt, transactionState);
 	}
 	#endif
 	

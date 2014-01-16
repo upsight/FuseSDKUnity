@@ -71,7 +71,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 		transactionIDPurchasing = transaction.transactionIdentifier;
 		currentTransaction = transaction;
 		byte[] reciept = Convert.FromBase64String(transaction.base64EncodedTransactionReceipt);
-		FuseAPI.RegisterInAppPurchase(transaction.productIdentifier, reciept, FuseAPI.TransactionState.PURCHASING);		
+		FuseAPI.RegisterInAppPurchase(transaction.productIdentifier, transaction.transactionIdentifier, reciept, FuseAPI.TransactionState.PURCHASING);		
 	}
 	
 	void purchaseFailed( string error )
@@ -81,7 +81,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 		if( currentTransaction != null )
 		{
 			byte[] reciept = Convert.FromBase64String(currentTransaction.base64EncodedTransactionReceipt);
-			FuseAPI.RegisterInAppPurchase(currentTransaction.productIdentifier, reciept, FuseAPI.TransactionState.FAILED);			
+			FuseAPI.RegisterInAppPurchase(currentTransaction.productIdentifier, currentTransaction.transactionIdentifier, reciept, FuseAPI.TransactionState.FAILED);			
 			currentTransaction = null;
 		}
 	}	
@@ -92,7 +92,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 		if( currentTransaction != null )
 		{
 			byte[] reciept = Convert.FromBase64String(currentTransaction.base64EncodedTransactionReceipt);
-			FuseAPI.RegisterInAppPurchase(currentTransaction.productIdentifier, reciept, FuseAPI.TransactionState.FAILED);			
+			FuseAPI.RegisterInAppPurchase(currentTransaction.productIdentifier, currentTransaction.transactionIdentifier, reciept, FuseAPI.TransactionState.FAILED);			
 			currentTransaction = null;			
 		}
 	}
@@ -101,16 +101,16 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	{
 		if( transactionIDPurchased == transaction.transactionIdentifier )
 		{
-			//Debug.Log("Duplicate transaction " + transactionID);
+			//Debug.Log("Duplicate transaction " + transactionIDPurchased);
 			return;
 		}
 		transactionIDPurchased = transaction.transactionIdentifier;
 		
-		Debug.Log( "purchased product: " + transaction );
+		//Debug.Log( "purchased product: " + transaction );
 		
 		currentTransaction = null;
 		byte[] reciept = Convert.FromBase64String(transaction.base64EncodedTransactionReceipt);
-		FuseAPI.RegisterInAppPurchase(transaction.productIdentifier, reciept, FuseAPI.TransactionState.PURCHASED);		
+		FuseAPI.RegisterInAppPurchase(transaction.productIdentifier, transaction.transactionIdentifier, reciept, FuseAPI.TransactionState.PURCHASED);		
 	}
 	
 	void OnDestroy()

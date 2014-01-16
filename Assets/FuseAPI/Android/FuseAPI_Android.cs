@@ -518,12 +518,14 @@ public class FuseAPI_Android : FuseAPI
 #region User-to-User Push Notifications
 	new public static void UserPushNotification(string fuseId, string message)
 	{
-		Debug.Log("***** NOT YET SUPPORTED BY FUSE'S ANDROID API ***** FuseAPI:UserPushNotification(" + fuseId + "," + message + ")");
+		Debug.Log("FuseAPI:UserPushNotification(" + fuseId + "," + message + ")");
+		_fuseUnityPlugin.CallStatic("userPushNotification", fuseId, message);
 	}
 	
 	new public static void FriendsPushNotification(string message)
 	{
-		Debug.Log("***** NOT YET SUPPORTED BY FUSE'S ANDROID API ***** FuseAPI:FriendsPushNotification(" + message + ")");
+		Debug.Log("FuseAPI:FriendsPushNotification(" + message + ")");
+		_fuseUnityPlugin.CallStatic("friendsPushNotification", message);
 	}
 #endregion
 
