@@ -82,6 +82,14 @@ enum kFuseRejectFriendErrors
     FUSE_REJECT_FRIEND_REQUEST_FAILED
 };
 
+enum kFuseMigrateFriendErrors
+{
+    FUSE_MIGRATE_FRIENDS_NO_ERROR = 0,
+    FUSE_MIGRATE_FRIENDS_BAD_ID,
+    FUSE_MIGRATE_FRIENDS_NOT_CONNECTED,
+    FUSE_MIGRATE_FRIENDS_REQUEST_FAILED
+};
+
 enum kFuseFriendsListErrors
 {
     FUSE_FRIENDS_LIST_NO_ERROR = 0,
@@ -333,6 +341,34 @@ enum kFuseLoginErrors
  @since Fuse API version 1.22
  */
 -(void) friendRejected:(NSString*)_fuse_id Error:(NSNumber*)_error;
+
+/*!
+ * @brief This method indicates the result of a rejection of a request to migrate friends from one account to another
+ * @details This method is optional, and only needs to be handled if the application needs to respond to errors in migrating friends. An example implementation would be:
+ 
+ @code
+ 
+    -(void) friendsMigrated:(NSString*)_fuse_id Error:(NSNumber*)_error
+    {
+        if ([_error intValue] == FUSE_MIGRATE_FRIENDS_NO_ERROR)
+        {
+            // no error has occurred in accepting a friend
+        }
+        else
+        {
+            // an error has occurred
+        }
+    }
+ 
+ @endcode
+ 
+ @param _fuse_id [NSString*] The fuse ID of the account for which the friend's are to be migrated from
+ @param _error [int] The error value corresponding to the a value in kFuseMigrateFriendErrors
+ @see kFuseMigrateFriendErrors for all possible error codes
+ @see FuseAPI::migrateFriends: for more information on migrating friends
+ @since Fuse API version 1.34.1
+ */
+-(void) friendsMigrated:(NSString*)_fuse_id Error:(NSNumber*)_error;
 
 /*!
  * @brief This method indicates when the friends list on the client has been updated from the server
@@ -2316,6 +2352,38 @@ enum kFuseLoginErrors
  @since Fuse API version 1.22
  */
 +(void) rejectFriend:(NSString*)_fuse_id;
+
+/*!
+ * @brief This method is used to migrate (one-way) friends from an existing account to the logged in user's friends list
+ * @details In the case where a user is transferring between two different account types, this method allows the users's friends to be added to the target account. If a \<FuseDelegate\> has been registered using startSession:Delegate:, a callback can be made once the friends are migrated (in case a notification is required by the application). Please use this function with caution as it is one-way.  Friends from the previos account will be permanently moved and will not remain in the previous account.
+ 
+ To migrate friends:
+ 
+ @code
+ 
+ [FuseAPI migrateFriends:@"012345678"];
+ 
+ @endcode
+ 
+ The (optional) callback to the \<FuseDelegate\> is as follows:
+ 
+ @code
+ 
+ -(void) friendsMigrated:(NSString*)_fuse_id Error:(NSNumber*)_error
+ {
+ // A friend has been added
+ // If [error intValue] != 0, an error has occurred
+ // Please see kFuseMigrateFriendErrors for more information on all of the possible error codes
+ }
+ 
+ @endcode
+ 
+ @param _fuse_id [NSString*] This is the "Fuse ID" of the player whose friends are being migrated to the logged in account
+ @see startSession:Delegate: for information on setting up the \<FuseDelegate\>
+ @see FuseDelegate::friendsMigrated:Error: for more information on the delegate method
+ @since Fuse API version 1.34
+ */
++(void) migrateFriends:(NSString*)_fuse_id;
 
 #pragma mark Chat List Actions
 

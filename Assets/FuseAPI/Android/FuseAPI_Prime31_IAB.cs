@@ -46,9 +46,26 @@ public class FuseAPI_Prime31_IAB : MonoBehaviour
 		
 		// parse the price as a number value from the string in skuInfo
 		// we can't get the currency symbol this way, but passing an empty string to RegisterInAppPurchase will cause it to check the current locale for the currency type		
-		double price = double.Parse(skuInfo[0].price, System.Globalization.NumberStyles.Currency);
+		string priceString = skuInfo[0].price;
+        int i = 0;
+        while (!char.IsDigit(priceString, i))
+        {
+            i++;
+        }
+        priceString = priceString.Substring(i);
+        for (int j = 0; j < priceString.Length; j++)
+        {
+            if (!char.IsDigit(priceString, j) && !char.Equals('.', priceString[j]))
+            {
+                priceString = priceString.Remove(j, 1);
+                j--;
+            }
+        }
+
+		double price = double.Parse(priceString, System.Globalization.NumberStyles.Currency);
 		GooglePurchase purchase = savedPurchase;
-		DateTime time = FuseAPI.TimestampToDateTime(purchase.purchaseTime);
+		// purchaseTime from GoogleIAB is milliseconds since unix epoch
+		DateTime time = new DateTime(purchase.purchaseTime*TimeSpan.TicksPerMillisecond, DateTimeKind.Utc);
 		FuseAPI.RegisterInAppPurchase((FuseAPI.PurchaseState)purchase.purchaseState, purchase.purchaseToken, purchase.productId, purchase.orderId, time, purchase.developerPayload, price, null);		
 		
 		savedPurchase = null;

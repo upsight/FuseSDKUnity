@@ -923,6 +923,19 @@ public class FuseAPI_iOS : FuseAPI
 	
 	#region Friend List
 	[DllImport("__Internal")]
+	private static extern void FuseAPI_MigrateFriends(string fuseId);
+	
+	new public static void MigrateFriends(string fuseId)
+	{
+		FuseAPI_MigrateFriends(fuseId);
+	}
+	
+	private static void _FriendsMigrated(string fuseId, int error)
+	{
+		OnFriendsMigrated(fuseId, error);
+	}
+	
+	[DllImport("__Internal")]
 	private static extern void FuseAPI_UpdateFriendsListFromServer();
 	
 	new public static void UpdateFriendsListFromServer()

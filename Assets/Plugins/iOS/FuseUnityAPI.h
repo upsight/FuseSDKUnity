@@ -154,6 +154,8 @@ void FuseAPI_FriendsListUpdatedStart();
 void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* accountId, const char* alias, bool pending);
 void FuseAPI_FriendsListUpdatedEnd();
 void FuseAPI_FriendsListError(int error);
+void FuseAPI_MigrateFriends(const char* fuseId);
+void FuseAPI_FriendsMigrated(const char* fuseId, int error);
 int FuseAPI_GetFriendsListCount();
 const char* FuseAPI_GetFriendsListFriendFuseId(int index);
 const char* FuseAPI_GetFriendsListFriendAccountId(int index);

@@ -327,6 +327,21 @@ public class FuseAPI : MonoBehaviour
 	
 	#region Friend List
 	
+	public enum FuseMigrateFriendErrors
+	{
+	    FUSE_MIGRATE_FRIENDS_NO_ERROR = 0,
+	    FUSE_MIGRATE_FRIENDS_BAD_ID,
+	    FUSE_MIGRATE_FRIENDS_NOT_CONNECTED,
+	    FUSE_MIGRATE_FRIENDS_REQUEST_FAILED
+	};
+
+	public static event Action<string, int> FriendsMigrated;
+	
+	public static void MigrateFriends(string fuseId)
+	{
+		FusePlatformAPI.MigrateFriends(fuseId);
+	}
+	
 	public static void UpdateFriendsListFromServer()
 	{
 		FusePlatformAPI.UpdateFriendsListFromServer();
@@ -567,6 +582,14 @@ public class FuseAPI : MonoBehaviour
 		if (GameDataReceived != null)
 		{
 			GameDataReceived(fuseId, dataKey, data, requestId);
+		}
+	}
+	
+	static protected void OnFriendsMigrated(string fuseId, int error)
+	{
+		if( FriendsMigrated != null )
+		{
+			FriendsMigrated(fuseId, error);
 		}
 	}
 	

@@ -566,6 +566,12 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 // | Friend List |
 // +-------------+
 
+    public static void migrateFriends(String fuseId)
+    {
+        Log.d(_logTag, "migrateFriends(" + fuseId + ")");
+        FuseAPI.migrateFriends(fuseId, _gameDataCallback);
+    }
+
 	public static void updateFriendsListFromServer()
 	{
 		Log.d(_logTag, "updateFriendsListFromServer()");

@@ -27,6 +27,7 @@ static void* _FuseAPI_FriendsListUpdatedStart = NULL;
 static void* _FuseAPI_FriendsListUpdatedFriend = NULL;
 static void* _FuseAPI_FriendsListUpdatedEnd = NULL;
 static void* _FuseAPI_FriendsListError = NULL;
+static void* _FuseAPI_FriendsMigrated = NULL;
 static void* _FuseAPI_MailListReceivedStart = NULL;
 static void* _FuseAPI_MailListReceivedMail = NULL;
 static void* _FuseAPI_MailListReceivedEnd = NULL;
@@ -74,6 +75,7 @@ void FuseAPI_Initialize()
 	_FuseAPI_FriendsListUpdatedFriend = Mono_GetMethod("FuseAPI:_FriendsListUpdatedFriend");
 	_FuseAPI_FriendsListUpdatedEnd = Mono_GetMethod("FuseAPI:_FriendsListUpdatedEnd");
 	_FuseAPI_FriendsListError = Mono_GetMethod("FuseAPI:_FriendsListError");
+    _FuseAPI_FriendsMigrated = Mono_GetMethod("FuseAPI:_FriendsMigrated");
 	_FuseAPI_MailListReceivedStart = Mono_GetMethod("FuseAPI:_MailListReceivedStart");
 	_FuseAPI_MailListReceivedMail = Mono_GetMethod("FuseAPI:_MailListReceivedMail");
 	_FuseAPI_MailListReceivedEnd = Mono_GetMethod("FuseAPI:_MailListReceivedEnd");
@@ -728,6 +730,18 @@ void FuseAPI_FriendsListError(int error)
 	Mono_CallMethod(_FuseAPI_FriendsListError, args);
 }
 
+
+void FuseAPI_MigrateFriends(const char* fuseId)
+{
+    [FuseAPI migrateFriends:[NSString stringWithUTF8String:fuseId]];
+}
+
+void FuseAPI_FriendsMigrated(const char* fuseId, int error)
+{
+    void *args[] = { Mono_NewString(fuseId), &error };
+    Mono_CallMethod(_FuseAPI_FriendsMigrated, args);
+}
+
 int FuseAPI_GetFriendsListCount()
 {
 	return [[FuseAPI getFriendsList] count];
@@ -1109,7 +1123,11 @@ void FuseAPI_RegisterTapjoyReward(int amount)
 -(void) friendsListError:(NSNumber*)_error
 {
 	FuseAPI_FriendsListError(_error.intValue);
-	
+}
+
+-(void) friendsMigrated:(NSString*)_fuse_id Error:(NSNumber*)_error
+{
+    FuseAPI_FriendsMigrated(_fuse_id.UTF8String, _error.intValue);
 }
 
 #pragma mark Gifting

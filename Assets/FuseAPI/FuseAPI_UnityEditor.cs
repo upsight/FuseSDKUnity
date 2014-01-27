@@ -840,6 +840,12 @@ public class FuseAPI_UnityEditor : FuseAPI
 	#endregion
 
 	#region Friend List
+	
+	new public static void MigrateFriends(string fuseId)
+	{
+		OnFriendsMigrated(fuseId, (int)FuseAPI.FuseMigrateFriendErrors.FUSE_MIGRATE_FRIENDS_NOT_CONNECTED);
+	}		
+	
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_UpdateFriendsListFromServer();
 

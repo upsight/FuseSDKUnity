@@ -471,6 +471,21 @@ public class FuseAPI_Android : FuseAPI
 #endregion
 
 #region Friend List
+	
+	new public static void MigrateFriends(string fuseId)
+	{
+		Debug.Log("FuseAPI:MigrateFriends(" + fuseId + ")");
+		_fuseUnityPlugin.CallStatic("migrateFriends", fuseId);
+	}
+	
+	private void _FriendsMigrated(string dummy)
+	{
+		if( _args.Count == 2 && _args[0] != null && _args[1] != null )
+		{
+			OnFriendsMigrated(_args[0], Convert.ToInt32(_args[1]));
+		}
+	}
+	
 	new public static void UpdateFriendsListFromServer()
 	{
 		Debug.Log("FuseAPI:UpdateFriendsListFromServer()");
@@ -483,7 +498,7 @@ public class FuseAPI_Android : FuseAPI
 		_ParseCompositeValueIntoArgs(_fuseUnityPlugin.CallStatic<string>("getFriendsList"));
 		return ArgsToFriendsList();
 	}
-
+	
 	private static List<Friend> ArgsToFriendsList()
 	{
 		List<Friend> friendsList = new List<Friend>();

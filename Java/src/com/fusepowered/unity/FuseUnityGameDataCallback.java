@@ -15,6 +15,7 @@ import com.fusepowered.util.GameValue;
 import com.fusepowered.util.Mail;
 import com.fusepowered.util.Player;
 import com.fusepowered.util.UserTransactionLog;
+import com.fusepowered.util.FuseMigrateFriendsError;
 
 import android.util.Log;
 
@@ -159,6 +160,15 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 // +-------------+
 // | Friend List |
 // +-------------+
+
+    public void friendsMigrated(String fuseId, FuseMigrateFriendsError migrateFriendsError)
+    {
+        Log.d(_logTag, "friendsMigrated: " + fuseId + ", " + migrateFriendsError);
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentList", "");
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", fuseId);
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", Integer.toString(migrateFriendsError.getErrorCode()));
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_FriendsMigrated", "");
+    }
 
 	public void friendsListUpdated(ArrayList<Player> friendsList)
 	{
