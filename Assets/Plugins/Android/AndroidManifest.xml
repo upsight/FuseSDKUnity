@@ -49,12 +49,11 @@
 			</intent-filter>
 		</activity>
 		<activity android:name="com.fusepowered.m2.m2l.M2Activity" android:configChanges="keyboardHidden" />
-        <activity android:name="com.fusepowered.m2.m2l.M2RActivity" android:configChanges="keyboardHidden|orientation"/>
-        <activity android:name="com.fusepowered.m2.m2l.M2RBrowser" android:configChanges="keyboardHidden|orientation"/>
-        <activity android:name="com.fusepowered.m2.m2l.M2RvpActivity" android:configChanges="keyboardHidden|orientation"/>
-        <activity android:name="com.google.ads.AdActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
-        <activity android:name="com.fusepowered.m1.android.MMActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:configChanges="keyboardHidden|orientation|keyboard" />
-        <activity android:name="com.fusepowered.m1.android.VideoPlayer" android:configChanges="keyboardHidden|orientation|keyboard" />
+		<activity android:name="com.fusepowered.m2.m2l.M2RActivity" android:configChanges="keyboardHidden|orientation"/>
+		<activity android:name="com.fusepowered.m2.m2l.M2RBrowser" android:configChanges="keyboardHidden|orientation"/>
+		<activity android:name="com.fusepowered.m2.m2l.M2RvpActivity" android:configChanges="keyboardHidden|orientation"/>
+		<activity android:name="com.fusepowered.m1.android.MMActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:configChanges="keyboardHidden|orientation|keyboard" />
+		<activity android:name="com.fusepowered.m1.android.VideoPlayer" android:configChanges="keyboardHidden|orientation|keyboard" />
 		<activity android:name="com.fusepowered.a1.A1InterstitialActivity" android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize" android:hardwareAccelerated="true" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />		
 		<!-- end -->
 		
@@ -62,46 +61,48 @@
 		<activity
             android:name="com.fusepowered.unity.GCMJava" 
             android:label="@string/app_name" >
-        </activity>
+		</activity>
 		<receiver
             android:name="com.fusepowered.unity.FuseUnityGCMReceiver" 
             android:permission="com.google.android.c2dm.permission.SEND" >
-            <intent-filter>
- 
+            <intent-filter> 
                 <!-- Receives the actual messages. -->
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
                 <!-- Receives the registration id. -->
                 <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-				
-				<!-- replace com.fusepowered.unitysample with your bundle id"-->
+              
+				        <!-- replace com.fusepowered.unitysample with your bundle id"-->
                 <category android:name="com.fusepowered.unitysample" />
+              
             </intent-filter>
-        </receiver> 
-        <service android:name="com.fusepowered.unity.GCMIntentService" />
+		</receiver> 
+		<service android:name="com.fusepowered.unity.GCMIntentService" />
 		<!-- end -->
 		
 	</application>
 	<uses-feature android:glEsVersion="0x00010001" />
 	
-	<!-- GCM java -->
+	<!-- Permissions for Analytics -->
 	<uses-permission android:name="com.android.vending.BILLING"/>
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/> 
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <!-- GCM requires a Google account. -->
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <!-- Keeps the processor from sleeping when a message is received. -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Creates a custom permission so only this app can receive its messages. -->
-    <permission android:name="com.fusepowered.unitysample.permission.C2D_MESSAGE"
-		android:protectionLevel="signature" /> <!-- replace com.fusepowered.unitysample with your bundle id"-->
-    <uses-permission android:name="com.fusepowered.unitysample.permission.C2D_MESSAGE" /> <!-- replace com.fusepowered.unitysample with your bundle id"-->
-    <!-- This app has permission to register and receive data message. -->
-    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+  
+	<!-- Permissions for GCM -->
+	<!-- GCM requires a Google account. -->
+	<uses-permission android:name="android.permission.GET_ACCOUNTS" />
+	<!-- Keeps the processor from sleeping when a message is received. -->
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<!-- Creates a custom permission so only this app can receive its messages. -->
+	<permission android:name="com.fusepowered.unitysample.permission.C2D_MESSAGE"
+	android:protectionLevel="signature" /> <!-- replace com.fusepowered.unitysample with your bundle id"-->
+	<uses-permission android:name="com.fusepowered.unitysample.permission.C2D_MESSAGE" /> <!-- replace com.fusepowered.unitysample with your bundle id"-->
+	<!-- This app has permission to register and receive data message. -->
+	<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 	<!-- Permission to vibrate -->
-    <!--<uses-permission android:name="android.permission.VIBRATE" /> -->
+	<!--<uses-permission android:name="android.permission.VIBRATE" /> -->
 	
 	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="16" />
 	
