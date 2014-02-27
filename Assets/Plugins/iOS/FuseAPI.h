@@ -919,10 +919,10 @@ enum kFuseLoginErrors
                                                                       [NSNumber numberWithFloat:20.5f], @"Frame Rate",
                                                                       nil];
  
-    [FuseAPI registerEvent:@"Levels" ParameterName:@"1" ParameterValue:@"Level" Variables:dict];
+    [FuseAPI registerEvent:@"Levels" ParameterName:@"Level" ParameterValue:@"1" Variables:dict];
  
     // with no dictionary
-    [FuseAPI registerEvent:@"System" ParameterName:@"2" ParameterValue:@"Tutorial Level Reached" Variables:nil];
+    [FuseAPI registerEvent:@"System" ParameterName:@"Tutorial Level Reached" ParameterValue:@"2" Variables:nil];
  
     // with no parameters
     [FuseAPI registerEvent:@"Tutorial Finished" ParameterName:nil ParameterValue:nil  Variables:nil];
@@ -947,10 +947,10 @@ enum kFuseLoginErrors
  * @code
     
     // with variables
-    [FuseAPI registerEvent:@"Levels" ParameterName:@"1" ParameterValue:@"Level" VariableName:@"Coins" VariableValue:256];
+    [FuseAPI registerEvent:@"Levels" ParameterName:@"Level" ParameterValue:@"1" VariableName:@"Coins" VariableValue:256];
  
     // with no variables
-    [FuseAPI registerEvent:@"System" ParameterName:@"2" ParameterValue:@"Tutorial Level Reached" VariableName:nil VariableValue:nil];
+    [FuseAPI registerEvent:@"System" ParameterName:@"Tutorial Level Reached" ParameterValue:@"2" VariableName:nil VariableValue:nil];
  
     // with no parameters
     [FuseAPI registerEvent:@"Tutorial Finished" ParameterName:nil ParameterValue:nil VariableName:nil VariableValue:nil];

@@ -87,6 +87,7 @@ void FuseAPI_AdWillClose();
 
 void FuseAPI_RegisterPushToken(Byte* token, int size);
 void FuseAPI_DisplayNotifications();
+bool FuseAPI_IsNotificationAvailable();
 void FuseAPI_NotificationAction(const char* action);
 
 #pragma mark - More Games

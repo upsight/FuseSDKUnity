@@ -363,6 +363,11 @@ void FuseAPI_DisplayNotifications()
 	[FuseAPI displayNotifications];
 }
 
+bool FuseAPI_IsNotificationAvailable()
+{
+	return [FuseAPI isNotificationAvailable];
+}
+
 void FuseAPI_NotificationAction(const char* action)
 {
 	void *args[] = { Mono_NewString(action) };
