@@ -27,18 +27,7 @@
 		<meta-data android:name="unityplayer.ForwardNativeEventsToDalvik" android:value="true" />
 		</activity>
 		
-		<!-- FuseAPI -->
-		<activity android:name="com.fusepowered.fuseactivities.FuseApiAdBrowser"
-				  android:label="FuseApiAdBrowser"
-				  android:screenOrientation="behind"
-				  android:noHistory="true"
-				  android:configChanges="keyboardHidden|orientation">
-			<intent-filter>
-				<action android:name="%Application Package%.fuseactivities.FuseApiAdBrowser" />
-				<action android:name="android.intent.action.VIEW" />
-				<category android:name="android.intent.category.DEFAULT" />
-			</intent-filter>
-		</activity>
+		<!-- FuseAPI -->		
 		<activity android:name="com.fusepowered.fuseactivities.FuseApiMoregamesBrowser"
 				  android:label="FuseApiMoregamesBrowser">
 			<intent-filter>
@@ -47,13 +36,17 @@
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
 		</activity>
-		<activity android:name="com.fusepowered.m2.m2l.M2Activity" android:configChanges="keyboardHidden" />
-		<activity android:name="com.fusepowered.m2.m2l.M2RActivity" android:configChanges="keyboardHidden|orientation"/>
-		<activity android:name="com.fusepowered.m2.m2l.M2RBrowser" android:configChanges="keyboardHidden|orientation"/>
-		<activity android:name="com.fusepowered.m2.m2l.M2RvpActivity" android:configChanges="keyboardHidden|orientation"/>
-		<activity android:name="com.fusepowered.m1.android.MMActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:configChanges="keyboardHidden|orientation|keyboard" />
-		<activity android:name="com.fusepowered.m1.android.VideoPlayer" android:configChanges="keyboardHidden|orientation|keyboard" />
-		<activity android:name="com.fusepowered.a1.A1InterstitialActivity" android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize" android:hardwareAccelerated="true" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />		
+    <activity android:name="com.fusepowered.m2.m2l.M2Activity" android:configChanges="keyboardHidden|orientation" />
+    <activity android:name="com.fusepowered.m2.m2l.M2RActivity" android:configChanges="keyboardHidden|orientation"/>
+    <activity android:name="com.fusepowered.m2.m2l.M2RBrowser" android:configChanges="keyboardHidden|orientation"/>
+    <activity android:name="com.fusepowered.m2.m2l.M2RvpActivity" android:configChanges="keyboardHidden|orientation"/>
+    <activity android:name="com.fusepowered.m1.android.MMActivity" android:configChanges="keyboardHidden|orientation|keyboard" />
+    <activity android:name="com.fusepowered.m1.android.VideoPlayer" android:configChanges="keyboardHidden|orientation|keyboard" />
+    <activity android:name="com.fusepowered.a1.A1InterstitialActivity" android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize" android:hardwareAccelerated="true" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+    <activity android:name="com.fusepowered.ads.FuseInterstitialActivity" android:configChanges="keyboardHidden|orientation|screenSize" android:noHistory="true" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+    <activity android:name="com.vungle.sdk.VungleAdvert" android:configChanges="keyboardHidden|orientation|screenSize" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+    <service android:name="com.vungle.sdk.VungleIntentService" />
+    <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
 		<!-- end -->
 		
 		<!-- GCM -->

@@ -150,6 +150,14 @@ const char* FuseAPI_GetFuseId();
 
 #pragma mark - Friend List
 
+void FuseAPI_AddFriend(const char* fuseId);
+void FuseAPI_RemoveFriend(const char* fuseId);
+void FuseAPI_AcceptFriend(const char* fuseId);
+void FuseAPI_RejectFriend(const char* fuseId);
+void FuseAPI_FriendAdded(const char* fuseId, int error);
+void FuseAPI_FriendRemoved(const char* fuseId, int error);
+void FuseAPI_FriendAccepted(const char* fuseId, int error);
+void FuseAPI_FriendRejected(const char* fuseId, int error);
 void FuseAPI_UpdateFriendsListFromServer();
 void FuseAPI_FriendsListUpdatedStart();
 void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* accountId, const char* alias, bool pending);

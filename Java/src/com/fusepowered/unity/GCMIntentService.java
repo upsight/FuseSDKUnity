@@ -45,7 +45,7 @@ public class GCMIntentService extends FuseGCMBaseIntentService
 	@Override
 	protected void onUnregistered(Context context, String registrationId)
 	{
-		Log.i(TAG, "Device unregistered");
+		//Log.i(TAG, "Device unregistered");
 		UnityPlayer.UnitySendMessage("ECPNManager","UnregisterDevice",registrationId);
 	}
 
@@ -55,7 +55,7 @@ public class GCMIntentService extends FuseGCMBaseIntentService
 	@Override
 	protected void onMessage(Context context, Intent intent)
 	{
-		Log.i(TAG, "Received message");
+		//Log.i(TAG, "Received message");
 		//String message = intent.getExtras().getString("price");
 		
 		// notifies user
@@ -68,7 +68,7 @@ public class GCMIntentService extends FuseGCMBaseIntentService
 	@Override
 	protected void onDeletedMessages(Context context, int total)
 	{
-		Log.i(TAG, "Received deleted messages notification");
+		//Log.i(TAG, "Received deleted messages notification");
 	}
 
 	/**

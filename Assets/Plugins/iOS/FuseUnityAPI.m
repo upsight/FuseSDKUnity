@@ -23,6 +23,10 @@ static void* _FuseAPI_GameDataError = NULL;
 static void* _FuseAPI_GameDataReceivedStart = NULL;
 static void* _FuseAPI_GameDataReceivedKeyValue = NULL;
 static void* _FuseAPI_GameDataReceivedEnd = NULL;
+static void* _FuseAP_FriendAdded = NULL;
+static void* _FuseAP_FriendRemoved = NULL;
+static void* _FuseAP_FriendAccepted = NULL;
+static void* _FuseAP_FriendRejected = NULL;
 static void* _FuseAPI_FriendsListUpdatedStart = NULL;
 static void* _FuseAPI_FriendsListUpdatedFriend = NULL;
 static void* _FuseAPI_FriendsListUpdatedEnd = NULL;
@@ -71,6 +75,10 @@ void FuseAPI_Initialize()
 	_FuseAPI_GameDataReceivedStart = Mono_GetMethod("FuseAPI:_GameDataReceivedStart");
 	_FuseAPI_GameDataReceivedKeyValue = Mono_GetMethod("FuseAPI:_GameDataReceivedKeyValue");
 	_FuseAPI_GameDataReceivedEnd = Mono_GetMethod("FuseAPI:_GameDataReceivedEnd");
+	_FuseAP_FriendAdded = Mono_GetMethod("FuseAPI:_FriendAdded");
+	_FuseAP_FriendRemoved = Mono_GetMethod("FuseAPI:_FriendRemoved");
+	_FuseAP_FriendAccepted = Mono_GetMethod("FuseAPI:_FriendAccepted");
+	_FuseAP_FriendRejected = Mono_GetMethod("FuseAPI:_FriendRejected");
 	_FuseAPI_FriendsListUpdatedStart = Mono_GetMethod("FuseAPI:_FriendsListUpdatedStart");
 	_FuseAPI_FriendsListUpdatedFriend = Mono_GetMethod("FuseAPI:_FriendsListUpdatedFriend");
 	_FuseAPI_FriendsListUpdatedEnd = Mono_GetMethod("FuseAPI:_FriendsListUpdatedEnd");
@@ -735,6 +743,49 @@ void FuseAPI_FriendsListError(int error)
 	Mono_CallMethod(_FuseAPI_FriendsListError, args);
 }
 
+void FuseAPI_AddFriend(const char* fuseId)
+{
+    [FuseAPI addFriend:[NSString stringWithUTF8String:fuseId]];
+}
+
+void FuseAPI_RemoveFriend(const char* fuseId)
+{
+    [FuseAPI removeFriend:[NSString stringWithUTF8String:fuseId]];
+}
+
+void FuseAPI_AcceptFriend(const char* fuseId)
+{
+    [FuseAPI acceptFriend:[NSString stringWithUTF8String:fuseId]];
+}
+
+void FuseAPI_RejectFriend(const char* fuseId)
+{
+    [FuseAPI rejectFriend:[NSString stringWithUTF8String:fuseId]];
+}
+
+void FuseAPI_FriendAdded(const char* fuseId, int error)
+{
+    void *args[] = { Mono_NewString(fuseId), &error };
+    Mono_CallMethod(_FuseAP_FriendAdded, args);
+}
+
+void FuseAPI_FriendRemoved(const char* fuseId, int error)
+{
+    void *args[] = { Mono_NewString(fuseId), &error };
+    Mono_CallMethod(_FuseAP_FriendRemoved, args);
+}
+
+void FuseAPI_FriendAccepted(const char* fuseId, int error)
+{
+    void *args[] = { Mono_NewString(fuseId), &error };
+    Mono_CallMethod(_FuseAP_FriendAccepted, args);
+}
+
+void FuseAPI_FriendRejected(const char* fuseId, int error)
+{
+    void *args[] = { Mono_NewString(fuseId), &error };
+    Mono_CallMethod(_FuseAP_FriendRejected, args);
+}
 
 void FuseAPI_MigrateFriends(const char* fuseId)
 {
@@ -1109,6 +1160,26 @@ void FuseAPI_RegisterTapjoyReward(int amount)
 
 #pragma mark Friends List
 
+-(void) friendAdded:(NSString*)_fuse_id Error:(NSNumber*)_error
+{
+    FuseAPI_FriendAdded(_fuse_id.UTF8String, _error.intValue);
+}
+
+-(void) friendRemoved:(NSString*)_fuse_id Error:(NSNumber*)_error
+{
+    FuseAPI_FriendRemoved(_fuse_id.UTF8String, _error.intValue);
+}
+
+-(void) friendAccepted:(NSString*)_fuse_id Error:(NSNumber*)_error
+{
+    FuseAPI_FriendAccepted(_fuse_id.UTF8String, _error.intValue);
+}
+
+-(void) friendRejected:(NSString*)_fuse_id Error:(NSNumber*)_error
+{
+    FuseAPI_FriendRejected(_fuse_id.UTF8String, _error.intValue);
+}
+
 -(void) friendsListUpdated:(NSDictionary*)_friendsList
 {
 	FuseAPI_FriendsListUpdatedStart();
@@ -1161,12 +1232,12 @@ void FuseAPI_RegisterTapjoyReward(int amount)
 	FuseAPI_MailListError(_error.intValue);
 }
 
--(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id
+-(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id RequestID:(NSNumber*)_request_id
 {
 	FuseAPI_MailAcknowledged(_message_id.intValue, _fuse_id.UTF8String);
 }
 
--(void) mailError:(NSNumber*)_error
+-(void) mailError:(NSNumber*)_error RequestID:(NSNumber*)_request_id
 {
 	FuseAPI_MailError(_error.intValue);
 }

@@ -49,7 +49,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	
 	public void Initialize()
 	{
-		Log.d(_logTag, "Initialize()");
+		//Log.d(_logTag, "Initialize()");
 		
 		_this = this;
 		_gameDataCallback = new FuseUnityGameDataCallback();
@@ -60,14 +60,14 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	
 	public void onRestart()
 	{
-		Log.d(_logTag, "onRestart()");
+		//Log.d(_logTag, "onRestart()");
 
 		FuseAPI.initializeFuseAPI(_activity, _activity.getApplicationContext());
 	}
 	
 	public void onDestroy()
 	{
-		Log.d(_logTag, "onDestroy()");
+		//Log.d(_logTag, "onDestroy()");
 
 		if (_sessionStarted)
 		{
@@ -78,7 +78,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	
 	public static void onPause()
 	{
-		Log.d(_logTag, "onPause()");
+		//Log.d(_logTag, "onPause()");
 		
 		if (_sessionStarted)
 		{
@@ -88,22 +88,22 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	
 	public static void onResume()
 	{
-		Log.d(_logTag, "onResume()");
+		//Log.d(_logTag, "onResume()");
 
 		if (_sessionStarted)
 		{
-			FuseAPI.resumeSession(_gameDataCallback);
+			FuseAPI.resumeSession(_activity, _gameDataCallback);
 		}
 	}
 	
 	public void onBackPressed()
 	{
-		Log.d(_logTag, "onBackPressed()");
+		//Log.d(_logTag, "onBackPressed()");
 	}
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data)
 	{
-		Log.d(_logTag, "onActivityResult()");
+		//Log.d(_logTag, "onActivityResult()");
 //		super.onActivityResult(requestCode, resultCode, data);
 		/*
 		if (resultCode == RESULT_OK)
@@ -151,14 +151,14 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void startSession(String gameId)
 	{
-		Log.d(_logTag, "startSession(" + gameId + ")");
+		//Log.d(_logTag, "startSession(" + gameId + ")");
 		FuseAPI.startSession(gameId, _activity, _activity.getApplicationContext(), _gameDataCallback);
 		_sessionStarted = true;
 	}
 	
 	public static void registerForPushNotifications(String projectID)
 	{
-		Log.d(_logTag, "registerForPushNotifications(" + projectID + ")");	
+		//Log.d(_logTag, "registerForPushNotifications(" + projectID + ")");	
 		
 		Intent forGCM = new Intent(UnityPlayer.currentActivity.getApplicationContext(), FuseUnityAPI.class);
 		FuseAPI.setupGCM(projectID, forGCM, _activity, 0, 0);
@@ -171,7 +171,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	//@SuppressWarnings("deprecation")
 	public static void registerEvent(String message)
 	{
-		Log.d(_logTag, "registerEvent(" + message + ")");
+		//Log.d(_logTag, "registerEvent(" + message + ")");
 		//FuseAPI.registerEvent(message);
 		//registerEventWithDictionary(message, null, null, 0);
 		FuseAPI.registerEvent(message, "", "", "", null);
@@ -180,7 +180,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	@SuppressWarnings("deprecation")
 	public static void registerEventWithDictionary(String message, String[] keys, String[] attributes, int numValues)
 	{
-		Log.d(_logTag, "registerEvent(" + message + " + [variables] )");
+		//Log.d(_logTag, "registerEvent(" + message + " + [variables] )");
 		HashMap<String, String> data = new HashMap<String, String>();
 		for( int i = 0; i < numValues; i++ )
 		{
@@ -193,19 +193,19 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void registerEventStart()
 	{
-		Log.d(_logTag, "registerEventStart()");
+		//Log.d(_logTag, "registerEventStart()");
 		_registerEventData = new HashMap<String,Number>();
 	}
 
 	public static void registerEventKeyValue(String entryKey, double entryValue)
 	{
-		Log.d(_logTag, "registerEventKeyValue(" + entryKey + "," + entryValue + ")");
+		//Log.d(_logTag, "registerEventKeyValue(" + entryKey + "," + entryValue + ")");
 		_registerEventData.put(entryKey, entryValue);
 	}
 
 	public static int registerEventEnd(String name, String paramName, String paramValue)
 	{
-		Log.d(_logTag, "registerEventEnd(" + name + "," + paramName + "," + paramValue + ")");
+		//Log.d(_logTag, "registerEventEnd(" + name + "," + paramName + "," + paramValue + ")");
 		int result = FuseAPI.registerEvent(name, paramName, paramValue, _registerEventData).ordinal();
 		_registerEventData = null;
 		return result;
@@ -213,8 +213,8 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static int registerEvent(String name, String paramName, String paramValue, String variableName, double variableValue)
 	{
-		Log.d(_logTag, "registerEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
-		return FuseAPI.registerEvent(name, paramName, paramValue, variableName, variableValue).ordinal();
+		//Log.d(_logTag, "registerEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
+		return FuseAPI.registerEvent(name, paramName, paramValue, variableName, new Double(variableValue)).ordinal();
 	}
 
 
@@ -225,7 +225,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void registerInAppPurchase(String purchaseState, String purchaseToken, String productId, String orderId, long purchaseTime, String developerPayload)
 	{
-		Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + ")");
+		//Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + ")");
 		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, purchaseToken, productId, orderId, purchaseTime, developerPayload);
 		FuseAPI.registerInAppPurchase(purchase);
 	}
@@ -248,7 +248,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 			}
 		}
 
-		Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + "," + price + "," + currency + ")");
+		//Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + "," + price + "," + currency + ")");
 		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, purchaseToken, productId, orderId, purchaseTime, developerPayload);
 		FuseAPI.registerInAppPurchase(purchase, price, currency);
 	}
@@ -263,7 +263,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	{
 		_activity.runOnUiThread(new Runnable() {
 		    public void run() {
-				Log.d(_logTag, "checkAdAvailable()");
+				//Log.d(_logTag, "checkAdAvailable()");
 		    	FuseAPI.checkAdAvailable(_adCallback);
    		    }
 		});
@@ -271,7 +271,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void showAd()
 	{
-		Log.d(_logTag, "showAd()");
+		//Log.d(_logTag, "showAd()");
 
 		_activity.runOnUiThread(new Runnable() 
 		{
@@ -290,7 +290,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void displayNotifications()
 	{
-		Log.d(_logTag, "displayNotifications()");
+		//Log.d(_logTag, "displayNotifications()");
 
 		_activity.runOnUiThread(new Runnable() {
 		    public void run() {
@@ -299,16 +299,21 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 		});
 	}
 	
+	public static boolean isNotificationAvailable()
+	{
+		return FuseAPI.isNotificationAvailable();
+	}
+	
 	public static void userPushNotification(String fuse_id, String message)
 	{
-		Log.d(_logTag, "userPushNotification(" + fuse_id + ", " + message + ")");
+		//Log.d(_logTag, "userPushNotification(" + fuse_id + ", " + message + ")");
 		
 		FuseAPI.userPushNotification(fuse_id, message);
 	}
 	
 	public static void friendsPushNotification(String message)
 	{
-		Log.d(_logTag, "friendsPushNotification(" + message + ")");
+		//Log.d(_logTag, "friendsPushNotification(" + message + ")");
 		
 		FuseAPI.friendsPushNotification(message);
 	}
@@ -320,7 +325,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void displayMoreGames()
 	{
-		Log.d(_logTag, "displayMoreGames()");
+		//Log.d(_logTag, "displayMoreGames()");
 
 		_activity.runOnUiThread(new Runnable() {
 		    public void run() {
@@ -337,7 +342,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void registerGender(int gender)
 	{
-		Log.d(_logTag, "registerGender(" + gender + ")");
+		//Log.d(_logTag, "registerGender(" + gender + ")");
 		FuseAPI.registerGender(gender);
 	}
 
@@ -349,7 +354,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	
 	public static void facebookLogin(String facebookId, String name, String accessToken)
 	{
-		Log.d(_logTag, "facebookLogin(" + facebookId + "," + name + "," + accessToken + ")");
+		//Log.d(_logTag, "facebookLogin(" + facebookId + "," + name + "," + accessToken + ")");
 		FuseAPI.facebookLogin(facebookId, name, accessToken, _gameDataCallback);
 	}
 
@@ -360,60 +365,60 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void twitterLogin(String twitterId)
 	{
-		Log.d(_logTag, "twitterLogin(" + twitterId + ")");
+		//Log.d(_logTag, "twitterLogin(" + twitterId + ")");
 		FuseAPI.twitterLogin(twitterId, _gameDataCallback);
 	}
 
 	public static void openFeintLogin(String openFeintId)
 	{
-		Log.d(_logTag, "*** NOT IMPLEMENTED *** openFeintLogin(" + openFeintId + ")");
+		//Log.d(_logTag, "*** NOT IMPLEMENTED *** openFeintLogin(" + openFeintId + ")");
 	}
 
 	public static void fuseLogin(String fuseId, String alias)
 	{
-		Log.d(_logTag, "fuseLogin(" + fuseId + "," + alias + ")");
+		//Log.d(_logTag, "fuseLogin(" + fuseId + "," + alias + ")");
 		FuseAPI.fuseLogin(fuseId, alias, _gameDataCallback);
 	}
 	
 	public static void googlePlayLogin(String alias, String token)
 	{
-		Log.d(_logTag, "googlePlayLogin(" + alias + "," + token + ")");		
+		//Log.d(_logTag, "googlePlayLogin(" + alias + "," + token + ")");		
 		FuseAPI.googlePlayLogin(alias, token, _gameDataCallback);
 	}
 	
 	public static void gamecenterLogin(String accountID, String alias)
 	{
-		Log.d(_logTag, "gamecenterLogin(" + accountID + "," + alias + ")");
+		//Log.d(_logTag, "gamecenterLogin(" + accountID + "," + alias + ")");
 		FuseAPI.gamecenterLogin(accountID, alias, _gameDataCallback);
 	}
 	
 	public static void deviceLogin(String alias)
 	{
-		Log.d(_logTag, "deviceLogin(" + alias + ")");
+		//Log.d(_logTag, "deviceLogin(" + alias + ")");
 		FuseAPI.deviceLogin(alias, _gameDataCallback);
 	}
 	
 	public static String getFuseID()
 	{
-		Log.d(_logTag, "getFuseID() = " + FuseAPI.getFuseID());
+		//Log.d(_logTag, "getFuseID() = " + FuseAPI.getFuseID());
 		return FuseAPI.getFuseID();
 	}
 
 	public static String getOriginalAccountId()
 	{
-		Log.d(_logTag, "getOriginalAccountId()");
+		//Log.d(_logTag, "getOriginalAccountId()");
 		return FuseAPI.getOriginalAccountId();
 	}
 	
 	public static String getOriginalAccountAlias()
 	{
-		Log.d(_logTag, "getOriginalAccountAlias()");
+		//Log.d(_logTag, "getOriginalAccountAlias()");
 		return FuseAPI.getOriginalAccountAlias();
 	}
 
 	public static int getOriginalAccountType()
 	{
-		Log.d(_logTag, "getOriginalAccountType()");
+		//Log.d(_logTag, "getOriginalAccountType()");
 		return FuseAPI.getOriginalAccountType();
 	}
 
@@ -425,25 +430,25 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 		
 	public static int gamesPlayed()
 	{
-		Log.d(_logTag, "gamesPlayed() = " + FuseAPI.gamesPlayed());
+		//Log.d(_logTag, "gamesPlayed() = " + FuseAPI.gamesPlayed());
 		return FuseAPI.gamesPlayed();
 	}
 
 	public static String libraryVersion()
 	{
-		Log.d(_logTag, "libraryVersion() = " + FuseAPI.libraryVersion());
+		//Log.d(_logTag, "libraryVersion() = " + FuseAPI.libraryVersion());
 		return FuseAPI.libraryVersion();
 	}
 
 	public static boolean connected()
 	{
-		Log.d(_logTag, "connected() = " + FuseAPI.connected());
+		//Log.d(_logTag, "connected() = " + FuseAPI.connected());
 		return FuseAPI.connected();
 	}
 
 	public static void timeFromServer()
 	{
-		Log.d(_logTag, "timeFromServer()");
+		//Log.d(_logTag, "timeFromServer()");
 		FuseAPI.utcTimeFromServer(_gameDataCallback);
 	}
 
@@ -460,7 +465,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 			
 	public static void enableData(boolean enable)
 	{
-		Log.d(_logTag, "enableData(" + enable + ")");
+		//Log.d(_logTag, "enableData(" + enable + ")");
 		FuseAPI.userOptOut(enable ? 0 : 1);
 	}
 
@@ -480,84 +485,86 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void setGameDataStart()
 	{
-		Log.d(_logTag, "setGameDataStart()");
+		//Log.d(_logTag, "setGameDataStart()");
 		_setGameData = new HashMap<String,GameValue>();
 	}
 
 	public static void setGameDataKeyValue(String entryKey, String entryValue, boolean isBinary)
 	{
-		Log.d(_logTag, "setGameDataKeyValue(" + entryKey + "," + entryValue + "," + isBinary + ")");
+		//Log.d(_logTag, "setGameDataKeyValue(" + entryKey + "," + entryValue + "," + isBinary + ")");
 		_setGameData.put(entryKey, new GameValue(entryValue, isBinary));
 	}
 
 	public static int setGameDataEnd(String key, boolean isCollection, String fuseId)
 	{
-		Log.d(_logTag, "setGameDataEnd(" + key + "," + isCollection + "," + fuseId + ")");
+		//Log.d(_logTag, "setGameDataEnd(" + key + "," + isCollection + "," + fuseId + ")");
 
 		GameKeyValuePairs gameKeyValuePairs = new GameKeyValuePairs();
 		gameKeyValuePairs.setMap(_setGameData);
 
 		FuseUnityGameDataCallback callback = new FuseUnityGameDataCallback();
 
+		int requestID = 0;
 		if (key != null && !key.equals(""))
 		{
-			FuseAPI.setGameData(fuseId, key, gameKeyValuePairs, callback);
+			requestID = FuseAPI.setGameData(fuseId, key, gameKeyValuePairs, callback);
 		}
 		else if (fuseId.equals(getFuseID()))
 		{
-			FuseAPI.setGameData(gameKeyValuePairs, callback);
+			requestID = FuseAPI.setGameData(gameKeyValuePairs, callback);
 		}
 
 		_setGameData = null;
 
-		return callback.getRequestId();
+		return requestID;
 	}
 	
 	private static ArrayList<String> _getGameData;
 	public static void getGameDataStart()
 	{
-		Log.d(_logTag, "getGameDataStart()");
+		//Log.d(_logTag, "getGameDataStart()");
 		_getGameData = new ArrayList<String>();
 	}
 
 	public static void getGameDataKey(String entryKey)
 	{
-		Log.d(_logTag, "getGameDataKey(" + entryKey + ")");
+		//Log.d(_logTag, "getGameDataKey(" + entryKey + ")");
 		_getGameData.add(entryKey);
 	}
 
 	public static int getGameDataEnd(String key, String fuseId)
 	{
-		Log.d(_logTag, "getGameDataEnd(" + key + "," + fuseId + ")");
+		//Log.d(_logTag, "getGameDataEnd(" + key + "," + fuseId + ")");
 
 		FuseUnityGameDataCallback callback = new FuseUnityGameDataCallback();
 
+		int requestID = 0;
 		if (fuseId != null && !fuseId.equals(""))
 		{
 			if (key != null && !key.equals(""))
 			{
-				FuseAPI.getFriendGameData(key, _getGameData, callback, fuseId);
+				requestID = FuseAPI.getFriendGameData(key, _getGameData, callback, fuseId);
 			}
 			else
 			{
-				FuseAPI.getFriendGameData(_getGameData, callback, fuseId);
+				requestID = FuseAPI.getFriendGameData(_getGameData, callback, fuseId);
 			}
 		}
 		else
 		{
 			if (key != null && !key.equals(""))
 			{
-				FuseAPI.getGameData(key, _getGameData, callback);
+				requestID = FuseAPI.getGameData(key, _getGameData, callback);
 			}
 			else
 			{
-				FuseAPI.getGameData(_getGameData, callback);
+				requestID = FuseAPI.getGameData(_getGameData, callback);
 			}
 		}
 
 		_getGameData = null;
 
-		return callback.getRequestId();
+		return requestID;
 	}
 
 
@@ -566,21 +573,45 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 // | Friend List |
 // +-------------+
 
+	public static void addFriend(String fuseId)
+    {
+        //Log.d(_logTag, "addFriend(" + fuseId + ")");
+        FuseAPI.addFriend(fuseId, _gameDataCallback);
+    }
+
+	public static void removeFriend(String fuseId)
+    {
+        //Log.d(_logTag, "removeFriend(" + fuseId + ")");
+        FuseAPI.removeFriend(fuseId, _gameDataCallback);
+    }
+
+	public static void acceptFriend(String fuseId)
+    {
+        //Log.d(_logTag, "acceptFriend(" + fuseId + ")");
+        FuseAPI.acceptFriend(fuseId, _gameDataCallback);
+    }
+
+	public static void rejectFriend(String fuseId)
+    {
+        //Log.d(_logTag, "rejectFriend(" + fuseId + ")");
+        FuseAPI.rejectFriend(fuseId, _gameDataCallback);
+    }	
+
     public static void migrateFriends(String fuseId)
     {
-        Log.d(_logTag, "migrateFriends(" + fuseId + ")");
+        //Log.d(_logTag, "migrateFriends(" + fuseId + ")");
         FuseAPI.migrateFriends(fuseId, _gameDataCallback);
     }
 
 	public static void updateFriendsListFromServer()
 	{
-		Log.d(_logTag, "updateFriendsListFromServer()");
+		//Log.d(_logTag, "updateFriendsListFromServer()");
 		FuseAPI.updateFriendsListFromServer(_gameDataCallback);
 	}
 
 	public static String getFriendsList()
 	{
-		Log.d(_logTag, "getFriendsList()");
+		//Log.d(_logTag, "getFriendsList()");
 		List<Player> friendsList = FuseAPI.getFriendsList();
 		String returnValue = "";		
 		if( friendsList == null )
@@ -606,19 +637,19 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void getMailListFromServer()
 	{
-		Log.d(_logTag, "getMailListFromServer()");
+		//Log.d(_logTag, "getMailListFromServer()");
 		FuseAPI.getMailListFromServer(_gameDataCallback);
 	}
 
 	public static void getMailListFriendFromServer(String fuseId)
 	{
-		Log.d(_logTag, "getMailListFriendFromServer(" + fuseId + ")");
+		//Log.d(_logTag, "getMailListFriendFromServer(" + fuseId + ")");
 		FuseAPI.getMailListFriendFromServer(fuseId, _gameDataCallback);
 	}
 
 	public static String getMailList(String fuseId)
 	{
-		Log.d(_logTag, "getMailList(" + fuseId + ")");
+		//Log.d(_logTag, "getMailList(" + fuseId + ")");
 		List<Mail> mailList = FuseAPI.getMailList(fuseId);
 
 		String returnValue = "";
@@ -639,19 +670,19 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void setMailAsReceived(int messageId)
 	{
-		Log.d(_logTag, "setMailAsReceived(" + messageId + ")");
+		//Log.d(_logTag, "setMailAsReceived(" + messageId + ")");
 		FuseAPI.setMailAsReceived(messageId);
 	}
 
 	public static int sendMailWithGift(String fuseId, String message, int giftId, int giftAmount)
 	{
-		Log.d(_logTag, "sendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
+		//Log.d(_logTag, "sendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
 		return FuseAPI.sendMailWithGift(fuseId, message, giftId, giftAmount, _gameDataCallback);
 	}
 
 	public static int sendMail(String fuseId, String message)
 	{
-		Log.d(_logTag, "sendMailWithGift(" + fuseId + "," + message + ")");
+		//Log.d(_logTag, "sendMailWithGift(" + fuseId + "," + message + ")");
 		return FuseAPI.sendMail(fuseId, message, _gameDataCallback);
 	}
 
@@ -702,31 +733,31 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void registerLevel(int level)
 	{
-		Log.d(_logTag, "registerLevel(" + level + ")");
+		//Log.d(_logTag, "registerLevel(" + level + ")");
 		FuseAPI.registerLevel(level);
 	}
 	
 	public static void registerCurrency(int type, int balance)
 	{
-		Log.d(_logTag, "registerCurrency(" + type + "," + balance + ")");
+		//Log.d(_logTag, "registerCurrency(" + type + "," + balance + ")");
 		FuseAPI.registerCurrency(type, balance);
 	}
 	
 	public static void registerFlurryView()
 	{
-		Log.d(_logTag, "registerFlurryView()");
+		//Log.d(_logTag, "registerFlurryView()");
 		FuseAPI.registerFlurryView();
 	}
 	
 	public static void registerFlurryClick()
 	{
-		Log.d(_logTag, "registerFlurryClick()");
+		//Log.d(_logTag, "registerFlurryClick()");
 		FuseAPI.registerFlurryClick();
 	}
 	
 	public static void registerTapjoyReward(int amount)
 	{
-		Log.d(_logTag, "registerTapjoyReward(" + amount + ")");
+		//Log.d(_logTag, "registerTapjoyReward(" + amount + ")");
 		FuseAPI.registerTapjoyReward(amount);
 	}
 
@@ -741,7 +772,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 		// initialize the unity plugin
 		instance().Initialize();
 		
-		Log.d(_logTag, "Callback object set to: " + gameObject);
+		//Log.d(_logTag, "Callback object set to: " + gameObject);
 		callbackObj = gameObject;
 	}
 	
@@ -762,7 +793,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 	public static void SendMessage(String gameObject, String methodName, String message)
 	{
-		Log.d(_logTag, "Sending message: " + methodName + ": " + message);
+		//Log.d(_logTag, "Sending message: " + methodName + ": " + message);
 		UnityPlayer.UnitySendMessage(callbackObj, methodName, message == null ? "" : message);
 	}
 

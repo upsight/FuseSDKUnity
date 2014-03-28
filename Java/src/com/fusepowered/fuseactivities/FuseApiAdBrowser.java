@@ -83,8 +83,8 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
         action = extras.getString(Constants.EXTRA_AD_ACTION);
         adId = extras.getInt(Constants.EXTRA_AD_ID);
         String html = extras.getString(Constants.EXTRA_AD_HTML);
-        Log.d(TAG, String.format("Displaying ad [%d]...", adId));
-        Log.d(TAG, String.format("Ad body: %s", html));
+        //Log.d(TAG, String.format("Displaying ad [%d]...", adId));
+        //Log.d(TAG, String.format("Ad body: %s", html));
         if (html.length() < 1)
         {
         	FuseAPI.sendFuseAdSkip(FuseAdSkip.FUSE_AD_SKIP_NO_HTML.getErrorCode());
@@ -201,7 +201,7 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
         
         layout.startAnimation(FuseAnimationController.getSlideInAnimation(500));
 
-        Log.d("FUSEAD", "Recording a Fuse Ad being Displayed");
+        //Log.d("FUSEAD", "Recording a Fuse Ad being Displayed");
         FuseAPI.adDisplay(adId);
         if (FuseAPI.fuseAdCallback != null && FuseAPI.fuseAdCallback instanceof FuseAdCallback) {
             FuseAPI.fuseAdCallback.adDisplayed();
@@ -290,7 +290,7 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
     {
         super.onResume();
         FuseAPI.initializeFuseAPI(this, getApplicationContext());
-        FuseAPI.resumeSession(null);
+        FuseAPI.resumeSession(this, null);
     }
 
     @Override
@@ -358,7 +358,7 @@ public class FuseApiAdBrowser extends FuseApiBrowser {
 			public void onAnimationEnd(Animation animation) 
 			{
 				layout.setVisibility(View.GONE);
-				Log.d("AdBrowser", "Got an exit event for an ad");
+				//Log.d("AdBrowser", "Got an exit event for an ad");
 
 	            finish();				
 			}

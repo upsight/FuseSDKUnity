@@ -31,8 +31,11 @@ import com.fusepowered.fuseapi.NetworkService;
 import com.fusepowered.util.ActivityResults;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class FuseApiMoregamesBrowser extends FuseApiBrowser {
+public class FuseApiMoregamesBrowser extends FuseApiBrowser
+{
 	
+    public static boolean backPressed = false;
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,9 +52,14 @@ public class FuseApiMoregamesBrowser extends FuseApiBrowser {
         		LayoutParams.MATCH_PARENT);
         DisplayMetrics dm = this.getResources().getDisplayMetrics();
              
+        int height = (int) Math.floor(65 * dm.density);
+        int width = (int) Math.floor(45 * dm.density);
+        
+        Log.d("GAME CONFIGURATION", "This is the density " + dm.density);
+        
         LayoutParams paramsBTN = new FrameLayout.LayoutParams(
-        		66,
-        		45);
+        		height,
+        		width);
         
         AnimationSet set = new AnimationSet(true);
         Animation animation = new AlphaAnimation(0.0f, 1.0f);
@@ -112,9 +120,13 @@ public class FuseApiMoregamesBrowser extends FuseApiBrowser {
         
         ns.createImageButton(imageUrl, imageButton);
         
-        imageButton.setOnClickListener(new OnClickListener() {
+        imageButton.setOnClickListener(new OnClickListener()
+        {
 			@Override
-			public void onClick(View v) {
+			public void onClick(View v)
+            {
+                FuseApiMoregamesBrowser.backPressed = true;
+                FuseAPI.showingMoreGames = false;
 				Intent data = new Intent();
 				data.setData(Uri.parse(ActivityResults.MORE_GAMES_DISPLAYED.name()));
 				setResult(RESULT_OK,data);
@@ -135,9 +147,24 @@ public class FuseApiMoregamesBrowser extends FuseApiBrowser {
     }
     
     @Override
-	protected void onResume() {
+    protected void onPause()
+    {
+        super.onPause();
+        FuseAPI.showingMoreGames = false;
+        if( !backPressed )
+        {
+            FuseAPI.suspendSession();
+        }
+        backPressed = false;
+    }
+    
+    @Override
+	protected void onResume()
+    {
 		super.onResume();
 		FuseAPI.initializeFuseAPI(this, getApplicationContext());
+        FuseAPI.resumeSession(this, null);
+        FuseAPI.showingMoreGames = true;
 	}
     
 }

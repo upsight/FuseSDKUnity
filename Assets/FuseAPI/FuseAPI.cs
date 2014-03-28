@@ -134,6 +134,11 @@ public class FuseAPI : MonoBehaviour
 	{
 		FusePlatformAPI.DisplayNotifications();
 	}
+
+    public static bool IsNotificationAvailable()
+    {
+        return FusePlatformAPI.IsNotificationAvailable();
+    }
 	
 	public static event Action<string> NotificationAction;
 #endregion
@@ -326,6 +331,34 @@ public class FuseAPI : MonoBehaviour
 	#endregion
 	
 	#region Friend List
+	public enum FriendErrors
+	{
+		FUSE_FRIEND_NO_ERROR = 0,
+    	FUSEE_FRIEND_BAD_ID,
+    	FUSE_FRIEND_NOT_CONNECTED,
+    	FUSE_FRIEND_REQUEST_FAILED,
+	}	
+	public static event Action<string, int> FriendAdded;
+	public static event Action<string, int> FriendRemoved;
+	public static event Action<string, int> FriendAccepted;
+	public static event Action<string, int> FriendRejected;
+	
+	public static void AddFriend(string fuseId)
+	{
+		FusePlatformAPI.AddFriend(fuseId);
+	}
+	public static void RemoveFriend(string fuseId)
+	{
+		FusePlatformAPI.RemoveFriend(fuseId);
+	}
+	public static void AcceptFriend(string fuseId)
+	{
+		FusePlatformAPI.AcceptFriend(fuseId);
+	}
+	public static void RejectFriend(string fuseId)
+	{
+		FusePlatformAPI.RejectFriend(fuseId);
+	}	
 	
 	public enum FuseMigrateFriendErrors
 	{
@@ -582,6 +615,38 @@ public class FuseAPI : MonoBehaviour
 		if (GameDataReceived != null)
 		{
 			GameDataReceived(fuseId, dataKey, data, requestId);
+		}
+	}
+	
+	static protected void OnFriendAdded(string fuseId, int error)
+	{
+		if( FriendAdded != null )
+		{
+			FriendAdded(fuseId, error);
+		}
+	}
+	
+	static protected void OnFriendRemoved(string fuseId, int error)
+	{
+		if( FriendAdded != null )
+		{
+			FriendRemoved(fuseId, error);
+		}
+	}
+	
+	static protected void OnFriendAccepted(string fuseId, int error)
+	{
+		if( FriendAdded != null )
+		{
+			FriendAccepted(fuseId, error);
+		}
+	}
+	
+	static protected void OnFriendRejected(string fuseId, int error)
+	{
+		if( FriendAdded != null )
+		{
+			FriendRejected(fuseId, error);
 		}
 	}
 	

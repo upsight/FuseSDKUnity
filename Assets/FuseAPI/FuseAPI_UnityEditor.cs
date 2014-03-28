@@ -222,7 +222,7 @@ public class FuseAPI_UnityEditor : FuseAPI
 		}
 		else
 		{
-			_AdAvailabilityResponse(1,1);
+			_AdAvailabilityResponse(0,0);
 		}
 	}
 
@@ -275,6 +275,11 @@ public class FuseAPI_UnityEditor : FuseAPI
 		}
 	}
 
+    new public static bool IsNotificationAvailable()
+    {
+        return false;
+    }
+
 	private static void _NotificationAction(string action)
 	{
 		Debug.Log("FuseAPI:NotificationAction(" + action + ")");
@@ -282,9 +287,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 		OnNotificationAction(action);
 	}
 
-	#endregion
+    #endregion
 
-	#region More Games
+#region More Games
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_DisplayMoreGames();
 
@@ -308,9 +313,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 		OnOverlayWillClose();
 	}
 
-	#endregion
+    #endregion
 
-	#region Gender
+#region Gender
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterGender(int gender);
 
@@ -323,9 +328,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 			FuseAPI_RegisterGender((int)gender);
 		}
 	}
-	#endregion
+    #endregion
 
-	#region Account Login
+#region Account Login
 
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_GameCenterLogin();
@@ -518,9 +523,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 		OnAccountLoginComplete(type, accountId);
 	}
 
-	#endregion
+    #endregion
 
-	#region Miscellaneous
+#region Miscellaneous
 	[DllImport("__Internal")]
 	private static extern int FuseAPI_GamesPlayed();
 
@@ -625,9 +630,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 			return false;
 		}
 	}
-	#endregion
+    #endregion
 
-	#region Data Opt In/Out
+#region Data Opt In/Out
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_EnableData(bool enable);
 
@@ -659,9 +664,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 			return true;
 		}
 	}
-	#endregion
+    #endregion
 
-	#region User Game Data
+#region User Game Data
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_SetGameDataStart(string key, bool isCollection, string fuseId);
 	[DllImport("__Internal")]
@@ -837,9 +842,25 @@ public class FuseAPI_UnityEditor : FuseAPI
 	private static string _gameDataFuseId = "";
 	private static Hashtable _gameData = null;
 	private static int _gameDataRequestId = -1;
-	#endregion
+    #endregion
 
-	#region Friend List
+#region Friend List
+	new public static void AddFriend(string fuseId)
+	{
+		OnFriendAdded(fuseId, (int)FuseAPI.FriendErrors.FUSE_FRIEND_NO_ERROR);
+	}
+	new public static void RemoveFriend(string fuseId)
+	{
+		OnFriendRemoved(fuseId, (int)FuseAPI.FriendErrors.FUSE_FRIEND_NO_ERROR);
+	}
+	new public static void AcceptFriend(string fuseId)
+	{
+		OnFriendAccepted(fuseId, (int)FuseAPI.FriendErrors.FUSE_FRIEND_NO_ERROR);
+	}
+	new public static void RejectFriend(string fuseId)
+	{
+		OnFriendRejected(fuseId, (int)FuseAPI.FriendErrors.FUSE_FRIEND_NO_ERROR);
+	}
 	
 	new public static void MigrateFriends(string fuseId)
 	{
@@ -937,12 +958,12 @@ public class FuseAPI_UnityEditor : FuseAPI
 
 		return friendsList;
 	}
-	#endregion
+    #endregion
 
-	#region Chat List
-	#endregion
+#region Chat List
+    #endregion
 
-	#region User-to-User Push Notifications
+#region User-to-User Push Notifications
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_UserPushNotification(string fuseId, string message);
 
@@ -968,9 +989,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 			FuseAPI_FriendsPushNotification(message);
 		}
 	}
-	#endregion
+    #endregion
 
-	#region Gifting
+#region Gifting
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_GetMailListFromServer();
 	[DllImport("__Internal")]
@@ -1158,9 +1179,9 @@ public class FuseAPI_UnityEditor : FuseAPI
 		OnMailError(error);
 	}
 
-	#endregion
+    #endregion
 
-	#region Game Configuration Data
+#region Game Configuration Data
 	[DllImport("__Internal")]
 	private static extern string FuseAPI_GetGameConfigurationValue(string key);
 
@@ -1185,7 +1206,7 @@ public class FuseAPI_UnityEditor : FuseAPI
 		OnGameConfigurationReceived();
 	}
 
-	#endregion
+    #endregion
 
 #region Specific Event Registration
 	[DllImport("__Internal")]
