@@ -794,7 +794,74 @@ enum kFuseLoginErrors
  */
 +(void) startSession:(NSString *)_game_id Delegate:(id)_delegate;
 
+/*!
+ * @brief This method is used to initiate all communication with the Fuse system (and register a \<FuseDelegate\>)
+ * @details The startSession method is used to bootstrap all communications with the Fuse system. This should be called early in the applicationDidFinishLaunching method in your application delegate.  There is a second version of this method, startSession:Delegate: which performs the same operation as this method except it does not register a \<FuseDelegate\> delegate.
+
+ An example call would be:
+
+ @code
+ - (void)applicationDidFinishLaunching:(UIApplication *)application
+ {
+ [FuseAPI startSession: @"YOUR API KEY" Delegate:DELEGATE_REFERENCE];
+
+ ...
+ }
+ @endcode
+
+ When a session has been established by Fuse system, a callback will be sent to the registered \<FuseDelegate\> object using the following method:
+
+ @code
+ -(void) sessionStartReceived;
+ @endcode
+
+ * @param _game_id [NSString*] This is the 36-character API key assigned by the Fuse system.  Your API key is generated when you add your App to the Fuse dashboard system.  It can be found in the configuration tab in a specific game, or in the "Integrate API" section of the dashboard.  The API key is a 36-digit unique ID of the form 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'.
+ * @param _delegate [id] The \<FuseDelegate\> object to be registered to receive protocol callbacks (optional - see startSession: without this parameter if registering a delegate is not needed)
+ * @see FuseDelegate::sessionStartReceived for more information on the delegate method
+ * @see FuseDelegate::sessionLoginError: for more information on handling errors occurred when trying to start a session
+ * @param _registerForPush [BOOL] set whether startSession automatically registers for a push notification token. If _registerForPush is set to NO, you must manually call [FuseAPI registerForPushToken]
+ */
++(void) startSession:(NSString *)_game_id Delegate:(id)_delegate AutoRegisterForPush:(BOOL)_registerForPush;
+
+/*!
+ * @brief This method is used to describe the platform the API is running on
+ * @details The setPlatform method is an optional start up call for setting the platform the game is running on.
+
+ An example call would be:
+ 
+ @code
+ - (void)applicationDidFinishLaunching:(UIApplication *)application
+ {
+ ...
+ [FuseAPI startSession: @"YOUR API KEY"];
+ [FuseAPI setPlatform: @"unity-ios"];
+ 
+ ...
+ }
+ @endcode
+ 
+ * @param _game_Platform [NSString*] platform string to identify the platform represented, - expected platforms unity , air , marmalade , native
+ */
+
++(void) setPlatform:(NSString *)_game_Platform;
+
+
 #pragma mark Application Hooks
+/*!
+ * @brief This method is used to manually register for a push notification device token
+ * @details This method should only be called if startSession:(NSString *)_game_id Delegate:(id)_delegate AutoRegisterForPush:(BOOL)_registerForPush was called where _registerForPush was set to NO.
+
+ @code
+
+ [FuseAPI startSession:@"YOUR API KEY" Delegate:nil AutoRegisterForPush:NO];
+ ...
+ ...
+ [FuseAPI registerForPushToken];
+
+ @endcode
+ */
++(void) registerForPushToken;
+
 /*!
  * @brief This method is used to pass the registered Apple push token to the Fuse servers for future push notification messaging.
  * @details This method should be called from your application delegate file application:didRegisterForRemoteNotificationsWithDeviceToken method:
@@ -1280,6 +1347,37 @@ enum kFuseLoginErrors
  @param _gender [int] The enumerated gender of the user
  */
 +(void) registerGender:(int)_gender;
+
+#pragma mark Age
+/*!
+ * @brief This method registers an age for the user
+ * @details If an age is known for a user, call the following method to assign an age to the user:
+
+ @code
+
+ [FuseAPI registerAge:24];
+
+ @endcode
+
+ @param _age [int] The age of the user, in years
+ */
++(void) registerAge:(int)_age;
+
+/*!
+ * @brief This method registers a user's birthday
+ * @details If the birthday of a user in known for a user, call the following method to assign their birthday:
+
+ @code
+
+ [FuseAPI registerBithday:1978 Month:7 Day:9];
+
+ @endcode
+
+ @param _year [int] The year in which the user was born
+ @param _month [int] The month in which the user was born
+ @param _day [int] The day on which the user was born
+ */
++(void) registerBirthday:(int)_year Month:(int)_month Day:(int)_day;
 
 #pragma mark Account Login methods
 

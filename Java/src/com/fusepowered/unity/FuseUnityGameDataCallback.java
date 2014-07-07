@@ -20,6 +20,8 @@ import com.fusepowered.util.FuseAddFriendError;
 import com.fusepowered.util.FuseRemoveFriendError;
 import com.fusepowered.util.FuseAcceptFriendError;
 import com.fusepowered.util.FuseRejectFriendError;
+import com.fusepowered.util.FuseLoginError;
+
 
 import android.util.Log;
 
@@ -46,10 +48,10 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 		FuseUnityAPI.SendMessage("FuseAPI_Android", "_SessionStartReceived", "");
 	}
 	
-	public void sessionLoginError(int error)
+	public void sessionLoginError(FuseLoginError error)
 	{
-		Log.d(_logTag, "sessionLoginError(" + error + ")");
-		FuseUnityAPI.SendMessage("FuseAPI_Android", "_SessionLoginError", Integer.toString(error));
+		Log.d(_logTag, "sessionLoginError(" + error.getErrorCode() + ")");
+		FuseUnityAPI.SendMessage("FuseAPI_Android", "_SessionLoginError", Integer.toString(error.getErrorCode()));
 	}
 
 
@@ -93,6 +95,15 @@ public class FuseUnityGameDataCallback extends FuseGameDataCallback
 		FuseUnityAPI.SendMessage("FuseAPI_Android", "_TimeUpdated", Integer.toString(timestamp));
 	}
 
+    public void purchaseVerification(int verified, String transaction_id,  String originalTransactionID)
+    {
+        //Log.d(_logTag, "purchaseVerification(" + verified + ", " + transaction_id + ", " + originalTransactionID + ")");
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_ClearArgumentListAndSetFirst", Integer.toString(verified) );
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", transaction_id);
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_AddArgument", originalTransactionID);
+
+        FuseUnityAPI.SendMessage("FuseAPI_Android", "_PurchaseVerification", "");
+    }
 
 
 // +----------------+

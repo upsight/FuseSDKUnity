@@ -7,12 +7,24 @@ using System.Collections.Generic;
 
 public class FuseAPI_Prime31_IAB : MonoBehaviour
 {
+	public bool logging = false;
 #if UNITY_ANDROID && USING_PRIME31_ANDROID
 	
-	private GooglePurchase savedPurchase = null;
+	public static bool debugOutput = false;
 	
+	private GooglePurchase savedPurchase = null;
+
+	void Awake ()
+	{
+		if(logging)
+		{
+			FuseAPI_Prime31_IAB.debugOutput = true;
+		}
+	}
+
 	void Start () 
 	{
+
 		RegisterActions();
 	}
 	
@@ -85,6 +97,16 @@ public class FuseAPI_Prime31_IAB : MonoBehaviour
 	void PurchaseFailed( string error )
 	{
 		//FuseAPI.RegisterInAppPurchase(FuseAPI.PurchaseState.CANCELED, "", "", "", System.DateTime.Now, "");			
+	}
+
+
+	
+	new public static void FuseLog(string str)
+	{
+		if(debugOutput)
+		{
+			Debug.Log("FuseAPI: " + str);
+		}
 	}
 
 #endif//UNITY_ANDROID && USING_PRIME31_ANDROIDs

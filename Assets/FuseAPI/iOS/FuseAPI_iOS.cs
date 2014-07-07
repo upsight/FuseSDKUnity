@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 
 public class FuseAPI_iOS : FuseAPI
 {
+	public bool logging = false;
 	public bool persistent = true;
 	public bool registerForPushNotifications = true;	
 #if UNITY_IPHONE && !UNITY_EDITOR
@@ -19,6 +20,8 @@ public class FuseAPI_iOS : FuseAPI
 	private static bool _registerForPushNotificationsCalled = false;
 	private static Dictionary<string, string> gameConfig = new Dictionary<string, string>();
 	
+	public static bool debugOutput = false;
+
 	void Awake()
 	{
 		// preserve the prefab and all attached scripts through level loads
@@ -26,11 +29,15 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			DontDestroyOnLoad(transform.gameObject);
 		}
+		if(logging)
+		{
+			FuseAPI_iOS.debugOutput = true;
+		}
 	}
 	
 	new public static void StartSession(string gameId)
 	{
-//		Debug.Log("FuseAPI:StartSession(" + gameId + ")");
+		FuseLog("StartSession(" + gameId + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -46,7 +53,7 @@ public class FuseAPI_iOS : FuseAPI
 	{
 		if( registerForPushNotifications || _registerForPushNotificationsCalled )
 		{
-			//Debug.Log("FuseAPI: Registering for push notifications...");
+			FuseLog(" Registering for push notifications...");
 			NotificationServices.RegisterForRemoteNotificationTypes(RemoteNotificationType.Alert |
                                 RemoteNotificationType.Badge |
                                 RemoteNotificationType.Sound);
@@ -61,30 +68,35 @@ public class FuseAPI_iOS : FuseAPI
         	byte[] token = NotificationServices.deviceToken;
             if (token != null) 
 			{
-				//Debug.Log("FuseAPI: Device token registered!");
+				FuseLog(" Device token registered!");
                 FuseAPI_RegisterPushToken(token, token.Length); 
                 waitingForToken = false;
         	}
+            if( NotificationServices.registrationError != null )
+			{
+				FuseLog("Failed to register for push notification device token with error: " + NotificationServices.registrationError);
+				waitingForToken = false;
+			}
 		}
 	}	
 	
 	private static void _SessionStartReceived()
 	{
-//		Debug.Log("FuseAPI:SessionStartReceived()");
+		FuseLog("SessionStartReceived()");
 		
 		OnSessionStartReceived();
 	}
 	
 	private static void _SessionLoginError(int error)
 	{
-//		Debug.Log("FuseAPI:SessionLoginError(" + error + ")");
+		FuseLog("SessionLoginError(" + error + ")");
 		
 		OnSessionLoginError(error);
 	}
 	
-	#endregion
+    #endregion
 	
-	#region Analytics Event
+    #region Analytics Event
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterEvent(string message);
 	[DllImport("__Internal")]
@@ -100,7 +112,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterEvent(string message)
 	{
-//		Debug.Log("FuseAPI:RegisterEvent(" + message + ")");
+		FuseLog("RegisterEvent(" + message + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -110,7 +122,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterEvent(string message, Hashtable values)
 	{
-		//Debug.Log ("FuseAPI:RegisterEvent(" + message + ", [variables])");
+		FuseLog("RegisterEvent(" + message + ", [variables])");
 		
 		if( values == null )
 		{
@@ -145,13 +157,13 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static int RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
 	{
-		//Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");
+		FuseLog("RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");
 
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
 			FuseAPI_RegisterEventStart();
 			
-			//Debug.Log("Registering KVPs");
+			FuseLog("Registering KVPs");
 			foreach (DictionaryEntry entry in variables)
 			{
 				string entryKey = entry.Key as string;
@@ -175,7 +187,7 @@ public class FuseAPI_iOS : FuseAPI
 				}
 			}
 			
-			//Debug.Log("End Register Event");
+			FuseLog("End Register Event");
 			return FuseAPI_RegisterEventEnd(name, paramName, paramValue);
 		}
 
@@ -189,7 +201,7 @@ public class FuseAPI_iOS : FuseAPI
 			return -1;
 		}
 		
-		//Debug.Log ("FuseAPI:RegisterEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
+		FuseLog ("RegisterEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
 			return FuseAPI_RegisterEventVariable(name, paramName, paramValue, variableName, variableValue);
@@ -197,9 +209,9 @@ public class FuseAPI_iOS : FuseAPI
 
 		return -1;
 	}
-	#endregion
+    #endregion
 	
-	#region In-App Purchase Logging
+    #region In-App Purchase Logging
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterInAppPurchaseListStart();
 	[DllImport("__Internal")]
@@ -209,7 +221,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterInAppPurchaseList(Product[] products)
 	{
-//		Debug.Log ("FuseAPI:RegisterInAppPurchaseList(" + products.Length + ")");
+		FuseLog ("RegisterInAppPurchaseList(" + products.Length + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -234,7 +246,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterInAppPurchase(string productId, string transactionId, byte[] transactionReceipt, TransactionState transactionState)
 	{
-//		Debug.Log("FuseAPI:RegisterInAppPurchase(" + productId + "," + transactionReceipt.Length + "," + transactionState + ")");
+		FuseLog("RegisterInAppPurchase(" + productId + "," + transactionReceipt.Length + "," + transactionState + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -248,14 +260,14 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _PurchaseVerification(bool verified, string transactionId, string originalTransactionId)
 	{
-//		Debug.Log("FuseAPI:PurchaseVerification(" + verified + "," + transactionId + "," + originalTransactionId + ")");
+		FuseLog("PurchaseVerification(" + verified + "," + transactionId + "," + originalTransactionId + ")");
 		
 		OnPurchaseVerification(verified, transactionId, originalTransactionId);
 	}
 	
-	#endregion
+    #endregion
 	
-	#region Fuse Interstitial Ads
+    #region Fuse Interstitial Ads
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_CheckAdAvailable();
 	[DllImport("__Internal")]
@@ -263,13 +275,13 @@ public class FuseAPI_iOS : FuseAPI
 
 	new public static void CheckAdAvailable()
 	{
-		//Debug.Log("FuseAPI:CheckAdAvailable()");
+		FuseLog("CheckAdAvailable()");
 		FuseAPI_CheckAdAvailable();
 	}
 
 	new public static void ShowAd()
 	{
-//		Debug.Log("FuseAPI:ShowAd()");
+		FuseLog("ShowAd()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -283,21 +295,21 @@ public class FuseAPI_iOS : FuseAPI
 
 	private static void _AdAvailabilityResponse(int available, int error)
 	{
-		//Debug.Log("FuseAPI:AdAvailabilityResponse(" + available + "," + error + ")");
+		FuseLog("AdAvailabilityResponse(" + available + "," + error + ")");
 
 		OnAdAvailabilityResponse(available, error);
 	}
 
 	private static void _AdWillClose()
 	{
-//		Debug.Log("FuseAPI:AdWillClose()");
+		FuseLog("AdWillClose()");
 		
 		OnAdWillClose();
 	}
 	
-	#endregion
+    #endregion
 
-	#region Notifications
+    #region Notifications
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_DisplayNotifications();
 	
@@ -308,7 +320,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void DisplayNotifications()
 	{
-//		Debug.Log("FuseAPI:DisplayNotifications()");
+		FuseLog("DisplayNotifications()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -320,13 +332,13 @@ public class FuseAPI_iOS : FuseAPI
 	private static extern bool FuseAPI_IsNotificationAvailable();
     new public static bool IsNotificationAvailable()
     {
-//		Debug.Log("FuseAPI:IsNotificationAvailable()");
+		FuseLog("IsNotificationAvailable()");
         return FuseAPI_IsNotificationAvailable();
     }
 	
 	private static void _NotificationAction(string action)
 	{
-//		Debug.Log("FuseAPI:NotificationAction(" + action + ")");
+		FuseLog("NotificationAction(" + action + ")");
 		
 		OnNotificationAction(action);
 	}
@@ -339,7 +351,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void DisplayMoreGames()
 	{
-//		Debug.Log("FuseAPI:DisplayMoreGames()");
+		FuseLog("DisplayMoreGames()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -353,7 +365,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _OverlayWillClose()
 	{
-//		Debug.Log("FuseAPI:OverlayWillClose()");
+		FuseLog("OverlayWillClose()");
 		OnOverlayWillClose();
 	}
 	
@@ -365,7 +377,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterGender(Gender gender)
 	{
-//		Debug.Log("FuseAPI:RegisterGender(" + gender + ")");
+		FuseLog("RegisterGender(" + gender + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -381,7 +393,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void GameCenterLogin()
 	{
-//		Debug.Log ("FuseAPI:GameCenterLogin()");
+		FuseLog ("GameCenterLogin()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -398,7 +410,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void FacebookLogin(string facebookId, string name, string accessToken)
 	{
-//		Debug.Log ("FuseAPI:FacebookLogin(" + facebookId + "," + name + "," + accessToken + ")");
+		FuseLog ("FacebookLogin(" + facebookId + "," + name + "," + accessToken + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -415,7 +427,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void FacebookLogin(string facebookId, string name, Gender gender, string accessToken)
 	{
-//		Debug.Log ("FuseAPI:FacebookLogin(" + facebookId + "," + name " "," + gender + "," + accessToken + ")");
+		FuseLog ("FacebookLogin(" + facebookId + "," + name + "," + gender + "," + accessToken + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -432,7 +444,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void TwitterLogin(string twitterId)
 	{
-//		Debug.Log ("FuseAPI:TwitterLogin(" + twitterId + ")");
+		FuseLog ("TwitterLogin(" + twitterId + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -448,7 +460,7 @@ public class FuseAPI_iOS : FuseAPI
 	private static extern void FuseAPI_DeviceLogin(string alias);
 	new public static void DeviceLogin(string alias)
 	{
-		//Debug.Log ("FuseAPI:DeviceLogin(" + alias + ")");
+		FuseLog ("DeviceLogin(" + alias + ")");
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
 			FuseAPI_DeviceLogin(alias);
@@ -464,7 +476,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void OpenFeintLogin(string openFeintId)
 	{
-//		Debug.Log ("FuseAPI:OpenFeintLogin(" + openFeintId + ")");
+		FuseLog ("OpenFeintLogin(" + openFeintId + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -481,7 +493,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void FuseLogin(string fuseId, string alias)
 	{
-//		Debug.Log ("FuseAPI:FuseLogin(" + fuseId + "," + alias + ")");
+		FuseLog(" FuseLogin(" + fuseId + "," + alias + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -498,7 +510,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void GooglePlayLogin(string alias, string token)
 	{		
-//		Debug.Log ("FuseAPI:GooglePlayLogin(" + alias + "," + token + ")");
+		FuseLog("GooglePlayLogin(" + alias + "," + token + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -515,7 +527,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static string GetOriginalAccountAlias()
 	{		
-//		Debug.Log("FuseAPI:GetOriginalAccountAlias()");		
+		FuseLog("GetOriginalAccountAlias()");		
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -538,13 +550,13 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			string accountId = FuseAPI_GetOriginalAccountId();
 			
-//			Debug.Log("FuseAPI:GetOriginalAccountId()==" + accountId);
+			FuseLog("GetOriginalAccountId()==" + accountId);
 			
 			return accountId;
 		}
 		else
 		{
-//			Debug.Log("FuseAPI:GetOriginalAccountId()");
+			FuseLog("GetOriginalAccountId()");
 			
 			return "";
 		}
@@ -559,13 +571,13 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			AccountType accountType = FuseAPI_GetOriginalAccountType();
 			
-//			Debug.Log("FuseAPI:GetOriginalAccountType()==" + accountType);
+			FuseLog("GetOriginalAccountType()==" + accountType);
 			
 			return accountType;
 		}
 		else
 		{
-//			Debug.Log("FuseAPI:GetOriginalAccountType()");
+			FuseLog("GetOriginalAccountType()");
 			
 			return AccountType.NONE;
 		}
@@ -573,7 +585,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _AccountLoginComplete(AccountType type, string accountId)
 	{
-//		Debug.Log("FuseAPI:AccountLoginComplete(" + type + "," + accountId + ")");
+		FuseLog("AccountLoginComplete(" + type + "," + accountId + ")");
 		
 		OnAccountLoginComplete(type, accountId);
 	}
@@ -590,7 +602,7 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			int gamesPlayed = FuseAPI_GamesPlayed();
 			
-//			Debug.Log("FuseAPI:GamesPlayed()==" + gamesPlayed);
+			FuseLog("GamesPlayed()==" + gamesPlayed);
 		
 			return gamesPlayed;
 		}
@@ -609,7 +621,7 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			string libraryVersion = FuseAPI_LibraryVersion();
 			
-//			Debug.Log("FuseAPI:LibraryVersion()==" + libraryVersion);
+			FuseLog("LibraryVersion()==" + libraryVersion);
 		
 			return libraryVersion;
 		}
@@ -627,7 +639,7 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			bool connected = FuseAPI_Connected();
 			
-//			Debug.Log("FuseAPI:Connected()==" + connected);
+			FuseLog("Connected()==" + connected);
 		
 			return connected;
 		}
@@ -642,7 +654,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void TimeFromServer()
 	{
-//		Debug.Log("FuseAPI:TimeFromServer()");
+		FuseLog("TimeFromServer()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -656,7 +668,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _TimeUpdated(long timestamp)
 	{
-//		Debug.Log("FuseAPI:TimeUpdated(" + timestamp + ")");
+		FuseLog("TimeUpdated(" + timestamp + ")");
 		
 		if (timestamp >= 0)
 		{
@@ -675,7 +687,7 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			bool notReadyToTerminate = FuseAPI_NotReadyToTerminate();
 			
-//			Debug.Log("FuseAPI:NotReadyToTerminate()==" + notReadyToTerminate);
+			FuseLog("NotReadyToTerminate()==" + notReadyToTerminate);
 		
 			return notReadyToTerminate;
 		}
@@ -684,6 +696,15 @@ public class FuseAPI_iOS : FuseAPI
 			return false;
 		}
 	}
+
+	new public static void FuseLog(string str)
+	{
+		if(debugOutput)
+		{
+			Debug.Log("FuseAPI: " + str);
+		}
+	}
+
     #endregion
 	
     #region Data Opt In/Out
@@ -692,7 +713,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void EnableData(bool enable)
 	{
-//		Debug.Log("FuseAPI:EnableData(" + enable + ")");
+		FuseLog("EnableData(" + enable + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -709,7 +730,7 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			bool enabled = FuseAPI_DataEnabled();
 			
-//			Debug.Log("FuseAPI:DataEnabled()==" + enabled);
+			FuseLog("DataEnabled()==" + enabled);
 		
 			return enabled;
 		}
@@ -745,7 +766,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static int SetGameData(string key, Hashtable data, bool isCollection, string fuseId)
 	{
-//		Debug.Log ("FuseAPI:SetGameData(" + key + "," + isCollection + "," + fuseId + ")");
+		FuseLog("SetGameData(" + key + "," + isCollection + "," + fuseId + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -779,7 +800,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _GameDataError(int error, int requestId)
 	{
-//		Debug.Log("FuseAPI:GameDataError(" + error + "," + requestId + ")");
+		FuseLog("GameDataError(" + error + "," + requestId + ")");
 		
 		OnGameDataError(error, requestId);
 	}
@@ -808,7 +829,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static int GetFriendGameData(string fuseId, string key, string[] keys)
 	{
-//		Debug.Log ("FuseAPI:GetGameData(" + fuseId + "," + key + ")");
+		FuseLog("GetGameData(" + fuseId + "," + key + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -832,14 +853,14 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _GameDataSetAcknowledged(int requestId)
 	{
-//		Debug.Log("FuseAPI:GameDataSetAcknowledged(" + requestId + ")");
+		FuseLog("GameDataSetAcknowledged(" + requestId + ")");
 		
 		OnGameDataSetAcknowledged(requestId);
 	}
 	
 	private static void _GameDataReceivedStart(string fuseId, string key, int requestId)
 	{
-//		Debug.Log("FuseAPI:GameDataReceivedStart(" + fuseId + "," + key + ")");
+		FuseLog("GameDataReceivedStart(" + fuseId + "," + key + ")");
 		
 		_gameDataFuseId = fuseId;
 		_gameDataKey = key;
@@ -849,7 +870,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _GameDataReceivedKeyValue(string key, string value, bool isBinary)
 	{
-//		Debug.Log("FuseAPI:GameDataReceivedKeyValue(" + key + "," + value + "," + isBinary + ")");
+		FuseLog("GameDataReceivedKeyValue(" + key + "," + value + "," + isBinary + ")");
 		
 		if (isBinary)
 		{
@@ -864,7 +885,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _GameDataReceivedEnd()
 	{
-//		Debug.Log("FuseAPI:GameDataReceivedEnd()");
+		FuseLog("GameDataReceivedEnd()");
 		
 		OnGameDataReceived(_gameDataFuseId, _gameDataKey, _gameData, _gameDataRequestId);
 		_gameDataRequestId = -1;
@@ -878,7 +899,7 @@ public class FuseAPI_iOS : FuseAPI
 
 	new public static Dictionary<string, string> GetGameConfig()
 	{
-		//Debug.Log("FuseAPI:GetGameConfig()");
+		FuseLog("GetGameConfig()");
 		
 		// re-populate the game config
 		FuseAPI_RefreshGameConfiguration();		
@@ -888,7 +909,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _GameConfigInit()
 	{
-		//Debug.Log("FuseAPI:GameConfigInit()");
+		FuseLog("GameConfigInit()");
 		
 		// clear the dictionary
 		gameConfig.Clear();
@@ -896,7 +917,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _UpdateGameConfig(string key, string value)
 	{
-		//Debug.Log("FuseAPI:UpdateGameConfig()");
+		FuseLog("UpdateGameConfig()");
 		
 		// add value for key here
 		gameConfig.Add(key, value);
@@ -911,13 +932,13 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			string fuseId = FuseAPI_GetFuseId();
 			
-//			Debug.Log("FuseAPI:GetFuseId()==" + fuseId);
+			FuseLog("GetFuseId()==" + fuseId);
 			
 			return fuseId;
 		}
 		else
 		{
-//			Debug.Log("FuseAPI:GetFuseId()");
+			FuseLog("GetFuseId()");
 			
 			return "";
 		}
@@ -993,7 +1014,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void UpdateFriendsListFromServer()
 	{
-//		Debug.Log("FuseAPI:UpdateFriendsListFromServer()");
+		FuseLog("UpdateFriendsListFromServer()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1008,14 +1029,14 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _FriendsListUpdatedStart()
 	{
-//		Debug.Log("FuseAPI:FriendsListUpdatedStart()");
+		FuseLog("FriendsListUpdatedStart()");
 		
 		_friendsList = new List<Friend>();
 	}
 	
 	private static void _FriendsListUpdatedFriend(string fuseId, string accountId, string alias, bool pending)
 	{
-//		Debug.Log("FuseAPI:FriendsListUpdatedFriend(" + fuseId + "," + accountId + "," + alias + "," + pending + ")");
+		FuseLog("FriendsListUpdatedFriend(" + fuseId + "," + accountId + "," + alias + "," + pending + ")");
 		
 		Friend friend = new Friend();
 		friend.fuseId = fuseId;
@@ -1028,7 +1049,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _FriendsListUpdatedEnd()
 	{
-//		Debug.Log("FuseAPI:FriendsListUpdatedEnd()");
+		FuseLog("FriendsListUpdatedEnd()");
 		
 		OnFriendsListUpdated(_friendsList);
 		
@@ -1037,7 +1058,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _FriendsListError(int error)
 	{
-//		Debug.Log("FuseAPI:FriendsListError(" + error + ")");
+		FuseLog("FriendsListError(" + error + ")");
 		
 		OnFriendsListError(error);
 	}
@@ -1057,7 +1078,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static List<Friend> GetFriendsList()
 	{
-//		Debug.Log("FuseAPI:GetFriendsList()");
+		FuseLog("GetFriendsList()");
 		
 		List<Friend> friendsList = new List<Friend>();
 		
@@ -1090,7 +1111,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void UserPushNotification(string fuseId, string message)
 	{
-//		Debug.Log("FuseAPI:UserPushNotification(" + fuseId +"," + message + ")");
+		FuseLog("UserPushNotification(" + fuseId +"," + message + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1103,7 +1124,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void FriendsPushNotification(string message)
 	{
-//		Debug.Log("FuseAPI:FriendsPushNotification(" + message + ")");
+		FuseLog("FriendsPushNotification(" + message + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1120,7 +1141,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void GetMailListFromServer()
 	{
-//		Debug.Log("FuseAPI:GetMailListFromServer()");
+		FuseLog("GetMailListFromServer()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1135,7 +1156,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void GetMailListFriendFromServer(string fuseId)
 	{
-//		Debug.Log("FuseAPI:GetMailListFriendFromServer(" + fuseId + ")");
+		FuseLog("GetMailListFriendFromServer(" + fuseId + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1150,7 +1171,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _MailListReceivedStart(string fuseId)
 	{
-		//Debug.Log("FuseAPI:MailListReceivedStart()");
+		FuseLog("MailListReceivedStart()");
 		
 		_mailListFuseId = fuseId;
 		_mailList = new List<Mail>();
@@ -1158,7 +1179,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _MailListReceivedMail(int messageId, long timestamp, string alias, string message, int giftId, string giftName, int giftAmount)
 	{
-		//Debug.Log("FuseAPI:MailListReceivedMail(" + messageId + "," + timestamp + "," + alias + "," + message + "," + giftId + "," + giftName + "," + giftAmount + ")");
+		FuseLog("MailListReceivedMail(" + messageId + "," + timestamp + "," + alias + "," + message + "," + giftId + "," + giftName + "," + giftAmount + ")");
 		
 		Mail mail = new Mail();
 		mail.messageId = messageId;
@@ -1174,7 +1195,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _MailListReceivedEnd()
 	{
-		//Debug.Log("FuseAPI:MailListReceivedEnd()");
+		FuseLog("MailListReceivedEnd()");
 		
 		OnMailListReceived(_mailList, _mailListFuseId);
 		
@@ -1184,7 +1205,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _MailListError(int error)
 	{
-		//Debug.Log("FuseAPI:MailListError(" + error + ")");
+		FuseLog("MailListError(" + error + ")");
 		
 		OnMailListError(error);
 	}
@@ -1211,7 +1232,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static List<Mail> GetMailList(string fuseId)
 	{
-		//Debug.Log("FuseAPI:GetMailList()");
+		FuseLog("GetMailList()");
 		
 		List<Mail> mailList = new List<Mail>();
 		
@@ -1242,7 +1263,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void SetMailAsReceived(int messageId)
 	{
-		//Debug.Log("FuseAPI:SetMailAsReceived(" + messageId + ")");
+		FuseLog("SetMailAsReceived(" + messageId + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1255,7 +1276,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static int SendMail(string fuseId, string message)
 	{
-		//Debug.Log("FuseAPI:SendMail(" + fuseId + "," + message + ")");
+		FuseLog("SendMail(" + fuseId + "," + message + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1273,7 +1294,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
 	{
-		//Debug.Log("FuseAPI:SendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
+		FuseLog("SendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1288,14 +1309,14 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _MailAcknowledged(int messageId, string fuseId, int requestID)
 	{
-		//Debug.Log("FuseAPI:MailAcknowledged()");
+		FuseLog("MailAcknowledged()");
 		
 		OnMailAcknowledged(messageId, fuseId, requestID);
 	}
 	
 	private static void _MailError(int error)
 	{
-		//Debug.Log("FuseAPI:MailError(" + error + ")");
+		FuseLog("MailError(" + error + ")");
 		
 		OnMailError(error);
 	}
@@ -1312,13 +1333,13 @@ public class FuseAPI_iOS : FuseAPI
 		{
 			string value = FuseAPI_GetGameConfigurationValue(key);
 			
-//			Debug.Log("FuseAPI:GetGameConfigurationValue(" + key + ")==" + value + "");
+			FuseLog("GetGameConfigurationValue(" + key + ")==" + value + "");
 			
 			return value;
 		}
 		else
 		{
-//			Debug.Log("FuseAPI:GetGameConfigurationValue(" + key + ")");
+			FuseLog("GetGameConfigurationValue(" + key + ")");
 			
 			return "";
 		}
@@ -1326,7 +1347,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	private static void _GameConfigurationReceived()
 	{
-//		Debug.Log("FuseAPI:GameConfigurationReceived()");
+		FuseLog("GameConfigurationReceived()");
 		
 		OnGameConfigurationReceived();
 	}
@@ -1344,10 +1365,14 @@ public class FuseAPI_iOS : FuseAPI
 	private static extern void FuseAPI_RegisterFlurryClick();
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterTapjoyReward(int amount);
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterAge(int age);
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterBirthday(int year, int month, int day);
 	
 	new public static void RegisterLevel(int level)
 	{
-//		Debug.Log("FuseAPI:RegisterLevel(" + level + ")");
+		FuseLog("RegisterLevel(" + level + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1357,7 +1382,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterCurrency(int type, int balance)
 	{
-//		Debug.Log("FuseAPI:RegisterCurrency(" + type + "," + balance + ")");
+		FuseLog("RegisterCurrency(" + type + "," + balance + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1367,7 +1392,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterFlurryView()
 	{
-//		Debug.Log("FuseAPI:RegisterFlurryView()");
+		FuseLog("RegisterFlurryView()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1377,7 +1402,7 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterFlurryClick()
 	{
-//		Debug.Log("FuseAPI:RegisterFlurryClick()");
+		FuseLog("RegisterFlurryClick()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
@@ -1387,13 +1412,28 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new public static void RegisterTapjoyReward(int amount)
 	{
-//		Debug.Log("FuseAPI:RegisterTapjoyReward(" + amount + ")");
+		FuseLog("RegisterTapjoyReward(" + amount + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
 			FuseAPI_RegisterTapjoyReward(amount);
 		}
 	}
+	
+	new public static void RegisterAge(int age)
+	{
+		// Available in 1.35.2 and above
+		FuseLog("RegisterAge(" + age + ")");
+		FuseAPI_RegisterAge(age);
+	}
+	
+	new public static void RegisterBirthday(int year, int month, int day)
+	{
+		// Available in 1.35.2 and above
+		FuseLog("RegisterBirthday(" + year + ", " + month + ", " + day + ")");
+		FuseAPI_RegisterBirthday(year, month, day);
+	}
+	
     #endregion
 	
 #endif

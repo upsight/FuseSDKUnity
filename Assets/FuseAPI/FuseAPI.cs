@@ -1,4 +1,4 @@
-
+using UnityEditor
 using UnityEngine;
 using System;
 using System.Collections;
@@ -11,8 +11,10 @@ using FusePlatformAPI = FuseAPI_iOS;
 #elif UNITY_ANDROID
 using FusePlatformAPI = FuseAPI_Android;
 #else
-using FusePlatformAPI = FuseAPI;
+using FusePlatformAPI = FuseAPI_Stub;
 #endif
+
+
 
 public class FuseAPI : MonoBehaviour
 {
@@ -23,11 +25,47 @@ public class FuseAPI : MonoBehaviour
     	REQUEST_FAILED,      /// there was an error in establishing a connection with the server
     	XML_PARSE_ERROR,     /// data was received, but there was a problem parsing the xml
 	};
-	
+#region FuseAPI meta functions
+
+	[MenuItem ("FuseAPI/RegeneratePrefab")]
+	static void RegeneratePrefab()
+	{
+		// delete the prefab
+		Debug.Log("Deleting old prefab...");
+		AssetDatabase.DeleteAsset("Assets/FuseAPI/FuseAPI.prefab");
+		
+		// re-create the prefab
+		Debug.Log("Creating new prefab...");
+		GameObject temp = new GameObject();
+		
+		// add script components
+		Debug.Log("Adding script components...");
+		temp.active = false;
+		temp.AddComponent("FuseAPI_Android");
+		temp.AddComponent("FuseAPI_iOS");
+		temp.AddComponent("FuseAPI_Prime31_IAB");
+		temp.AddComponent("FuseAPI_Prime31StoreKit");
+		temp.AddComponent("FuseAPI_Unibill_Android");
+		temp.AddComponent("FuseAPI_Unibill_iOS");
+		
+		// save the prefab
+		Debug.Log("Saving new prefab...");
+		PrefabUtility.CreatePrefab("Assets/FuseAPI/FuseAPI.prefab", temp);            
+		DestroyImmediate (temp); // Clean up our Object
+		AssetDatabase.SaveAssets();
+	}
+
+
 #region Session Creation
+
+	public static void FuseLog(string str)
+	{
+		FusePlatformAPI.FuseLog (str);
+	}
 
 	public static void StartSession(string gameId)
 	{
+		FuseLog(" Session Started");
 		FusePlatformAPI.StartSession(gameId);
 	}
 	
@@ -90,6 +128,11 @@ public class FuseAPI : MonoBehaviour
 	}
 	
 	public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, DateTime purchaseTime, string developerPayload, double price, string currency)
+	{
+		FusePlatformAPI.RegisterInAppPurchase(purchaseState, notifyId, productId, orderId, purchaseTime, developerPayload, price, currency);
+	}
+
+	public static void RegisterInAppPurchase(PurchaseState purchaseState, string notifyId, string productId, string orderId, long purchaseTime, string developerPayload, double price, string currency)
 	{
 		FusePlatformAPI.RegisterInAppPurchase(purchaseState, notifyId, productId, orderId, purchaseTime, developerPayload, price, currency);
 	}
@@ -502,6 +545,16 @@ public class FuseAPI : MonoBehaviour
 	public static void RegisterTapjoyReward(int amount)
 	{
 		FusePlatformAPI.RegisterTapjoyReward(amount);
+	}
+	
+	public static void RegisterAge(int age)
+	{
+		FusePlatformAPI.RegisterAge(age);
+	}
+	
+	public static void RegisterBirthday(int year, int month, int day)
+	{
+		FusePlatformAPI.RegisterBirthday(year, month, day);
 	}
 #endregion
 	

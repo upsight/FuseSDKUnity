@@ -106,7 +106,8 @@ void FuseAPI_RegisterCrash(NSException* exception)
 void FuseAPI_StartSession(const char* gameId)
 {
 	FuseAPI_Initialize();
-	[FuseAPI startSession:[NSString stringWithUTF8String:gameId] Delegate:_FuseAPI_delegate];
+	[FuseAPI startSession:[NSString stringWithUTF8String:gameId] Delegate:_FuseAPI_delegate AutoRegisterForPush:NO];
+    [FuseAPI setPlatform:@"unity-ios"];
 }
 
 void FuseAPI_SessionStartReceived()
@@ -447,7 +448,12 @@ const char* FuseAPI_GetOriginalAccountAlias()
 {
     NSString* accountAlias = [FuseAPI getOriginalAccountAlias];
 	
-	const char* string = accountAlias.UTF8String;
+    const char* string = "";
+    if( accountAlias != nil )
+    {
+        string = [accountAlias UTF8String];
+    }
+
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -457,8 +463,13 @@ const char* FuseAPI_GetOriginalAccountAlias()
 const char* FuseAPI_GetOriginalAccountId()
 {
 	NSString* accountId = [FuseAPI getOriginalAccountID];
-	
-	const char* string = accountId.UTF8String;
+    
+	const char* string = "";
+    if( accountId != nil )
+    {
+        string = [accountId UTF8String];
+    }
+
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -503,7 +514,11 @@ const char* FuseAPI_LibraryVersion()
 {
 	NSString* libraryVersion = [FuseAPI libraryVersion];
 	
-	const char* string = [libraryVersion UTF8String];
+	const char* string = "";
+    if(libraryVersion)
+    {
+        string = [libraryVersion UTF8String];
+    }
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -556,18 +571,16 @@ const char* FuseAPI_GetGameConfigurationValue(const char* key)
 {
 	NSString* value = [FuseAPI getGameConfigurationValue:[NSString stringWithUTF8String:key]];
 	
-	const char* string = [value UTF8String];
-	if (string)
-	{
-		char* copy = (char*)malloc(strlen(string) + 1);
-		strcpy(copy, string);
+	const char* string = "";
+    if(value)
+    {
+        string = [value UTF8String];
 		
-		return copy;
 	}
-	else
-	{
-		return 0;
-	}
+    char* copy = (char*)malloc(strlen(string) + 1);
+    strcpy(copy, string);
+    
+    return copy;
 }
 
 void FuseAPI_GameConfigurationReceived()
@@ -806,9 +819,20 @@ int FuseAPI_GetFriendsListCount()
 const char* FuseAPI_GetFriendsListFriendFuseId(int index)
 {
 	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
-	NSString* fuseId = [keys objectAtIndex:index];
+    
+    const char* string = "";
+    
+    if(keys)
+    {
+        NSString* fuseId = [keys objectAtIndex:index];
 	
-	const char* string = [fuseId UTF8String];
+    
+        if( fuseId != nil )
+        {
+            string = [fuseId UTF8String];
+        }
+    }
+    
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -817,12 +841,29 @@ const char* FuseAPI_GetFriendsListFriendFuseId(int index)
 
 const char* FuseAPI_GetFriendsListFriendAccountId(int index)
 {
+    
+    const char* string = "";
 	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
-	NSString* fuseId = [keys objectAtIndex:index];
-	NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
-	NSString* accountId = [friend objectForKey:@"account_id"];
+    if(keys)
+    {
+        NSString* fuseId = [keys objectAtIndex:index];
+        if(fuseId)
+        {
+            NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
+            if(friend)
+            {
+                
+                NSString* accountId = [friend objectForKey:@"account_id"];
+                
+                if(accountId)
+                {
+                    string = [accountId UTF8String];
+                }
+            }
+        }
+    }
 	
-	const char* string = accountId.UTF8String;
+    
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -831,12 +872,27 @@ const char* FuseAPI_GetFriendsListFriendAccountId(int index)
 
 const char* FuseAPI_GetFriendsListFriendAlias(int index)
 {
+    const char* string = "";
 	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
-	NSString* fuseId = [keys objectAtIndex:index];
-	NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
-	NSString* alias = [friend objectForKey:@"alias"];
-	
-	const char* string = alias.UTF8String;
+    if(keys)
+    {
+        NSString* fuseId = [keys objectAtIndex:index];
+        if(fuseId)
+        {
+            NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
+            if(friend)
+            {
+                
+                NSString* accountId = [friend objectForKey:@"alias"];
+                
+                if(accountId)
+                {
+                    string = [accountId UTF8String];
+                }
+            }
+        }
+    }
+
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -845,11 +901,21 @@ const char* FuseAPI_GetFriendsListFriendAlias(int index)
 
 bool FuseAPI_GetFriendsListFriendPending(int index)
 {
-	NSArray* keys = [[FuseAPI getFriendsList] allKeys];
-	NSString* fuseId = [keys objectAtIndex:index];
-	NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
-	int pending = [[friend objectForKey:@"pending"] intValue];
-	
+    int pending = false;
+NSArray* keys = [[FuseAPI getFriendsList] allKeys];
+	if(keys)
+    {
+        NSString* fuseId = [keys objectAtIndex:index];
+        if(fuseId)
+        {
+            NSDictionary* friend = (NSDictionary*)[[FuseAPI getFriendsList] objectForKey:fuseId];
+            if(friend)
+            {
+                pending = [[friend objectForKey:@"pending"] intValue];
+            }
+        }
+    }
+    
 	return pending;
 }
 
@@ -930,7 +996,11 @@ const char* FuseAPI_GetMailListMailAlias(const char* fuseId, int index)
 	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
 	NSString* alias = [mail objectForKey:@"alias"];
 	
-	const char* string = alias.UTF8String;
+    const char * string = "";
+    if(alias)
+    {
+        string = alias.UTF8String;
+    }
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -944,7 +1014,11 @@ const char* FuseAPI_GetMailListMailMessage(const char* fuseId, int index)
 	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
 	NSString* message = [mail objectForKey:@"message"];
 	
-	const char* string = message.UTF8String;
+	const char* string = "";
+    if(message)
+    {
+        string = message.UTF8String;
+    }
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -957,8 +1031,9 @@ int FuseAPI_GetMailListMailGiftId(const char* fuseId, int index)
 	NSNumber* messageId = [keys objectAtIndex:index];
 	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
 	NSNumber* giftId = [mail objectForKey:@"gift_id"];
-	
-	return [giftId intValue];
+	if(giftId)
+        return [giftId intValue];
+    return 0;
 }
 
 const char* FuseAPI_GetMailListMailGiftName(const char* fuseId, int index)
@@ -967,8 +1042,11 @@ const char* FuseAPI_GetMailListMailGiftName(const char* fuseId, int index)
 	NSNumber* messageId = [keys objectAtIndex:index];
 	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
 	NSString* giftName = [mail objectForKey:@"gift_name"];
-	
-	const char* string = giftName.UTF8String;
+	const char* string = "";
+    if(giftName)
+    {
+        string = giftName.UTF8String;
+    }
 	char* copy = (char*)malloc(strlen(string) + 1);
 	strcpy(copy, string);
 	
@@ -981,8 +1059,9 @@ int FuseAPI_GetMailListMailGiftAmount(const char* fuseId, int index)
 	NSNumber* messageId = [keys objectAtIndex:index];
 	NSDictionary* mail = (NSDictionary*)[[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] objectForKey:messageId];
 	NSNumber* giftAmount = [mail objectForKey:@"gift_amount"];
-	
-	return [giftAmount intValue];
+	if(giftAmount)
+        return [giftAmount intValue];
+    return 0;
 }
 
 void FuseAPI_SetMailAsReceived(int messageId)
@@ -990,19 +1069,19 @@ void FuseAPI_SetMailAsReceived(int messageId)
 	[FuseAPI setMailAsReceived:messageId];
 }
 
-void FuseAPI_SendMail(const char* fuseId, const char* message)
+int FuseAPI_SendMail(const char* fuseId, const char* message)
 {
-	[FuseAPI sendMail:[NSString stringWithUTF8String:fuseId] Message:[NSString stringWithUTF8String:message]];
+	return [FuseAPI sendMail:[NSString stringWithUTF8String:fuseId] Message:[NSString stringWithUTF8String:message]];
 }
 
-void FuseAPI_SendMailWithGift(const char* fuseId, const char* message, int giftId, int giftAmount)
+int FuseAPI_SendMailWithGift(const char* fuseId, const char* message, int giftId, int giftAmount)
 {
-	[FuseAPI sendMailWithGift:[NSString stringWithUTF8String:fuseId] Message:[NSString stringWithUTF8String:message] GiftID:giftId GiftAmount:giftAmount];
+	return [FuseAPI sendMailWithGift:[NSString stringWithUTF8String:fuseId] Message:[NSString stringWithUTF8String:message] GiftID:giftId GiftAmount:giftAmount];
 }
 
-void FuseAPI_MailAcknowledged(int messageId, const char* fuseId)
+void FuseAPI_MailAcknowledged(int messageId, const char* fuseId, int requestId)
 {
-	void *args[] = { &messageId, Mono_NewString(fuseId) };
+	void *args[] = { &messageId, Mono_NewString(fuseId), &requestId };
 	Mono_CallMethod(_FuseAPI_MailAcknowledged, args);
 }
 
@@ -1037,6 +1116,16 @@ void FuseAPI_RegisterFlurryClick()
 void FuseAPI_RegisterTapjoyReward(int amount)
 {
 	[FuseAPI registerTapjoyReward:amount];
+}
+
+void FuseAPI_RegisterAge(int age)
+{
+	[FuseAPI registerAge:age];
+}
+
+void FuseAPI_RegisterBirthday(int year, int month, int day)
+{
+	[FuseAPI registerBirthday:year Month:month Day:day];
 }
 
 #pragma mark - Callback
@@ -1234,7 +1323,7 @@ void FuseAPI_RegisterTapjoyReward(int amount)
 
 -(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id RequestID:(NSNumber*)_request_id
 {
-	FuseAPI_MailAcknowledged(_message_id.intValue, _fuse_id.UTF8String);
+	FuseAPI_MailAcknowledged(_message_id.intValue, _fuse_id.UTF8String, _request_id.intValue);
 }
 
 -(void) mailError:(NSNumber*)_error RequestID:(NSNumber*)_request_id

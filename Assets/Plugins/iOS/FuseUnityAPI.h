@@ -194,10 +194,10 @@ int FuseAPI_GetMailListMailGiftId(const char* fuseId, int index);
 const char* FuseAPI_GetMailListMailGiftName(const char* fuseId, int index);
 int FuseAPI_GetMailListMailGiftAmount(const char* fuseId, int index);
 void FuseAPI_SetMailAsReceived(int messageId);
-void FuseAPI_SendMail(const char* fuseId, const char* message);
-void FuseAPI_SendMailWithGift(const char* fuseId, const char* message, int giftId, int giftAmount);
-void _MailAcknowledged(int messageId, const char* fuseId);
-void _MailError(int error);
+int FuseAPI_SendMail(const char* fuseId, const char* message);
+int FuseAPI_SendMailWithGift(const char* fuseId, const char* message, int giftId, int giftAmount);
+void FuseAPI_MailAcknowledged(int messageId, const char* fuseId, int requestId);
+void FuseAPI_MailError(int error);
 
 #pragma mark - Game Configuration Data
 
@@ -211,6 +211,8 @@ void FuseAPI_RegisterCurrency(int type, int balance);
 void FuseAPI_RegisterFlurryView();
 void FuseAPI_RegisterFlurryClick();
 void FuseAPI_RegisterTapjoyReward(int amount);
+void FuseAPI_RegisterAge(int age);
+void FuseAPI_RegisterBirthday(int year, int month, int day);
 
 #pragma mark - Callback
 

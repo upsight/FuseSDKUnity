@@ -7,16 +7,27 @@ using System.Collections.Generic;
 
 public class FuseAPI_Prime31StoreKit : MonoBehaviour
 {	
+	public bool logging = false;
 	// Uncomment the #define at the top of this file if you are using the Prime31 StoreKit plugin for iOS
 #if UNITY_IPHONE && USING_PRIME31_IOS
-	
+	public static bool debugOutput = false;
+
 	// cached in order to send failed and cancelled messages
 	private StoreKitTransaction currentTransaction = null;
 	private static string transactionIDPurchasing = "";
 	private static string transactionIDPurchased = ""; 
-	
+
+	void Awake ()
+	{
+		if(logging)
+		{
+			FuseAPI_Prime31StoreKit.debugOutput = true;
+		}
+	}
+
 	void Start () 
 	{
+
 		RegisterActions();
 	}
 	
@@ -42,7 +53,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	
 	void productListReceivedEvent( List<StoreKitProduct> productList )
 	{	
-		//Debug.Log( "productListReceivedEvent. total products received: " + productList.Count );
+		FuseLog( "productListReceivedEvent. total products received: " + productList.Count );
 		
 		// create an array of product info to pass into the Fuse API
 		FuseAPI.Product[] products = new FuseAPI.Product[productList.Count];
@@ -54,18 +65,18 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 			currentProduct.priceLocale = product.currencyCode;
 			currentProduct.price = float.Parse(product.price);
 			products.SetValue(currentProduct, numItems++);
-			//Debug.Log( product.ToString() + "\n" );
+			FuseLog( product.ToString() + "\n" );
 		}
 		FuseAPI.RegisterInAppPurchaseList(products);
 	}
 	
 	void productPurchaseAwaitingConfirmationEvent( StoreKitTransaction transaction )
 	{
-		//Debug.Log( "productPurchaseAwaitingConfirmationEvent: " + transaction );
+		//FuseLog( "productPurchaseAwaitingConfirmationEvent: " + transaction );
 		
 		if( transactionIDPurchasing == transaction.transactionIdentifier )
 		{
-			//Debug.Log("Duplicate transaction " + transactionID);
+			FuseLog("Duplicate transaction " + transactionID);
 			return;
 		}
 		transactionIDPurchasing = transaction.transactionIdentifier;
@@ -76,7 +87,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	
 	void purchaseFailed( string error )
 	{
-		//Debug.Log( "purchase failed with error: " + error );
+		//FuseLog( "purchase failed with error: " + error );
 		
 		if( currentTransaction != null )
 		{
@@ -88,7 +99,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 
 	void purchaseCancelled( string error )
 	{
-		//Debug.Log( "purchase cancelled with error: " + error );
+		//FuseLog( "purchase cancelled with error: " + error );
 		if( currentTransaction != null )
 		{
 			byte[] reciept = Convert.FromBase64String(currentTransaction.base64EncodedTransactionReceipt);
@@ -101,12 +112,12 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	{
 		if( transactionIDPurchased == transaction.transactionIdentifier )
 		{
-			//Debug.Log("Duplicate transaction " + transactionIDPurchased);
+			FuseLog("Duplicate transaction " + transactionIDPurchased);
 			return;
 		}
 		transactionIDPurchased = transaction.transactionIdentifier;
 		
-		//Debug.Log( "purchased product: " + transaction );
+		//FuseLog( "purchased product: " + transaction );
 		
 		currentTransaction = null;
 		byte[] reciept = Convert.FromBase64String(transaction.base64EncodedTransactionReceipt);
@@ -117,7 +128,15 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	{
 		UnregisterActions();
 	}
-	
+
+
+	new public static void FuseLog(string str)
+	{
+		if(debugOutput)
+		{
+			Debug.Log("FuseAPI: " + str);
+		}
+	}
 	
 #endif//UNITY_IPHONE && USING_PRIME31_IOS
 }

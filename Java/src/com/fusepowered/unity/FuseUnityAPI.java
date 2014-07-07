@@ -11,6 +11,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Log;
+import android.os.Handler;
 
 import com.fusepowered.fuseactivities.FuseApiAdBrowser;
 import com.fusepowered.fuseactivities.FuseApiMoregamesBrowser;
@@ -156,14 +157,33 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 		_sessionStarted = true;
 	}
 	
-	public static void registerForPushNotifications(String projectID)
+	public static void registerForPushNotifications(final String projectID)
 	{
-		//Log.d(_logTag, "registerForPushNotifications(" + projectID + ")");	
-		
-		Intent forGCM = new Intent(UnityPlayer.currentActivity.getApplicationContext(), FuseUnityAPI.class);
-		FuseAPI.setupGCM(projectID, forGCM, _activity, 0, 0);
+		//Log.d(_logTag, "registerForPushNotifications(" + projectID + ")");
+
+//        Intent forGCM = new Intent(UnityPlayer.currentActivity.getApplicationContext(), FuseUnityAPI.class);
+//        FuseAPI.setupGCM(projectID, forGCM, _activity, 0, 0);
+
+        // Get a handler that can be used to post to the main thread
+        Handler mainHandler = new Handler(UnityPlayer.currentActivity.getApplicationContext().getMainLooper());
+
+        Runnable myRunnable = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Intent forGCM = new Intent(UnityPlayer.currentActivity.getApplicationContext(), FuseUnityAPI.class);
+                FuseAPI.setupGCM(projectID, forGCM, _activity, 0, 0);
+            }
+        };
+        mainHandler.post(myRunnable);
 	}
 
+    public static void testGCMSetup()
+    {
+        //Log.d(_logTag, "testing GCM Setup");
+        FuseAPI.testGCMSetup(_activity);
+    }
 // +-----------------+
 // | Analytics Event |
 // +-----------------+
@@ -227,7 +247,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 	{
 		//Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + ")");
 		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, purchaseToken, productId, orderId, purchaseTime, developerPayload);
-		FuseAPI.registerInAppPurchase(purchase);
+		FuseAPI.registerInAppPurchase(purchase, _gameDataCallback);
 	}
 
 	public static void registerInAppPurchase(String purchaseState, String purchaseToken, String productId, String orderId, long purchaseTime, String developerPayload, double price, String currency)
@@ -250,7 +270,7 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 
 		//Log.d(_logTag, "registerInAppPurchase(" + purchaseState + "," + purchaseToken + "," + productId + "," + orderId + "," + purchaseTime + "," + developerPayload + "," + price + "," + currency + ")");
 		VerifiedPurchase purchase = new VerifiedPurchase(purchaseState, purchaseToken, productId, orderId, purchaseTime, developerPayload);
-		FuseAPI.registerInAppPurchase(purchase, price, currency);
+		FuseAPI.registerInAppPurchase(purchase, price, currency, _gameDataCallback);
 	}
 
 
@@ -761,7 +781,17 @@ public class FuseUnityAPI implements Thread.UncaughtExceptionHandler
 		FuseAPI.registerTapjoyReward(amount);
 	}
 
+	public static void registerAge(int age)
+	{
+		//Log.d(_logTag, "registerAge(" + age + ")");
+		FuseAPI.registerAge(age);
+	}
 
+	public static void registerBirthday(int year, int month, int day)
+	{
+		//Log.d(_logTag, "registerBirthday(" + year + ", " + month + ", " + day + ")");
+		FuseAPI.registerBirthday(year, month, day);
+	}
 
 // +--------------------+
 // | API bridge helpers |
