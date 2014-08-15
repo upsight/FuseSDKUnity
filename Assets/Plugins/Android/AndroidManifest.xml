@@ -49,6 +49,8 @@
     <activity android:name="com.fusepowered.ac.ACFActivity" android:configChanges="keyboardHidden|orientation|screenSize" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
     <activity android:name="com.fusepowered.ac.ACBActivity" android:configChanges="keyboardHidden|orientation|screenSize" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
     <activity android:name="com.fusepowered.ads.providers.LRActivity" android:configChanges="keyboardHidden|orientation|screenSize" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+    <activity android:name="com.fusepowered.sa.android.publish.list3d.List3DActivity" android:theme="@android:style/Theme" />
+    <activity android:name="com.fusepowered.sa.android.publish.AppWallActivity" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" android:configChanges="orientation|keyboardHidden|screenSize" />
     <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
 		<!-- end -->
 		

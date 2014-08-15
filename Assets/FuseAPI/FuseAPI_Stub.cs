@@ -70,13 +70,20 @@ public class FuseAPI_Stub : FuseAPI
 	#endregion
 	
 	#region Fuse Interstitial Ads
-	
-	new public static void CheckAdAvailable()
+
+	new public static void PreLoadAd(string adZone)
 	{
+
 	}
 	
-	new public static void ShowAd()
+	new public static void CheckAdAvailable(string adZone)
 	{
+
+	}
+	
+	new public static void ShowAd(string adZone)
+	{
+
 	}
 
 	#endregion

@@ -223,17 +223,22 @@ public class FuseAPI_UnityEditor : FuseAPI
 
 	#region Fuse Interstitial Ads
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_CheckAdAvailable();
+	private static extern void FuseAPI_CheckAdAvailable(string adZone);
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_ShowAd();
+	private static extern void FuseAPI_ShowAd(string adZone);
 
-	new public static void CheckAdAvailable()
+	new public static void PreLoadAd(string adZone)
+	{
+		Debug.Log("In editor");
+	}
+
+	new public static void CheckAdAvailable(string adZone)
 	{
 		FuseLog("CheckAdAvailable()");
 
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_CheckAdAvailable();
+			FuseAPI_CheckAdAvailable(adZone);
 		}
 		else
 		{
@@ -241,13 +246,13 @@ public class FuseAPI_UnityEditor : FuseAPI
 		}
 	}
 
-	new public static void ShowAd()
+	new public static void ShowAd(string adZone)
 	{
 		FuseLog("ShowAd()");
 
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_ShowAd();
+			FuseAPI_ShowAd(adZone);
 		}
 		else
 		{

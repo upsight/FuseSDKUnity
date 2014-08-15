@@ -1,10 +1,11 @@
-using UnityEditor
+
 using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 #if UNITY_EDITOR
+using UnityEditor;
 using FusePlatformAPI = FuseAPI_UnityEditor;
 #elif UNITY_IPHONE
 using FusePlatformAPI = FuseAPI_iOS;
@@ -26,7 +27,8 @@ public class FuseAPI : MonoBehaviour
     	XML_PARSE_ERROR,     /// data was received, but there was a problem parsing the xml
 	};
 #region FuseAPI meta functions
-
+	
+#if UNITY_EDITOR
 	[MenuItem ("FuseAPI/RegeneratePrefab")]
 	static void RegeneratePrefab()
 	{
@@ -40,7 +42,7 @@ public class FuseAPI : MonoBehaviour
 		
 		// add script components
 		Debug.Log("Adding script components...");
-		temp.active = false;
+		temp.active = true;
 		temp.AddComponent("FuseAPI_Android");
 		temp.AddComponent("FuseAPI_iOS");
 		temp.AddComponent("FuseAPI_Prime31_IAB");
@@ -54,7 +56,8 @@ public class FuseAPI : MonoBehaviour
 		DestroyImmediate (temp); // Clean up our Object
 		AssetDatabase.SaveAssets();
 	}
-
+#endif
+	#endregion
 
 #region Session Creation
 
@@ -149,15 +152,33 @@ public class FuseAPI : MonoBehaviour
 #endregion
 	
 #region Fuse Interstitial Ads
+
 	
+	public static void PreLoadAd()
+	{
+		PreLoadAd("");
+	}
+	public static void PreLoadAd(string adZone)
+	{
+		FusePlatformAPI.PreLoadAd(adZone);
+	}
+
 	public static void CheckAdAvailable()
 	{
-		FusePlatformAPI.CheckAdAvailable();
+		CheckAdAvailable("");
+	}
+	public static void CheckAdAvailable(string adZone)
+	{
+		FusePlatformAPI.CheckAdAvailable(adZone);
 	}
 
 	public static void ShowAd()
 	{
-		FusePlatformAPI.ShowAd();
+		ShowAd("");
+	}
+	public static void ShowAd(string adZone)
+	{
+		FusePlatformAPI.ShowAd(adZone);
 	}
 	
 	public static event Action<int, int> AdAvailabilityResponse;

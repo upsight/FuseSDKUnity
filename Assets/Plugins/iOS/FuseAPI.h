@@ -792,7 +792,7 @@ enum kFuseLoginErrors
  * @see FuseDelegate::sessionStartReceived for more information on the delegate method
  * @see FuseDelegate::sessionLoginError: for more information on handling errors occurred when trying to start a session
  */
-+(void) startSession:(NSString *)_game_id Delegate:(id)_delegate;
++(void) startSession:(NSString *)_game_id Delegate:(id<FuseDelegate>)_delegate;
 
 /*!
  * @brief This method is used to initiate all communication with the Fuse system (and register a \<FuseDelegate\>)
@@ -821,7 +821,7 @@ enum kFuseLoginErrors
  * @see FuseDelegate::sessionLoginError: for more information on handling errors occurred when trying to start a session
  * @param _registerForPush [BOOL] set whether startSession automatically registers for a push notification token. If _registerForPush is set to NO, you must manually call [FuseAPI registerForPushToken]
  */
-+(void) startSession:(NSString *)_game_id Delegate:(id)_delegate AutoRegisterForPush:(BOOL)_registerForPush;
++(void) startSession:(NSString *)_game_id Delegate:(id<FuseDelegate>)_delegate AutoRegisterForPush:(BOOL)_registerForPush;
 
 /*!
  * @brief This method is used to describe the platform the API is running on
@@ -1205,11 +1205,49 @@ enum kFuseLoginErrors
  
  @param _delegate [id] The \<FuseAdDelegate\> object that will handle receiving callbacks in response to ad actions.
  */
-+(void) showAdWithDelegate:(id)_delegate;
++(void) showAdWithDelegate:(id<FuseAdDelegate>)_delegate;
+
+/*!
+ @brief This method displays a Fuse interstitial ad for a given ad zone.  Different ad zones can be configured via the Fuse Dashboard
+ 
+ @code
+ [FuseAPI showAdWithDelegate:FuseAdDelegate_Reference adZone:@"Level Completed"];
+ @endcode
+
+ The object passed to the method must be an object that is subscribed to the \<FuseAdDelegate\> protocol.  This object will receive a callback when the ad is closing, signalling to the application that it has been handed back control.  To create a \<FuseAdDelegate\> object, change the interface declaration to add the \<FuseAdDelegate\> protocol:
+
+ @code
+ @interface YourAdObject : NSObject <FuseAdDelegate>
+ {
+ }
+ @end
+
+ @endcode
+
+ In the implementation of the delegate object, add this delegate method:
+
+ @code
+
+ @implementation YourAdObject
+
+ -(void) adWillClose
+ {
+    // Continue execution flow of your application
+ }
+
+ @end
+
+ @endcode
+
+ @param _delegate [id] The \<FuseAdDelegate\> object that will handle receiving callbacks in response to ad actions.
+ @param _zone [NSString*] The name of the ad zone to display.  You can configure different zones via the Fuse Dashboard.
+ */
++(void) showAdWithDelegate:(id<FuseAdDelegate>)_delegate adZone:(NSString*)_zone;
+
 
 /*!
  * @brief This method indicates whether an ad is available to be shown to the user
- * @details This method is optional and can be used to test if an ad is available in the Fuse system before attempting to show an ad to the user.  If an ad is shown (using showAdWithDelegate:) without an ad unit available, the window will be dismissed.  To call this method:
+ * @details This method is optional and can be used to test if an ad is available for the last specified ad zone (or the default ad zone if one was not specified before) in the Fuse system before attempting to show an ad to the user.  If an ad is shown (using showAdWithDelegate:) without an ad unit available, the window will be dismissed.  To call this method:
  
  @code
  [FuseAPI checkAdAvailable];
@@ -1264,7 +1302,40 @@ enum kFuseLoginErrors
  
  * @since Fuse API version 1.27
  */
-+(void) checkAdAvailableWithDelegate:(id)_delegate;
++(void) checkAdAvailableWithDelegate:(id<FuseAdDelegate>)_delegate;
+
+/*!
+ * @brief This method indicates whether an ad is available to be shown to the user for the specified ad zone
+ * @details This method is optional and can be used to test if an ad is available in the Fuse system before attempting to show an ad to the user.  If an ad is shown (using showAdWithDelegate:) without an ad unit available, the window will be dismissed.  To call this method:
+
+ @code
+ [FuseAPI checkAdAvailableWithDelegate:delegate withAdZone:@"Level Completed"];
+ @endcode
+
+ The response to this method is sent using the \<FuseDelegate\> protocol method adAvailabilityResponse:Error.  Note that a \<FuseDelegate\> object must be registered using startSession: to receive this callback.
+
+ * @param (id<FuseAdDelegate>)_delegate the FuseDelegate that receives the ad availability callbacks
+ * @param (NSString*)_adZone the ad zone to check ad availability for.  Pass in nil to get the default ad zone.
+ * @see FuseDelegate::adAvailabilityResponse:Error: for more information on handling the callback response
+ * @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ * @since Fuse API version 1.36
+ */
++(void) checkAdAvailableWithDelegate:(id<FuseAdDelegate>)_delegate withAdZone:(NSString*)_adZone;
+
+/*!
+ * @brief This method preloads an ad for a specified ad zone
+ * @details This method is optional and can be used to ensure that an ad is shown to the user in a timely manner.  For example, preload ads for a "Level Complete" ad zone just before the result screen is shown.  The ad will load in the background and will appear when [FuseAPI showAdWithDelegate:(id)_delegate adZone:(NSString*)_zone] is called.
+
+ @code
+ [FuseAPI preLoadAdForZone:@"Level Complete"];
+ @endcode
+
+ * @param (NSString*)_adZone the name to the ad zone to preload.  Pass in nil to preload the default ad zone.
+ * @see FuseDelegate::adAvailabilityResponse:Error: for more information on handling the callback response
+ * @see startSession:Delegate: to see how to register a \<FuseDelegate\> object to receive the optional callback
+ * @since Fuse API version 1.36
+ */
++(void) preLoadAdForZone:(NSString*)_adZone;
 
 #pragma mark Notifications
 /*!
@@ -1323,7 +1394,7 @@ enum kFuseLoginErrors
  @param _delegate [id] The \<FuseAdDelegate\> object that will handle receiving callbacks in response to the more games section signalling the application [optional - pass 'nil' if not required]
  @see FuseOverlayDelegate::overlayWillClose for more information on the delegate method call
  */
-+(void) displayMoreGames:(id)_delegate;
++(void) displayMoreGames:(id<FuseOverlayDelegate>)_delegate;
 
 #pragma mark Gender
 /*!
@@ -2003,7 +2074,7 @@ enum kFuseLoginErrors
  @see kFuseGameDataErrors for all possible game data error values
  @since Fuse API version 1.15
  */
-+(int) setGameData:(NSMutableDictionary*)_data Delegate:(id)_delegate;
++(int) setGameData:(NSMutableDictionary*)_data Delegate:(id<FuseGameDataDelegate>)_delegate;
 
 /*!
  * @brief This method is used to store per-user persistent game data on the Fuse servers while specifying a master key value for the key->value pairs in the dictionary.
@@ -2030,7 +2101,7 @@ enum kFuseLoginErrors
  @see kFuseGameDataErrors for all possible game data error values
  @since Fuse API version 1.15
  */
-+(int) setGameData:(NSMutableDictionary*)_data Key:(NSString*)_key Delegate:(id)_delegate;
++(int) setGameData:(NSMutableDictionary*)_data Key:(NSString*)_key Delegate:(id<FuseGameDataDelegate>)_delegate;
 
 /*!
  * @brief This method is used to store per-user persistent game data on the Fuse servers while indicating whether the dictionary is a dictionary of dictionaries.
@@ -2069,7 +2140,7 @@ enum kFuseLoginErrors
  @see setGameData:Delegate: for more information on configuring a \<FuseGameDataDelegate\> delegate
  @since Fuse API version 1.18
  */
-+(int) setGameData:(NSMutableDictionary*)_data Key:(NSString*)_key Delegate:(id)_delegate IsCollection:(BOOL)_collection;
++(int) setGameData:(NSMutableDictionary*)_data Key:(NSString*)_key Delegate:(id<FuseGameDataDelegate>)_delegate IsCollection:(BOOL)_collection;
 
 /*!
  @brief This method is used to store per-user persistent game data on the Fuse servers for another user.
@@ -2085,7 +2156,7 @@ enum kFuseLoginErrors
  @see setGameData:Key:Delegate:IsCollection: for information on how to use the method
  @since Fuse API version 1.15
  */
-+(int) setGameData:(NSMutableDictionary*)_data FuseID:(NSString*)_fuse_id Key:(NSString*)_key Delegate:(id)_delegate IsCollection:(BOOL)_collection;
++(int) setGameData:(NSMutableDictionary*)_data FuseID:(NSString*)_fuse_id Key:(NSString*)_key Delegate:(id<FuseGameDataDelegate>)_delegate IsCollection:(BOOL)_collection;
 
 /*!
  @brief This method is used to retrieve per-user persistent game data on the Fuse servers.
@@ -2134,7 +2205,7 @@ enum kFuseLoginErrors
  @see gameDataReceived:ForKey:Data: for more information on the delegate callback
  @since Fuse API version 1.15
  */
-+(int) getGameData:(NSArray*)_keys Delegate:(id)_delegate;
++(int) getGameData:(NSArray*)_keys Delegate:(id<FuseGameDataDelegate>)_delegate;
 
 /*!
  @brief This method is used to retrieve per-user persistent game data on the Fuse servers while specifying a master key value for the key->value pairs in the dictionary.
@@ -2157,7 +2228,7 @@ enum kFuseLoginErrors
  @see getGameData:Delegate: for more information on make a request, setting up the delegate and receiving a request
  @since Fuse API version 1.15
  */
-+(int) getGameData:(NSArray*)_keys Key:(NSString*)_key Delegate:(id)_delegate;
++(int) getGameData:(NSArray*)_keys Key:(NSString*)_key Delegate:(id<FuseGameDataDelegate>)_delegate;
 
 /*!
  @brief This method is used to retrieve multiple read request at once.
@@ -2207,7 +2278,7 @@ enum kFuseLoginErrors
  @see gameDataReceived:ForKey:Data: for more information on the delegate callback
  @since Fuse API version 1.25
 */
-+(NSDictionary*) getGameDataCollection:(NSDictionary *)_parentKeys Delegate:(id)_delegate;
++(NSDictionary*) getGameDataCollection:(NSDictionary *)_parentKeys Delegate:(id<FuseGameDataDelegate>)_delegate;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2228,7 +2299,7 @@ enum kFuseLoginErrors
  @see getGameData:Delegate: to understand how to use the game data aspects of the method, and how to register the \<FuseGameDataDelegate\> delegate.
  @since Fuse API version 1.15
  *///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-+(int) getFriendGameData:(NSArray*)_keys FuseID:(NSString*)_fuse_id Delegate:(id)_delegate;
++(int) getFriendGameData:(NSArray*)_keys FuseID:(NSString*)_fuse_id Delegate:(id<FuseGameDataDelegate>)_delegate;
 
 /*!
  @brief This method retrieves persistent data for a friend of the current user from the Fuse server while specifying a master key value for the key->value pairs in the dictionary.
@@ -2250,7 +2321,7 @@ enum kFuseLoginErrors
  @see 
  @since Fuse API version 1.15
  */
-+(int) getFriendGameData:(NSArray*)_keys Key:(NSString*)_key FuseID:(NSString*)_fuse_id Delegate:(id)_delegate;
++(int) getFriendGameData:(NSArray*)_keys Key:(NSString*)_key FuseID:(NSString*)_fuse_id Delegate:(id<FuseGameDataDelegate>)_delegate;
 
 #pragma mark Friends List Actions
 /*!

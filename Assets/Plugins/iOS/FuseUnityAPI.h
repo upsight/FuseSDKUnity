@@ -78,8 +78,9 @@ void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, cons
 
 #pragma mark - Fuse Interstitial Ads
 
-void FuseAPI_CheckAdAvailable();
-void FuseAPI_ShowAd();
+void FuseAPI_PreloadAdForZone(const char * _adZone);
+void FuseAPI_CheckAdAvailable(const char * _adZone);
+void FuseAPI_ShowAd(const char * _adZone);
 void FuseAPI_AdAvailabilityResponse(int available, int error);
 void FuseAPI_AdWillClose();
 

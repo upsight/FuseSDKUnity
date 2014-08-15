@@ -269,23 +269,31 @@ public class FuseAPI_iOS : FuseAPI
 	
     #region Fuse Interstitial Ads
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_CheckAdAvailable();
+	private static extern void FuseAPI_CheckAdAvailable(string adZone);
 	[DllImport("__Internal")]
-	private static extern void FuseAPI_ShowAd();
+	private static extern void FuseAPI_ShowAd(string asZone);
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_PreloadAdForZone(string asZone);
 
-	new public static void CheckAdAvailable()
+	new public static void PreLoadAd(string adZone)
 	{
-		FuseLog("CheckAdAvailable()");
-		FuseAPI_CheckAdAvailable();
+		FuseLog("PreloadAd()");
+		FuseAPI_PreloadAdForZone(adZone);
 	}
 
-	new public static void ShowAd()
+	new public static void CheckAdAvailable(string adZone)
+	{
+		FuseLog("CheckAdAvailable()");
+		FuseAPI_CheckAdAvailable(adZone);
+	}
+
+	new public static void ShowAd(string adZone)
 	{
 		FuseLog("ShowAd()");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
-			FuseAPI_ShowAd();
+			FuseAPI_ShowAd(adZone);
 		}
 		else
 		{

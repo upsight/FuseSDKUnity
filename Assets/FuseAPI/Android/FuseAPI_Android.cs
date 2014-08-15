@@ -207,16 +207,22 @@ public class FuseAPI_Android : FuseAPI
     #endregion
 
     #region Fuse Interstitial Ads
-	new public static void CheckAdAvailable()
+	new public static void PreLoadAd(string adZone)
+	{
+		FuseLog("PreloadAd");
+		_fuseUnityPlugin.CallStatic("preloadAd",adZone);
+	}
+	
+	new public static void CheckAdAvailable(string adZone)
 	{
 		FuseLog("CheckAdAvailable()");
-		_fuseUnityPlugin.CallStatic("checkAdAvailable");
+		_fuseUnityPlugin.CallStatic("checkAdAvailable",adZone);
 	}
-
-	new public static void ShowAd()
+	
+	new public static void ShowAd(string adZone)
 	{
 		FuseLog("ShowAd()");
-		_fuseUnityPlugin.CallStatic("showAd");
+		_fuseUnityPlugin.CallStatic("showAd",adZone);
 	}
 
 	private void _AdAvailabilityResponse(string available)

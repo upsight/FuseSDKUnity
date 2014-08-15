@@ -106,8 +106,8 @@ void FuseAPI_RegisterCrash(NSException* exception)
 void FuseAPI_StartSession(const char* gameId)
 {
 	FuseAPI_Initialize();
-	[FuseAPI startSession:[NSString stringWithUTF8String:gameId] Delegate:_FuseAPI_delegate AutoRegisterForPush:NO];
-    [FuseAPI setPlatform:@"unity-ios"];
+	[FuseAPI setPlatform:@"unity-ios"];
+	[FuseAPI startSession:[NSString stringWithUTF8String:gameId] Delegate:_FuseAPI_delegate AutoRegisterForPush:NO];    
 }
 
 void FuseAPI_SessionStartReceived()
@@ -338,14 +338,19 @@ void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, cons
 
 #pragma mark - Ads
 
-void FuseAPI_CheckAdAvailable()
+void FuseAPI_PreloadAdForZone(const char * _adZone)
 {
-	[FuseAPI checkAdAvailable];
+    [FuseAPI preLoadAdForZone:[NSString stringWithUTF8String:_adZone]];
 }
 
-void FuseAPI_ShowAd()
+void FuseAPI_CheckAdAvailable(const char * _adZone)
 {
-	[FuseAPI showAdWithDelegate:_FuseAPI_delegate];
+	[FuseAPI checkAdAvailableWithDelegate:_FuseAPI_delegate withAdZone:[NSString stringWithUTF8String:_adZone]];
+}
+
+void FuseAPI_ShowAd(const char * _adZone)
+{
+	[FuseAPI showAdWithDelegate:_FuseAPI_delegate adZone:[NSString stringWithUTF8String:_adZone]];
 }
 
 void FuseAPI_AdAvailabilityResponse(int available, int error)
@@ -353,6 +358,7 @@ void FuseAPI_AdAvailabilityResponse(int available, int error)
 	void *args[] = { &available, &error };
 	Mono_CallMethod(_FuseAPI_AdAvailabilityResponse, args);
 }
+
 
 void FuseAPI_AdWillClose()
 {
