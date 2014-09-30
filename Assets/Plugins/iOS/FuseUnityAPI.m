@@ -274,13 +274,14 @@ void FuseAPI_RegisterInAppPurchaseListEnd()
 
 -(void)dealloc
 {
-    //FuseSafeRelease(_productIdentifier);
+    FuseSafeRelease(_productIdentifier);
     [super dealloc];
 }
 
 -(void)setIdentifier:(const char*)identifier
 {
-    _productIdentifier = [NSString stringWithUTF8String:identifier];
+    NSString* temp = [NSString stringWithUTF8String:identifier];
+    _productIdentifier = [temp copy];
 }
 
 @end
@@ -328,6 +329,34 @@ void FuseAPI_RegisterInAppPurchase(const char* productId, const char* transactio
 	
 	[FuseAPI registerInAppPurchase:(SKPaymentTransaction*)paymentTransaction];
     FuseSafeRelease(paymentTransaction);
+}
+
+SKProductsRequest* _UniBillRequest = nil;
+FuseAPI_PaymentTransaction* _UniBillPayment = nil;
+void FuseAPI_RegisterUnibillPurchase(const char* productId, const char* receipt, int receiptLength)
+{
+    // request the product information for this purchase so we can get the price and currency code
+    // we register the IAP when we get the product respnse
+    if( [SKPaymentQueue canMakePayments] && _UniBillRequest == nil && _UniBillPayment == nil)
+    {
+        _UniBillRequest = [[SKProductsRequest alloc] initWithProductIdentifiers:[NSSet setWithObjects:[NSString stringWithUTF8String:productId], nil]];
+        _UniBillRequest.delegate = _FuseAPI_delegate;
+
+        [_UniBillRequest start];
+    }
+    else
+    {
+        NSLog(@"FUSE ERROR: Could not register IAP because we could not connect to the store");
+        return;
+    }
+
+    // store the payment information
+    // this is released after we register the IAP
+    _UniBillPayment = [[FuseAPI_PaymentTransaction alloc] init];
+	[_UniBillPayment.payment setIdentifier:productId];
+	[_UniBillPayment setTransactionReceiptWithBuffer:(void*)receipt length:receiptLength];
+	_UniBillPayment.transactionState = SKPaymentTransactionStatePurchased;
+    _UniBillPayment.transactionIdentifier = @"No Transaction ID";
 }
 
 void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, const char* originalTransactionId)
@@ -1342,6 +1371,39 @@ void FuseAPI_RegisterBirthday(int year, int month, int day)
 - (void)gameConfigurationReceived
 {
 	FuseAPI_GameConfigurationReceived();
+}
+
+#pragma mark SKProductRequestDelegate methods
+- (void)productsRequest:(SKProductsRequest *)request didReceiveResponse:(SKProductsResponse *)response
+{
+    NSArray *products = response.products;
+    SKProduct* unibillProduct = [products count] > 0 ? [products objectAtIndex:0] : nil;
+
+    // Logging the response from Apple
+//    if (unibillProduct)
+//    {
+//        NSLog(@"Product title: %@" , unibillProduct.localizedTitle);
+//        NSLog(@"Product description: %@" , unibillProduct.localizedDescription);
+//        NSLog(@"Product price: %@" , unibillProduct.price);
+//        NSLog(@"Product id: %@" , unibillProduct.productIdentifier);
+//    }
+//
+//    for (NSString *invalidProductId in response.invalidProductIdentifiers)
+//    {
+//        NSLog(@"Invalid product id: %@" , invalidProductId);
+//    }
+
+    // register the product list so we can track the IAP price and currency
+    [FuseAPI registerInAppPurchaseList:response];
+
+    // register the IAP now that we have the product information
+    [FuseAPI registerInAppPurchase:(SKPaymentTransaction*)_UniBillPayment];
+
+    // release the payment object
+    FuseSafeRelease(_UniBillPayment);
+
+    // finally release the reqest we alloc/initÕed in requestProUpgradeProductData
+    FuseSafeRelease(_UniBillRequest);
 }
 
 @end

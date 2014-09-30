@@ -191,6 +191,11 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.CallStatic("registerInAppPurchase", purchaseState.ToString(), purchaseToken, productId, orderId, purchaseTime, developerPayload, price, currency);
 	}
 
+	new public static void RegisterUnibillPurchase(string productID, byte[] receipt)
+	{
+		// do nothing.  This method is for iOS only at this point.  Unibill Android can be handled with current methods
+	}
+
 	public static void _PurchaseVerification(string dummy)
 	{
 		// args: bool verified, string transactionID, string originalTransactionID

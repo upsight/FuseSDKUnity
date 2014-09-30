@@ -62,41 +62,38 @@ public class FuseAPI_Unibill_iOS : MonoBehaviour
 	{
 		if( item != null )
 		{
-			byte[] recipt = { 0 };
-			FuseAPI.RegisterInAppPurchase(item.Id, "", recipt, FuseAPI.TransactionState.FAILED);
+			byte[] receipt = { 0 };
+			FuseAPI.RegisterInAppPurchase(item.Id, "", receipt, FuseAPI.TransactionState.FAILED);
 		}
 	}	
 	
 	void purchaseCancelled( PurchasableItem item )
 	{
-
 		if( item != null )
 		{
-			byte[] recipt = { 0 };
-			FuseAPI.RegisterInAppPurchase(item.Id, "", recipt, FuseAPI.TransactionState.FAILED);	
+			byte[] receipt = { 0 };
+			FuseAPI.RegisterInAppPurchase(item.Id, "", receipt, FuseAPI.TransactionState.FAILED);	
 		}
 	}
+
 	static byte[] GetBytes(string str)
 	{
-		byte[] bytes = new byte[str.Length * sizeof(char)];
-		System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
-		return bytes;
+		return System.Text.Encoding.UTF8.GetBytes(str);
 	}
 	void purchaseSuccessful( PurchaseEvent e )
 	{
 		if(e != null)
 		{
-			byte[] reciept =  GetBytes(e.Receipt);
+			byte[] receipt =  GetBytes(e.Receipt);
 			FuseLog(e.PurchasedItem.description + " " + e.PurchasedItem.localizedPriceString);
-			FuseAPI.RegisterInAppPurchase(e.PurchasedItem.LocalID, "", reciept, FuseAPI.TransactionState.PURCHASED);		
+			FuseAPI.RegisterUnibillPurchase(e.PurchasedItem.Id, receipt);
 		}
 	}
-	
+
 	void OnDestroy()
 	{
 		UnregisterActions();
 	}
-	
 	
 	public static void FuseLog(string str)
 	{

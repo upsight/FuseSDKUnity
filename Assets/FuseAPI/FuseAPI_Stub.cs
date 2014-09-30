@@ -66,6 +66,11 @@ public class FuseAPI_Stub : FuseAPI
 	{
 
 	}
+	
+	new public static void RegisterUnibillPurchase(string productID, byte[] receipt)
+	{
+
+	}
 
 	#endregion
 	

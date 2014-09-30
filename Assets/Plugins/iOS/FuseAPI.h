@@ -845,6 +845,7 @@ enum kFuseLoginErrors
 
 +(void) setPlatform:(NSString *)_game_Platform;
 
++(void) useViewRotation:(BOOL) useViewRotation;
 
 #pragma mark Application Hooks
 /*!
@@ -861,6 +862,23 @@ enum kFuseLoginErrors
  @endcode
  */
 +(void) registerForPushToken;
+/*!
+ * @brief This method is used to manually register for a push notification device token
+ * @details This method should only be called if startSession:(NSString *)_game_id Delegate:(id)_delegate AutoRegisterForPush:(BOOL)_registerForPush was called where _registerForPush was set to NO.
+  * @param _categories [NSSet*] Group of UIUserNotificationCategory objects for
+ @code
+ 
+ [FuseAPI startSession:@"YOUR API KEY" Delegate:nil AutoRegisterForPush:NO];
+ ...
+ ...
+ //Create your categories here
+ 
+ [FuseAPI registerForPushToken:categories];
+ 
+ @endcode
+ */
+
++(void) registerForPushToken:(NSSet *)_categories;
 
 /*!
  * @brief This method is used to pass the registered Apple push token to the Fuse servers for future push notification messaging.

@@ -147,6 +147,11 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.RegisterInAppPurchase(productId, transactionId, transactionReceipt, transactionState);
 	}
 	#endif
+
+	public static void RegisterUnibillPurchase(string productID, byte[] receipt)
+	{
+		FusePlatformAPI.RegisterUnibillPurchase(productID, receipt);
+	}
 	
 	public static event Action<bool, string, string> PurchaseVerification;
 #endregion

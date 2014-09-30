@@ -74,6 +74,7 @@ void FuseAPI_RegisterInAppPurchaseListEnd();
 @end
 
 void FuseAPI_RegisterInAppPurchase(const char* productId, const char* transactionId, const unsigned char* transactionReceiptBuffer, int transactionReceiptLength, int transactionState);
+void FuseAPI_RegisterUnibillPurchase(const char* productId, const char* receipt, int receiptLength);
 void FuseAPI_PurchaseVerification(bool verified, const char* transactionId, const char* originalTransactionId);
 
 #pragma mark - Fuse Interstitial Ads
@@ -217,7 +218,7 @@ void FuseAPI_RegisterBirthday(int year, int month, int day);
 
 #pragma mark - Callback
 
-@interface FuseAPI_Delegate : NSObject<FuseDelegate, FuseAdDelegate, FuseOverlayDelegate, FuseGameDataDelegate>
+@interface FuseAPI_Delegate : NSObject<FuseDelegate, FuseAdDelegate, FuseOverlayDelegate, FuseGameDataDelegate, SKProductsRequestDelegate>
 {
 	
 }

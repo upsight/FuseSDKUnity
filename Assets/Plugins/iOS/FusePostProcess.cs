@@ -25,6 +25,9 @@ public static class FusePostProcess
 	const string TWITTER_ID = "3FBCE7861816DD570057C060";
 	const string SOCIAL_ID = "3FBCE7861816DD570057C062";
 	const string SECURITY_ID = "3FBCE7861816DD570057C065";
+	const string SQLITE_ID = "3FBCE7861816DD570057C069";
+
+
 	const string CORETELEPHONY_FW = "3F3EE17B1757FB570038DED8";
     const string ADSUPPORT_FW = "3F3EE1791757FB4D0038DED9";
 	const string STOREKIT_FW = "3F3EE17D1757FB610038DED0";
@@ -34,6 +37,7 @@ public static class FusePostProcess
 	const string TWITTER_FW = "3F3EE17B1757FB570038DED9";
 	const string SOCIAL_FW = "3F3EE17B1757FB570038DEEE";
 	const string SECURITY_FW = "3F3EE17B1757FB570038DEED";
+	const string SQLITE_FW = "3F3EE17B1757FB570038FEED";
     
     // List of all the frameworks to be added to the project
     public struct framework
@@ -69,6 +73,7 @@ public static class FusePostProcess
 										 new framework("Twitter.framework", TWITTER_FW, TWITTER_ID),
 										 new framework("Social.framework", SOCIAL_FW, SOCIAL_ID),
 										 new framework("Security.framework", SECURITY_FW, SECURITY_ID),
+				 						 new framework("libsqlite3.dylib", SQLITE_FW, SQLITE_ID),
 										};
 			            
             string xcodeprojPath = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);			
@@ -115,6 +120,7 @@ public static class FusePostProcess
 	static bool bFoundTwitter = false;
 	static bool bFoundSocial = false;
 	static bool bFoundSecurity = false;
+	static bool bFoundSQLite = false;
     public static void updateXcodeProject(string xcodeprojPath, framework[] listeFrameworks)
     {
 
@@ -173,6 +179,10 @@ public static class FusePostProcess
 				else if( lines[i].Contains("Security.framework") )
 				{
 					bFoundSecurity = true;
+				}
+				else if( lines[i].Contains("libsqlite3.dylib") )
+				{
+					bFoundSQLite = true;
 				}
 
 				++i;
@@ -355,7 +365,8 @@ public static class FusePostProcess
 			|| (bFoundEventUI && name.Equals("EventKitUI.framework"))
 		    || (bFoundTwitter && name.Equals("Twitter.framework"))
 		    || (bFoundSocial && name.Equals("Social.framework"))
-		    || (bFoundSecurity && name.Equals("Security.framework")))
+		    || (bFoundSecurity && name.Equals("Security.framework"))
+		    || (bFoundSQLite && name.Equals ("libsqlite3.dylib")))
 		{
 			// framework is already in the xcode project - do no process it
 			return false;
@@ -433,8 +444,10 @@ public static class FusePostProcess
 		UnityEngine.Debug.Log("OnPostProcessBuild - Adding framework file reference (xml) - " + name);
 		
 		string path = "System/Library/Frameworks"; // all the frameworks come from here
-		if (name == "libsqlite3.0.dylib")           // except for lidsqlite
+		if (name == "libsqlite3.dylib")           // except for libsqlite
+		{
 			path = "usr/lib";
+		}
 
 		XmlDocument doc = innerDict.OwnerDocument;
 		
@@ -698,10 +711,14 @@ public static class FusePostProcess
 		UnityEngine.Debug.Log("OnPostProcessBuild - Adding framework file reference " + name);
         
         string path = "System/Library/Frameworks"; // all the frameworks come from here
-        if (name == "libsqlite3.0.dylib")           // except for lidsqlite
+		string type = "wrapper.framework";
+        if (name == "libsqlite3.dylib")           // except for libsqlite
+		{
             path = "usr/lib";
+			type = "\"compiled.mach-o.dylib\"";
+		}
         
-        file.Write("\t\t"+id+" /* "+name+" */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = "+name+"; path = "+path+"/"+name+"; sourceTree = SDKROOT; };\n");
+        file.Write("\t\t"+id+" /* "+name+" */ = {isa = PBXFileReference; lastKnownFileType = " + type + "; name = "+name+"; path = "+path+"/"+name+"; sourceTree = SDKROOT; };\n");
     }
     
     // Adds a line into the PBXFrameworksBuildPhase section

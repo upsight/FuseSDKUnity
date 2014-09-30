@@ -199,6 +199,11 @@ public class FuseAPI_UnityEditor : FuseAPI
 			_PurchaseVerification(true, "", "");
 		}
 	}
+	
+	new public static void RegisterUnibillPurchase(string productID, byte[] receipt)
+	{
+		// do nothing.  This method is for iOS only at this point.  Unibill Android can be handled with current methods
+	}
 
 	#if UNITY_ANDROID
 	// Android purchase notification

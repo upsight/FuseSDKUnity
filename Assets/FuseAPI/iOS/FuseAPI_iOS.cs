@@ -218,7 +218,7 @@ public class FuseAPI_iOS : FuseAPI
 	private static extern void FuseAPI_RegisterInAppPurchaseListProduct(string productId, string priceLocale, float price);
 	[DllImport("__Internal")]
 	private static extern int FuseAPI_RegisterInAppPurchaseListEnd();
-	
+		
 	new public static void RegisterInAppPurchaseList(Product[] products)
 	{
 		FuseLog ("RegisterInAppPurchaseList(" + products.Length + ")");
@@ -264,7 +264,16 @@ public class FuseAPI_iOS : FuseAPI
 		
 		OnPurchaseVerification(verified, transactionId, originalTransactionId);
 	}
-	
+
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_RegisterUnibillPurchase(string productID, byte[] receipt, int receiptLength);
+
+	new public static void RegisterUnibillPurchase(string productID, byte[] receipt)
+	{
+		FuseLog("Registering Unibill transaction with product ID: " + productID);
+		FuseAPI_RegisterUnibillPurchase(productID, receipt, receipt.Length);
+	}
+
     #endregion
 	
     #region Fuse Interstitial Ads
