@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Fuse Unity Plugin Android Build Script" default="all">
+
+    <!-- Config -->
+    <property file="build.config"/>
+
+    <!-- All -->
+    <target name="all" depends="android" description="Full build of extension"/>
+
+    <!-- Android -->
+    <target name="android" description="Build base mediation Android Library">		
+        <delete dir="./android/temp"/>
+        <mkdir dir="./android/temp/classes"/>
+		
+		<!-- Rename FuseSDK*.jar to FuseSDK.jar -->
+		<fileset dir="./libs" id="jar_name">
+			<include name="**/FuseSDK*.jar"/>
+			<exclude name="**/FuseSDK.jar"/>
+		</fileset>
+		<property name="sdk.jar.name" refid="jar_name" />
+		<echo message="Renaming ${sdk.jar.name} to FuseSDK.jar" />
+		<move file="./libs/${sdk.jar.name}" tofile="./libs/FuseSDK.jar" overwrite="true"/>
+        
+		<!-- Compile FuseUnityAPI classes -->
+        <javac srcdir="./src" destdir="./android/temp/classes" includeantruntime="false">
+            <classpath>
+                <pathelement location="${android.sdk}/android.jar"/>
+                <pathelement location="./libs/FuseSDK.jar"/>
+                <pathelement location="./libs/classes.jar"/>
+                <pathelement location="./libs/google-play-services.jar"/>                
+            </classpath>
+        </javac>
+		
+		<!-- Build FuseUnityAPI.jar -->
+        <mkdir dir="./output/"/>
+        <jar basedir="./android/temp/classes" destfile="./output/${name}.jar"/>
+        <copy file="./libs/FuseSDK.jar" todir="./output" overwrite="true"/>        
+        <delete dir="./android"/>
+        
+        <!-- Deploy to Assets/Plugins/Android -->
+        <chmod file="../Assets/Plugins/Android/FuseSDK.jar" perm="u+w"/>
+        <chmod file="../Assets/Plugins/Android/${name}.jar" perm="u+w"/>        
+        <copy file="./output/FuseSDK.jar" todir="../Assets/Plugins/Android" overwrite="true"/>
+        <copy file="./output/${name}.jar" todir="../Assets/Plugins/Android" overwrite="true"/>
+    </target>
+	
+	<target name="clean">
+        <delete dir="./android/"/>
+        <delete dir="./output/"/>
+	</target>   
+</project>
