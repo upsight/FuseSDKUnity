@@ -22,9 +22,8 @@ public class FuseAPI : MonoBehaviour
 	public string iOSGameID;
 
 	public string GCM_SenderID = "";
-	public bool registerForPushNotifications = false;
+	public bool registerForPushNotifications = true;
 	public bool logging = true;
-	public bool persistent = true;
 
 	public bool androidIAB = false;
 	public bool androidUnibill = false;
@@ -32,13 +31,22 @@ public class FuseAPI : MonoBehaviour
 	public bool iosStoreKit = false;
 	public bool iosUnibill = false;
 
-	enum Errors
+	public enum SessionError
 	{
-    	NONE = 0,            /// no error has occurred
-    	NOT_CONNECTED,       /// the user is not connected to the internet
-    	REQUEST_FAILED,      /// there was an error in establishing a connection with the server
-    	XML_PARSE_ERROR,     /// data was received, but there was a problem parsing the xml
+    	NONE = 0,			/// no error has occurred
+    	NOT_CONNECTED,		/// the user is not connected to the internet
+    	REQUEST_FAILED,		/// there was an error in establishing a connection with the server
+    	XML_PARSE_ERROR,	/// data was received, but there was a problem parsing the xml
+		UNDEFINED,			/// unknown error
 	};
+
+	public enum AdAvailabilityError
+	{
+		FUSE_AD_NO_ERROR = 0,
+		FUSE_AD_NOT_CONNECTED,
+		FUSE_AD_SESSION_FAILURE,
+		UNDEFINED,
+	}
 #region Session Setup
 
 	void Awake()
@@ -64,9 +72,8 @@ public class FuseAPI : MonoBehaviour
 				fuse = gameObject.AddComponent<FuseAPI_Android>();
 				fuse.AndroidGameID = this.AndroidGameID;
 				fuse.GCM_SenderID = this.GCM_SenderID;
-				fuse.registerForPushNotifications = this.registerForPushNotifications;
+				fuse.registerForPushNotifications = this.registerForPushNotifications && !string.IsNullOrEmpty(this.GCM_SenderID);
 				fuse.logging = this.logging;
-				fuse.persistent = this.persistent;
 			}
 			else if(Application.platform == RuntimePlatform.IPhonePlayer)
 			{
@@ -74,7 +81,6 @@ public class FuseAPI : MonoBehaviour
 				fuse.iOSGameID = this.iOSGameID;
 				fuse.registerForPushNotifications = this.registerForPushNotifications;
 				fuse.logging = this.logging;
-				fuse.persistent = this.persistent;
 			}
 			else
 			{
@@ -88,7 +94,6 @@ public class FuseAPI : MonoBehaviour
 				fuse.GCM_SenderID = this.GCM_SenderID;
 				fuse.registerForPushNotifications = this.registerForPushNotifications;
 				fuse.logging = this.logging;
-				fuse.persistent = this.persistent;
 			}
 
 			DestroyImmediate(this);
@@ -127,12 +132,15 @@ public class FuseAPI : MonoBehaviour
 
 	protected static void _StartSession(string gameId)
 	{
+		if(string.IsNullOrEmpty(gameId))
+			Debug.LogError("FuseSDK: Null or empty API Key. Make sure your API Key is entered in the FuseSDK prefab");
+
 		FuseLog(" Session Started");
 		FusePlatformAPI._StartSession(gameId);
 	}
 	
 	public static event Action SessionStartReceived;
-	public static event Action<int> SessionLoginError; 
+	public static event Action<SessionError> SessionLoginError; 
 	
 	#if UNITY_ANDROID
 	public static void SetupPushNotifications(string gcmProjectID)
@@ -245,11 +253,8 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.ShowAd(adZone);
 	}
 	
-	public static event Action<int, int> AdAvailabilityResponse;
+	public static event Action<bool, AdAvailabilityError> AdAvailabilityResponse;
 	public static event Action AdWillClose;
-	public static event Action AdDisplayed;
-	public static event Action AdClicked;
-	public static event Action<string> VideoCompleted;
 	public static event Action<string> RewardedVideoCompleted;
 
 #endregion
@@ -332,11 +337,6 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.DeviceLogin(alias);
 	}
 	
-	public static void OpenFeintLogin(string openFeintId)
-	{
-		FusePlatformAPI.OpenFeintLogin(openFeintId);
-	}
-	
 	public static void FuseLogin(string fuseId, string alias)
 	{
 		FusePlatformAPI.FuseLogin(fuseId, alias);
@@ -393,6 +393,12 @@ public class FuseAPI : MonoBehaviour
 	{
 		return FusePlatformAPI.NotReadyToTerminate();
 	}
+
+	public static string GetFuseId()
+	{
+		return FusePlatformAPI.GetFuseId();
+	}
+	
 #endregion
 	
 #region Data Opt In/Out
@@ -408,71 +414,19 @@ public class FuseAPI : MonoBehaviour
 	}
 #endregion
 	
-#region User Game Data
-	
-	public static int SetGameData(Hashtable data)
-	{
-		return FusePlatformAPI.SetGameData(data);
-	}
-	
-	public static int SetGameData(string key, Hashtable data)
-	{
-		return FusePlatformAPI.SetGameData(key, data);
-	}
-	
-	public static int SetGameData(string key, Hashtable data, bool isCollection)
-	{
-		return FusePlatformAPI.SetGameData(key, data, isCollection);
-	}
-	
-	public static int SetGameData(string key, Hashtable data, bool isCollection, string fuseId)
-	{
-		return FusePlatformAPI.SetGameData(key, data, isCollection, fuseId);
-	}
-	
-	public static int GetGameData(string[] keys)
-	{
-		return FusePlatformAPI.GetGameData(keys);
-	}
-	
-	public static int GetGameData(string key, string[] keys)
-	{
-		return FusePlatformAPI.GetGameData(key, keys);
-	}
-	
-	public static int GetFriendGameData(string fuseId, string[] keys)
-	{
-		return FusePlatformAPI.GetFriendGameData(fuseId, keys);
-	}
-	
-	public static int GetFriendGameData(string fuseId, string key, string[] keys)
-	{
-		return FusePlatformAPI.GetFriendGameData(fuseId, key, keys);
-	}
-	
-	public static event Action<int, int> GameDataError;
-	public static event Action<int> GameDataSetAcknowledged;
-	public static event Action<string, string, Hashtable, int> GameDataReceived;
-	
-	public static string GetFuseId()
-	{
-		return FusePlatformAPI.GetFuseId();
-	}
-	
-	#endregion
-	
-	#region Friend List
+#region Friend List
 	public enum FriendErrors
 	{
 		FUSE_FRIEND_NO_ERROR = 0,
     	FUSEE_FRIEND_BAD_ID,
     	FUSE_FRIEND_NOT_CONNECTED,
     	FUSE_FRIEND_REQUEST_FAILED,
-	}	
-	public static event Action<string, int> FriendAdded;
-	public static event Action<string, int> FriendRemoved;
-	public static event Action<string, int> FriendAccepted;
-	public static event Action<string, int> FriendRejected;
+		UNDEFINED,
+	}
+	public static event Action<string, FriendErrors> FriendAdded;
+	public static event Action<string, FriendErrors> FriendRemoved;
+	public static event Action<string, FriendErrors> FriendAccepted;
+	public static event Action<string, FriendErrors> FriendRejected;
 	
 	public static void AddFriend(string fuseId)
 	{
@@ -491,15 +445,16 @@ public class FuseAPI : MonoBehaviour
 		FusePlatformAPI.RejectFriend(fuseId);
 	}	
 	
-	public enum FuseMigrateFriendErrors
+	public enum MigrateFriendErrors
 	{
 	    FUSE_MIGRATE_FRIENDS_NO_ERROR = 0,
 	    FUSE_MIGRATE_FRIENDS_BAD_ID,
 	    FUSE_MIGRATE_FRIENDS_NOT_CONNECTED,
-	    FUSE_MIGRATE_FRIENDS_REQUEST_FAILED
+	    FUSE_MIGRATE_FRIENDS_REQUEST_FAILED,
+		UNDEFINED,
 	};
 
-	public static event Action<string, int> FriendsMigrated;
+	public static event Action<string, MigrateFriendErrors> FriendsMigrated;
 	
 	public static void MigrateFriends(string fuseId)
 	{
@@ -520,16 +475,13 @@ public class FuseAPI : MonoBehaviour
 	}
 	
 	public static event Action<List<Friend>> FriendsListUpdated;
-	public static event Action<int> FriendsListError;
+	public static event Action<FriendErrors> FriendsListError;
 	
 	public static List<Friend> GetFriendsList()
 	{
 		return FusePlatformAPI.GetFriendsList();
 	}
-	#endregion
-
-	#region Chat List
-	#endregion
+#endregion
 
 #region User-to-User Push Notifications
 	public static void UserPushNotification(string fuseId, string message)
@@ -543,57 +495,6 @@ public class FuseAPI : MonoBehaviour
 	}
 #endregion
 	
-#region Gifting
-	
-	public static void GetMailListFromServer()
-	{
-		FusePlatformAPI.GetMailListFromServer();
-	}
-	
-	public static void GetMailListFriendFromServer(string fuseId)
-	{
-		FusePlatformAPI.GetMailListFriendFromServer(fuseId);
-	}
-	
-	public struct Mail
-	{
-		public int messageId;
-		public DateTime timestamp;
-		public string alias;
-		public string message;
-		public int giftId;
-		public string giftName;
-		public int giftAmount;
-	}
-	
-	public static event Action<List<Mail>, string> MailListReceived;
-	public static event Action<int> MailListError;
-	
-	public static List<Mail> GetMailList(string fuseId)
-	{
-		return FusePlatformAPI.GetMailList(fuseId);
-	}
-	
-	public static void SetMailAsReceived(int messageId)
-	{
-		FusePlatformAPI.SetMailAsReceived(messageId);
-	}
-	
-	public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
-	{
-		return FusePlatformAPI.SendMailWithGift(fuseId, message, giftId, giftAmount);
-	}
-	
-	public static int SendMail(string fuseId, string message)
-	{
-		return FusePlatformAPI.SendMail(fuseId, message);
-	}
-	
-	public static event Action<int, string, int> MailAcknowledged;
-	public static event Action<int> MailError;
-	
-#endregion
-
 #region Game Configuration Data
 
 	public static string GetGameConfigurationValue(string key)
@@ -619,22 +520,7 @@ public class FuseAPI : MonoBehaviour
 	{
 		FusePlatformAPI.RegisterCurrency(type, balance);
 	}
-	
-	public static void RegisterFlurryView()
-	{
-		FusePlatformAPI.RegisterFlurryView();
-	}
-	
-	public static void RegisterFlurryClick()
-	{
-		FusePlatformAPI.RegisterFlurryClick();
-	}
-	
-	public static void RegisterTapjoyReward(int amount)
-	{
-		FusePlatformAPI.RegisterTapjoyReward(amount);
-	}
-	
+
 	public static void RegisterAge(int age)
 	{
 		FusePlatformAPI.RegisterAge(age);
@@ -659,7 +545,16 @@ public class FuseAPI : MonoBehaviour
 	{
 		if (SessionLoginError != null)
 		{
-			SessionLoginError(error);
+			SessionError e;
+			try
+			{
+				e = (SessionError)error;
+			}
+			catch
+			{
+				e = SessionError.UNDEFINED;
+			}
+			SessionLoginError(e);
 		}
 	}
 	
@@ -675,7 +570,16 @@ public class FuseAPI : MonoBehaviour
 	{
 		if (AdAvailabilityResponse != null)
 		{
-			AdAvailabilityResponse(available, error);
+			AdAvailabilityError e;
+			try
+			{
+				e = (AdAvailabilityError)error;
+			}
+			catch
+			{
+				e = AdAvailabilityError.UNDEFINED;
+			}
+			AdAvailabilityResponse(available != 0, e);
 		}
 	}
 	
@@ -684,30 +588,6 @@ public class FuseAPI : MonoBehaviour
 		if (AdWillClose != null)
 		{
 			AdWillClose();
-		}
-	}
-	
-	static protected void OnAdDisplayed()
-	{
-		if (AdDisplayed != null)
-		{
-			AdDisplayed();
-		}
-	}
-
-	static protected void OnAdClicked()
-	{
-		if (AdClicked != null)
-		{
-			AdClicked();
-		}
-	}
-	
-	static protected void OnVideoCompleted(string adZone)
-	{
-		if (VideoCompleted != null)
-		{
-			VideoCompleted(adZone);
 		}
 	}
 	
@@ -750,36 +630,21 @@ public class FuseAPI : MonoBehaviour
 			TimeUpdated(time);
 		}
 	}
-	
-	static protected void OnGameDataError(int error, int requestId)
-	{
-		if (GameDataError != null)
-		{
-			GameDataError(error, requestId);
-		}
-	}
-	
-	static protected void OnGameDataSetAcknowledged(int requestId)
-	{
-		if (GameDataSetAcknowledged != null)
-		{
-			GameDataSetAcknowledged(requestId);
-		}
-	}
-	
-	static protected void OnGameDataReceived(string fuseId, string dataKey, Hashtable data, int requestId)
-	{
-		if (GameDataReceived != null)
-		{
-			GameDataReceived(fuseId, dataKey, data, requestId);
-		}
-	}
-	
+
 	static protected void OnFriendAdded(string fuseId, int error)
 	{
 		if( FriendAdded != null )
 		{
-			FriendAdded(fuseId, error);
+			FriendErrors e;
+			try
+			{
+				e = (FriendErrors)error;
+			}
+			catch
+			{
+				e = FriendErrors.UNDEFINED;
+			}
+			FriendAdded(fuseId, e);
 		}
 	}
 	
@@ -787,7 +652,16 @@ public class FuseAPI : MonoBehaviour
 	{
 		if( FriendAdded != null )
 		{
-			FriendRemoved(fuseId, error);
+			FriendErrors e;
+			try
+			{
+				e = (FriendErrors)error;
+			}
+			catch
+			{
+				e = FriendErrors.UNDEFINED;
+			}
+			FriendRemoved(fuseId, e);
 		}
 	}
 	
@@ -795,7 +669,16 @@ public class FuseAPI : MonoBehaviour
 	{
 		if( FriendAdded != null )
 		{
-			FriendAccepted(fuseId, error);
+			FriendErrors e;
+			try
+			{
+				e = (FriendErrors)error;
+			}
+			catch
+			{
+				e = FriendErrors.UNDEFINED;
+			}
+			FriendAccepted(fuseId, e);
 		}
 	}
 	
@@ -803,7 +686,16 @@ public class FuseAPI : MonoBehaviour
 	{
 		if( FriendAdded != null )
 		{
-			FriendRejected(fuseId, error);
+			FriendErrors e;
+			try
+			{
+				e = (FriendErrors)error;
+			}
+			catch
+			{
+				e = FriendErrors.UNDEFINED;
+			}
+			FriendRejected(fuseId, e);
 		}
 	}
 	
@@ -811,7 +703,16 @@ public class FuseAPI : MonoBehaviour
 	{
 		if( FriendsMigrated != null )
 		{
-			FriendsMigrated(fuseId, error);
+			MigrateFriendErrors e;
+			try
+			{
+				e = (MigrateFriendErrors)error;
+			}
+			catch
+			{
+				e = MigrateFriendErrors.UNDEFINED;
+			}
+			FriendsMigrated(fuseId, e);
 		}
 	}
 	
@@ -827,39 +728,16 @@ public class FuseAPI : MonoBehaviour
 	{
 		if (FriendsListError != null)
 		{
-			FriendsListError(error);
-		}
-	}
-	
-	static protected void OnMailListReceived(List<Mail> mailList, string mailFuseId)
-	{
-		if (MailListReceived != null)
-		{
-			MailListReceived(mailList, mailFuseId);
-		}
-	}
-	
-	static protected void OnMailListError(int error)
-	{
-		if (MailListError != null)
-		{
-			MailListError(error);
-		}
-	}
-	
-	static protected void OnMailAcknowledged(int messageId, string fuseId, int requestID)
-	{
-		if (MailAcknowledged != null)
-		{
-			MailAcknowledged(messageId, fuseId, requestID);
-		}
-	}
-	
-	static protected void OnMailError(int error)
-	{
-		if (MailError != null)
-		{
-			MailError(error);
+			FriendErrors e;
+			try
+			{
+				e = (FriendErrors)error;
+			}
+			catch
+			{
+				e = FriendErrors.UNDEFINED;
+			}
+			FriendsListError(e);
 		}
 	}
 
@@ -870,9 +748,9 @@ public class FuseAPI : MonoBehaviour
 			GameConfigurationReceived();
 		}
 	}
-	#endregion
+#endregion
 
-	#region Conversions
+#region Conversions
 	static public long DateTimeToTimestamp(DateTime dateTime)
 	{
 		return (dateTime - unixEpoch).Ticks / TimeSpan.TicksPerSecond;

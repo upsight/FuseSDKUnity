@@ -2,46 +2,13 @@
 #import "FuseSDK.h"
 #import "FuseUnityAPI.h"
 #import "NSData-Base64.h"
-#include "Mono.h"
 
 #define FuseSafeRelease(obj) if (obj != nil){ \
 [obj release]; \
 obj = nil;}
 
-static void* _FuseAPI_SessionStartReceived = NULL; 
-static void* _FuseAPI_SessionLoginError = NULL;
-static void* _FuseAPI_TimeUpdated = NULL;
-static void* _FuseAPI_PurchaseVerification = NULL;
-static void* _FuseAPI_AdAvailabilityResponse = NULL;
-static void* _FuseAPI_RewardedVideoCompleted = NULL;
-static void* _FuseAPI_AdWillClose = NULL;
-static void* _FuseAPI_NotificationAction = NULL;
-static void* _FuseAPI_OverlayWillClose = NULL;
-static void* _FuseAPI_AccountLoginComplete = NULL;
-static void* _FuseAPI_GameConfigurationReceived = NULL;
-static void* _FuseAPI_GameDataSetAcknowledged = NULL;
-static void* _FuseAPI_GameDataError = NULL;
-static void* _FuseAPI_GameDataReceivedStart = NULL;
-static void* _FuseAPI_GameDataReceivedKeyValue = NULL;
-static void* _FuseAPI_GameDataReceivedEnd = NULL;
-static void* _FuseAP_FriendAdded = NULL;
-static void* _FuseAP_FriendRemoved = NULL;
-static void* _FuseAP_FriendAccepted = NULL;
-static void* _FuseAP_FriendRejected = NULL;
-static void* _FuseAPI_FriendsListUpdatedStart = NULL;
-static void* _FuseAPI_FriendsListUpdatedFriend = NULL;
-static void* _FuseAPI_FriendsListUpdatedEnd = NULL;
-static void* _FuseAPI_FriendsListError = NULL;
-static void* _FuseAPI_FriendsMigrated = NULL;
-static void* _FuseAPI_MailListReceivedStart = NULL;
-static void* _FuseAPI_MailListReceivedMail = NULL;
-static void* _FuseAPI_MailListReceivedEnd = NULL;
-static void* _FuseAPI_MailListError = NULL;
-static void* _FuseAPI_MailAcknowledged = NULL;
-static void* _FuseAPI_MailError = NULL;
-static void* _FuseAPI_GameConfigInit = NULL;
-static void* _FuseAPI_UpdateGameConfig = NULL;
-
+static char *fuseGameObject = "FuseSDK";
+static const char *nilString = "";
 static FuseAPI_ProductsResponse* _FuseAPI_productsResponse = nil;
 
 static NSString* _FuseAPI_gameDataKey = nil;
@@ -59,48 +26,28 @@ void FuseAPI_Initialize()
 {
 	NSSetUncaughtExceptionHandler(&FuseAPI_RegisterCrash);
 	
-	Mono_Initialize();
-	
-	_FuseAPI_SessionStartReceived = Mono_GetMethod("FuseAPI:_SessionStartReceived");
-	_FuseAPI_SessionLoginError = Mono_GetMethod("FuseAPI:_SessionLoginError");
-	_FuseAPI_TimeUpdated = Mono_GetMethod("FuseAPI:_TimeUpdated");
-	_FuseAPI_PurchaseVerification = Mono_GetMethod("FuseAPI:_PurchaseVerification");
-	_FuseAPI_AdAvailabilityResponse = Mono_GetMethod("FuseAPI:_AdAvailabilityResponse");
-    _FuseAPI_RewardedVideoCompleted = Mono_GetMethod("FuseAPI:_RewardedVideoCompleted");
-	_FuseAPI_AdWillClose = Mono_GetMethod("FuseAPI:_AdWillClose");
-	_FuseAPI_NotificationAction = Mono_GetMethod("FuseAPI:_NotificationAction");
-	_FuseAPI_OverlayWillClose = Mono_GetMethod("FuseAPI:_OverlayWillClose");
-	_FuseAPI_AccountLoginComplete = Mono_GetMethod("FuseAPI:_AccountLoginComplete");
-	_FuseAPI_GameConfigurationReceived = Mono_GetMethod("FuseAPI:_GameConfigurationReceived");
-	_FuseAPI_GameDataSetAcknowledged = Mono_GetMethod("FuseAPI:_GameDataSetAcknowledged");
-	_FuseAPI_GameDataError = Mono_GetMethod("FuseAPI:_GameDataError");
-	_FuseAPI_GameDataReceivedStart = Mono_GetMethod("FuseAPI:_GameDataReceivedStart");
-	_FuseAPI_GameDataReceivedKeyValue = Mono_GetMethod("FuseAPI:_GameDataReceivedKeyValue");
-	_FuseAPI_GameDataReceivedEnd = Mono_GetMethod("FuseAPI:_GameDataReceivedEnd");
-	_FuseAP_FriendAdded = Mono_GetMethod("FuseAPI:_FriendAdded");
-	_FuseAP_FriendRemoved = Mono_GetMethod("FuseAPI:_FriendRemoved");
-	_FuseAP_FriendAccepted = Mono_GetMethod("FuseAPI:_FriendAccepted");
-	_FuseAP_FriendRejected = Mono_GetMethod("FuseAPI:_FriendRejected");
-	_FuseAPI_FriendsListUpdatedStart = Mono_GetMethod("FuseAPI:_FriendsListUpdatedStart");
-	_FuseAPI_FriendsListUpdatedFriend = Mono_GetMethod("FuseAPI:_FriendsListUpdatedFriend");
-	_FuseAPI_FriendsListUpdatedEnd = Mono_GetMethod("FuseAPI:_FriendsListUpdatedEnd");
-	_FuseAPI_FriendsListError = Mono_GetMethod("FuseAPI:_FriendsListError");
-    _FuseAPI_FriendsMigrated = Mono_GetMethod("FuseAPI:_FriendsMigrated");
-	_FuseAPI_MailListReceivedStart = Mono_GetMethod("FuseAPI:_MailListReceivedStart");
-	_FuseAPI_MailListReceivedMail = Mono_GetMethod("FuseAPI:_MailListReceivedMail");
-	_FuseAPI_MailListReceivedEnd = Mono_GetMethod("FuseAPI:_MailListReceivedEnd");
-	_FuseAPI_MailListError = Mono_GetMethod("FuseAPI:_MailListError");
-	_FuseAPI_MailAcknowledged = Mono_GetMethod("FuseAPI:_MailAcknowledged");
-	_FuseAPI_MailError = Mono_GetMethod("FuseAPI:_MailError");
-    _FuseAPI_GameConfigInit = Mono_GetMethod("FuseAPI:_GameConfigInit");
-    _FuseAPI_UpdateGameConfig = Mono_GetMethod("FuseAPI:_UpdateGameConfig");
-	
 	_FuseAPI_delegate = [FuseAPI_Delegate new];
 }
 
 void FuseAPI_RegisterCrash(NSException* exception)
 {
 	[FuseAPI registerCrash:exception];
+}
+
+void FuseAPI_SetUnityGameObject(const char* unityGameObject)
+{
+    char* fuseGameObject = (char*)malloc(strlen(unityGameObject) + 1);
+    strcpy(fuseGameObject, unityGameObject);
+//	fuseGameObject = unityGameObject;
+}
+
+void CallUnity(const char* methodName, const char* param)
+{
+	if(param == nil)
+	{
+		param = nilString;
+	}
+	UnitySendMessage(fuseGameObject, methodName, param);
 }
 
 #pragma mark - Session
@@ -110,17 +57,6 @@ void FuseAPI_StartSession(const char* gameId)
 	FuseAPI_Initialize();
 	[FuseAPI setPlatform:@"unity-ios"];
 	[FuseAPI startSession:[NSString stringWithUTF8String:gameId] Delegate:_FuseAPI_delegate AutoRegisterForPush:NO];    
-}
-
-void FuseAPI_SessionStartReceived()
-{
-	Mono_CallMethod(_FuseAPI_SessionStartReceived, NULL);
-}
-
-void FuseAPI_SessionLoginError(int error)
-{
-	void *args[] = { &error };
-	Mono_CallMethod(_FuseAPI_SessionLoginError, args);
 }
 
 #pragma mark - Analytics
@@ -361,12 +297,6 @@ void FuseAPI_RegisterUnibillPurchase(const char* productId, const char* receipt,
     _UniBillPayment.transactionIdentifier = @"No Transaction ID";
 }
 
-void FuseAPI_PurchaseVerification(int verified, const char* transactionId, const char* originalTransactionId)
-{
-	void *args[] = { &verified, Mono_NewString(transactionId), Mono_NewString(originalTransactionId) };
-	Mono_CallMethod(_FuseAPI_PurchaseVerification, args);
-}
-
 #pragma mark - Ads
 
 void FuseAPI_PreloadAdForZone(const char * _adZone)
@@ -382,24 +312,6 @@ void FuseAPI_CheckAdAvailable(const char * _adZone)
 void FuseAPI_ShowAd(const char * _adZone)
 {
 	[FuseAPI showAdWithDelegate:_FuseAPI_delegate adZone:[NSString stringWithUTF8String:_adZone]];
-}
-
-void FuseAPI_AdAvailabilityResponse(int available, int error)
-{
-	void *args[] = { &available, &error };
-	Mono_CallMethod(_FuseAPI_AdAvailabilityResponse, args);
-}
-
-void FuseAPI_RewardedVideoCompleted(const char* zoneID)
-{
-    void *args[] = { Mono_NewString(zoneID) };
-    Mono_CallMethod(_FuseAPI_RewardedVideoCompleted, args);
-}
-
-
-void FuseAPI_AdWillClose()
-{
-	Mono_CallMethod(_FuseAPI_AdWillClose, NULL);
 }
 
 #pragma mark - Notifications
@@ -420,22 +332,11 @@ bool FuseAPI_IsNotificationAvailable()
 	return [FuseAPI isNotificationAvailable];
 }
 
-void FuseAPI_NotificationAction(const char* action)
-{
-	void *args[] = { Mono_NewString(action) };
-	Mono_CallMethod(_FuseAPI_NotificationAction, args);
-}
-
 #pragma mark - More Games
 
 void FuseAPI_DisplayMoreGames()
 {
 	[FuseAPI displayMoreGames:_FuseAPI_delegate];
-}
-
-void FuseAPI_OverlayWillClose()
-{
-	Mono_CallMethod(_FuseAPI_OverlayWillClose, NULL);
 }
 
 #pragma mark - Gender
@@ -472,17 +373,12 @@ void FuseAPI_DeviceLogin(const char* alias)
 	[FuseAPI deviceLogin:[NSString stringWithUTF8String:alias]];
 }
 
-void FuseAPI_OpenFeintLogin(const char* openFeintId)
-{
-	[FuseAPI openFeintLogin:[NSString stringWithUTF8String:openFeintId]];
-}
-
 void FuseAPI_FuseLogin(const char* fuseId, const char* alias)
 {
 	[FuseAPI fuseLogin:[NSString stringWithUTF8String:fuseId] Alias:[NSString stringWithUTF8String:alias]];
 }
 
-void FuseAPI_GooglePlayLogin(const char* _id, const char* alias, const char* token)
+void FuseAPI_GooglePlayLogin(const char* alias, const char* token)
 {
     [FuseAPI googlePlayLogin:[NSString stringWithUTF8String:alias] AccessToken:[NSString stringWithUTF8String:token]];
 }
@@ -522,12 +418,6 @@ const char* FuseAPI_GetOriginalAccountId()
 int FuseAPI_GetOriginalAccountType()
 {
 	return [FuseAPI getOriginalAccountType];
-}
-
-void FuseAPI_AccountLoginComplete(int type, const char* accountId)
-{
-	void *args[] = { &type , Mono_NewString(accountId) };
-	Mono_CallMethod(_FuseAPI_AccountLoginComplete, args);
 }
 
 const char* FuseAPI_GetFuseId()
@@ -578,12 +468,6 @@ void FuseAPI_TimeFromServer()
 	[FuseAPI utcTimeFromServer];
 }
 
-void FuseAPI_TimeUpdated(long long timestamp)
-{
-	void *args[] = { &timestamp };
-	Mono_CallMethod(_FuseAPI_TimeUpdated, args);
-}
-
 bool FuseAPI_NotReadyToTerminate()
 {
 	return [FuseAPI notReadyToTerminate];
@@ -624,11 +508,6 @@ const char* FuseAPI_GetGameConfigurationValue(const char* key)
     strcpy(copy, string);
     
     return copy;
-}
-
-void FuseAPI_GameConfigurationReceived()
-{
-	Mono_CallMethod(_FuseAPI_GameConfigurationReceived, NULL);
 }
 
 #pragma mark - Game Data
@@ -672,18 +551,6 @@ int FuseAPI_SetGameDataEnd()
 	_FuseAPI_gameDataKey = nil;
 	
 	return requestId;
-}
-
-void FuseAPI_GameDataSetAcknowledged(int requestId)
-{
-	void *args[] = { &requestId };
-	Mono_CallMethod(_FuseAPI_GameDataSetAcknowledged, args);
-}
-
-void FuseAPI_GameDataError(int error, int requestId)
-{
-	void *args[] = { &error, &requestId };
-	Mono_CallMethod(_FuseAPI_GameDataError, args);
 }
 
 void FuseAPI_GetGameDataStart(const char* key, const char* fuseId)
@@ -731,72 +598,11 @@ int FuseAPI_GetGameDataEnd()
 	
 }
 
-void FuseAPI_GameDataReceivedStart(const char* fuseId, const char* key, int requestId)
-{
-	void *args[] = { Mono_NewString(fuseId), Mono_NewString(key), &requestId };
-	Mono_CallMethod(_FuseAPI_GameDataReceivedStart, args);
-}
-
-void FuseAPI_GameDataReceivedKeyValue(const char* key, const char* value, bool isBinary)
-{
-	void *args[] = { Mono_NewString(key), Mono_NewString(value), &isBinary };
-	Mono_CallMethod(_FuseAPI_GameDataReceivedKeyValue, args);
-}
-
-void FuseAPI_GameDataReceivedEnd()
-{
-	Mono_CallMethod(_FuseAPI_GameDataReceivedEnd, NULL);
-}
-
-void FuseAPI_RefreshGameConfiguration()
-{
-    // get the game config table
-    NSMutableDictionary* dict = [FuseAPI getGameConfiguration];
-    if( dict != nil && [dict count] > 0 )
-    {
-        // initialize game config by clearing the old dictionary
-        Mono_CallMethod(_FuseAPI_GameConfigInit, NULL);
-        
-        // iterate through each kvp in the dictionary and send them to mono
-        NSArray* keys = [dict allKeys];
-        for( int i = 0; i < [keys count]; i++ )
-        {
-            NSString* key = [keys objectAtIndex:i];
-            NSString* value = [dict objectForKey:key];
-            
-            void* argsForDict[] = { Mono_NewString(key.UTF8String), Mono_NewString([value UTF8String]) };
-            Mono_CallMethod(_FuseAPI_UpdateGameConfig, argsForDict);
-        }
-    }
-}
-
 #pragma mark - Friends List
 
 void FuseAPI_UpdateFriendsListFromServer()
 {
 	[FuseAPI updateFriendsListFromServer];
-}
-
-void FuseAPI_FriendsListUpdatedStart()
-{
-	Mono_CallMethod(_FuseAPI_FriendsListUpdatedStart, NULL);
-}
-
-void FuseAPI_FriendsListUpdatedFriend(const char* fuseId, const char* accountId, const char* alias, bool pending)
-{
-	void *args[] = { Mono_NewString(fuseId), Mono_NewString(accountId), Mono_NewString(alias), &pending };
-	Mono_CallMethod(_FuseAPI_FriendsListUpdatedFriend, args);
-}
-
-void FuseAPI_FriendsListUpdatedEnd()
-{
-	Mono_CallMethod(_FuseAPI_FriendsListUpdatedEnd, NULL);
-}
-
-void FuseAPI_FriendsListError(int error)
-{
-	void *args[] = { &error };
-	Mono_CallMethod(_FuseAPI_FriendsListError, args);
 }
 
 void FuseAPI_AddFriend(const char* fuseId)
@@ -819,39 +625,9 @@ void FuseAPI_RejectFriend(const char* fuseId)
     [FuseAPI rejectFriend:[NSString stringWithUTF8String:fuseId]];
 }
 
-void FuseAPI_FriendAdded(const char* fuseId, int error)
-{
-    void *args[] = { Mono_NewString(fuseId), &error };
-    Mono_CallMethod(_FuseAP_FriendAdded, args);
-}
-
-void FuseAPI_FriendRemoved(const char* fuseId, int error)
-{
-    void *args[] = { Mono_NewString(fuseId), &error };
-    Mono_CallMethod(_FuseAP_FriendRemoved, args);
-}
-
-void FuseAPI_FriendAccepted(const char* fuseId, int error)
-{
-    void *args[] = { Mono_NewString(fuseId), &error };
-    Mono_CallMethod(_FuseAP_FriendAccepted, args);
-}
-
-void FuseAPI_FriendRejected(const char* fuseId, int error)
-{
-    void *args[] = { Mono_NewString(fuseId), &error };
-    Mono_CallMethod(_FuseAP_FriendRejected, args);
-}
-
 void FuseAPI_MigrateFriends(const char* fuseId)
 {
     [FuseAPI migrateFriends:[NSString stringWithUTF8String:fuseId]];
-}
-
-void FuseAPI_FriendsMigrated(const char* fuseId, int error)
-{
-    void *args[] = { Mono_NewString(fuseId), &error };
-    Mono_CallMethod(_FuseAPI_FriendsMigrated, args);
 }
 
 int FuseAPI_GetFriendsListCount()
@@ -986,29 +762,6 @@ void FuseAPI_GetMailListFriendFromServer(const char* fuseId)
 	[FuseAPI getMailListFriendFromServer:[NSString stringWithUTF8String:fuseId]];
 }
 
-void FuseAPI_MailListReceivedStart(const char* fuseId)
-{
-	void *args[] = { Mono_NewString(fuseId) };
-	Mono_CallMethod(_FuseAPI_MailListReceivedStart, args);
-}
-
-void FuseAPI_MailListReceivedMail(int messageId, long long timestamp, const char* alias, const char* message, int giftId, const char* giftName, int giftAmount)
-{
-	void *args[] = { &messageId, &timestamp, Mono_NewString(alias), Mono_NewString(message), &giftId, Mono_NewString(giftName), &giftAmount };
-	Mono_CallMethod(_FuseAPI_MailListReceivedMail, args);
-}
-
-void FuseAPI_MailListReceivedEnd()
-{
-	Mono_CallMethod(_FuseAPI_MailListReceivedEnd, NULL);
-}
-
-void FuseAPI_MailListError(int error)
-{
-	void *args[] = { &error };
-	Mono_CallMethod(_FuseAPI_MailListError, args);
-}
-
 int FuseAPI_GetMailListCount(const char* fuseId)
 {
 	return [[FuseAPI getMailList:[NSString stringWithUTF8String:fuseId]] count];
@@ -1122,18 +875,6 @@ int FuseAPI_SendMailWithGift(const char* fuseId, const char* message, int giftId
 	return [FuseAPI sendMailWithGift:[NSString stringWithUTF8String:fuseId] Message:[NSString stringWithUTF8String:message] GiftID:giftId GiftAmount:giftAmount];
 }
 
-void FuseAPI_MailAcknowledged(int messageId, const char* fuseId, int requestId)
-{
-	void *args[] = { &messageId, Mono_NewString(fuseId), &requestId };
-	Mono_CallMethod(_FuseAPI_MailAcknowledged, args);
-}
-
-void FuseAPI_MailError(int error)
-{
-	void *args[] = { &error };
-	Mono_CallMethod(_FuseAPI_MailError, args);
-}
-
 #pragma mark - Specific Event Registration
 
 void FuseAPI_RegisterLevel(int level)
@@ -1144,21 +885,6 @@ void FuseAPI_RegisterLevel(int level)
 void FuseAPI_RegisterCurrency(int type, int balance)
 {
 	[FuseAPI registerCurrency:type Balance:balance];
-}
-
-void FuseAPI_RegisterFlurryView()
-{
-	[FuseAPI registerFlurryView];
-}
-
-void FuseAPI_RegisterFlurryClick()
-{
-	[FuseAPI registerFlurryClick];
-}
-
-void FuseAPI_RegisterTapjoyReward(int amount)
-{
-	[FuseAPI registerTapjoyReward:amount];
 }
 
 void FuseAPI_RegisterAge(int age)
@@ -1193,128 +919,130 @@ void FuseAPI_RegisterBirthday(int year, int month, int day)
 
 - (void)sessionStartReceived
 {
-	FuseAPI_SessionStartReceived();
+	CallUnity("_CB_SessionStartReceived", NULL);
 }
 
 - (void)sessionLoginError:(NSNumber*)_error
 {
-	FuseAPI_SessionLoginError([_error integerValue]);
+	CallUnity("_CB_SessionLoginError", [_error stringValue].UTF8String);
 }
 
 #pragma mark In-App Purchase Logging
 
 - (void)puchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id
 {
-	FuseAPI_PurchaseVerification(_verified.intValue, _tx_id.UTF8String, _o_tx_id.UTF8String);
+    NSArray *values = @[_verified,_tx_id,_o_tx_id];
+    
+	CallUnity("_CB_PurchaseVerification", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 #pragma mark Fuse Interstitial Ads
 
 - (void) adAvailabilityResponse:(NSNumber*)_available Error:(NSNumber*)_error
 {
-	FuseAPI_AdAvailabilityResponse(_available.intValue, _error.intValue);
+	NSArray *values = @[_available,_error];
+
+	CallUnity("_CB_AdAvailabilityResponse", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
+}
+
+-(void) rewardedVideoCompleted:(NSString*) _zoneID
+{
+    CallUnity("_CB_RewardedVideoCompleted", _zoneID.UTF8String);
 }
 
 - (void)adWillClose
 {
-	FuseAPI_AdWillClose();
+	CallUnity("_CB_AdWillClose", NULL);
 }
 
 #pragma mark Notifications
 
 -(void) notificationAction:(NSString*)_action
 {
-	FuseAPI_NotificationAction(_action.UTF8String);
+	CallUnity("_CB_NotificationAction", _action.UTF8String);
 }
 
 #pragma mark More Games
 
 - (void)overlayWillClose
 {
-	FuseAPI_OverlayWillClose();
+	CallUnity("_CB_OverlayWillClose", NULL);
 }
 
 #pragma mark Account Login
 
 - (void)accountLoginComplete:(NSNumber*)_type Account:(NSString*)_account_id
 {
-	FuseAPI_AccountLoginComplete(_type.intValue, _account_id.UTF8String);
+	NSArray *values = @[_type,_account_id];
+
+	CallUnity("_CB_AccountLoginComplete", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 #pragma mark Miscellaneous
 
 - (void)timeUpdated:(NSNumber*)_timeStamp
 {
-	FuseAPI_TimeUpdated([_timeStamp longLongValue]);
+	CallUnity("_CB_TimeUpdated", [_timeStamp stringValue].UTF8String);
 }
 
-#pragma mark User Game Data
-
--(void) gameDataReceived:(NSString*)_fuse_id ForKey:(NSString*)_key Data:(NSMutableDictionary*)_data
+-(bool) writeText:(NSString*)text toFile:(NSString*)fileName
 {
-    [self gameDataReceived:_fuse_id ForKey:_key Data:_data RequestID:[NSNumber numberWithInt:0]];
+    NSError *err = nil;
+    //get the documents directory:
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    
+    //make a file name to write the data to using the documents directory:
+    NSString *fName = [NSString stringWithFormat:@"%@/%@",
+                          documentsDirectory,fileName];
+    //create content - four lines of text
+    //save content to the documents directory
+	bool stuff =  [text writeToFile:fName
+              atomically:NO
+                encoding:NSStringEncodingConversionAllowLossy
+                   error:&err];
+    if(err)
+    {
+        NSLog(@"error writing string %@,%@",[err localizedFailureReason],[err domain]);
+    }
+    return stuff;
 }
 
-- (void)gameDataReceived:(NSString *)_user_account_id ForKey:(NSString *)_key Data:(NSMutableDictionary *)_data RequestID:(NSNumber *)_request_id
-{
-	FuseAPI_GameDataReceivedStart(_user_account_id.UTF8String, _key.UTF8String, _request_id.intValue);
-	for (NSString* key in _data)
-	{
-		NSObject* value = [_data objectForKey:key];
-		
-		if (value && [value isKindOfClass:[NSString class]] == YES)
-		{
-			NSString* string = (NSString*)value;
-            
-			FuseAPI_GameDataReceivedKeyValue(key.UTF8String, string.UTF8String, false);
-		}
-		else if (value && [value isKindOfClass:[NSData class]] == YES)
-		{
-			NSData* buffer = (NSData*)value;
-			
-			NSString* string = buffer.fuseUnityBase64EncodedString;
-            
-			FuseAPI_GameDataReceivedKeyValue(key.UTF8String, string.UTF8String, true);
-		}
-	}
-	FuseAPI_GameDataReceivedEnd();
-}
-
-- (void)gameDataError:(NSNumber*)_error RequestID:(NSNumber*)_request_id
-{
-	FuseAPI_GameDataError(_error.intValue, _request_id.intValue);
-}
-
-- (void)gameDataSetAcknowledged:(NSNumber*)_request_id
-{
-	FuseAPI_GameDataSetAcknowledged(_request_id.intValue);
-}
 
 #pragma mark Friends List
 
 -(void) friendAdded:(NSString*)_fuse_id Error:(NSNumber*)_error
 {
-    FuseAPI_FriendAdded(_fuse_id.UTF8String, _error.intValue);
+	NSArray *values = @[_fuse_id,_error];
+
+	CallUnity("_CB_FriendAdded", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 -(void) friendRemoved:(NSString*)_fuse_id Error:(NSNumber*)_error
 {
-    FuseAPI_FriendRemoved(_fuse_id.UTF8String, _error.intValue);
+	NSArray *values = @[_fuse_id,_error];
+
+	CallUnity("_CB_FriendRemoved", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 -(void) friendAccepted:(NSString*)_fuse_id Error:(NSNumber*)_error
 {
-    FuseAPI_FriendAccepted(_fuse_id.UTF8String, _error.intValue);
+	NSArray *values = @[_fuse_id,_error];
+
+	CallUnity("_CB_FriendAccepted", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 -(void) friendRejected:(NSString*)_fuse_id Error:(NSNumber*)_error
 {
-    FuseAPI_FriendRejected(_fuse_id.UTF8String, _error.intValue);
+	NSArray *values = @[_fuse_id,_error];
+
+	CallUnity("_CB_FriendRejected", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 -(void) friendsListUpdated:(NSDictionary*)_friendsList
 {
-	FuseAPI_FriendsListUpdatedStart();
+    NSMutableArray *allFriends = [NSMutableArray new];
+    
 	for (NSString* fuseId in _friendsList)
 	{
 		NSDictionary* friendEntry = (NSDictionary*)[_friendsList objectForKey:fuseId];
@@ -1323,62 +1051,57 @@ void FuseAPI_RegisterBirthday(int year, int month, int day)
 		NSString* alias = [friendEntry objectForKey:@"alias"];
 		int pending = [[friendEntry objectForKey:@"pending"] intValue];
 		
-		FuseAPI_FriendsListUpdatedFriend(fuseId.UTF8String, accountId.UTF8String, alias.UTF8String, pending);
+        [allFriends addObject:[ @[fuseId,accountId,alias,[NSNumber numberWithInt:pending]] componentsJoinedByString:@","]];
 	}
-	FuseAPI_FriendsListUpdatedEnd();
+    
+	NSString *filename = @"FuseSDK-friendsList.dat";
+    bool saved = [self writeText:[allFriends componentsJoinedByString:@"\n" ]  toFile:filename];
+    if(saved)
+    {
+       CallUnity("_CB_FriendsListUpdated", filename.UTF8String);
+    }
+	[allFriends release];
 }
 
 -(void) friendsListError:(NSNumber*)_error
 {
-	FuseAPI_FriendsListError(_error.intValue);
+	CallUnity("_CB_FriendsListError", [_error stringValue].UTF8String);
 }
 
 -(void) friendsMigrated:(NSString*)_fuse_id Error:(NSNumber*)_error
 {
-    FuseAPI_FriendsMigrated(_fuse_id.UTF8String, _error.intValue);
-}
+	NSArray *values = @[_fuse_id,_error];
 
-#pragma mark Gifting
-
--(void) mailListRecieved:(NSDictionary*)_messages User:(NSString*)_fuse_id
-{
-	FuseAPI_MailListReceivedStart(_fuse_id.UTF8String);
-	for (NSNumber* messageId in _messages)
-	{
-		NSDictionary* mail = (NSDictionary*)[_messages objectForKey:messageId];
-		
-		NSNumber* timestamp = [mail objectForKey:@"timestamp"];
-		NSString* alias = [mail objectForKey:@"alias"];
-		NSString* message = [mail objectForKey:@"message"];
-		int giftId = [[mail objectForKey:@"gift_id"] intValue];
-		NSString* giftName = [mail objectForKey:@"gift_name"];
-		int giftAmount = [[mail objectForKey:@"gift_amount"] intValue];
-		
-		FuseAPI_MailListReceivedMail(messageId.intValue, timestamp.longLongValue, alias.UTF8String, message.UTF8String, giftId, giftName.UTF8String, giftAmount);
-	}
-	FuseAPI_MailListReceivedEnd();
-}
-
--(void) mailListError:(NSNumber*)_error
-{
-	FuseAPI_MailListError(_error.intValue);
-}
-
--(void) mailAcknowledged:(NSNumber*)_message_id User:(NSString*)_fuse_id RequestID:(NSNumber*)_request_id
-{
-	FuseAPI_MailAcknowledged(_message_id.intValue, _fuse_id.UTF8String, _request_id.intValue);
-}
-
--(void) mailError:(NSNumber*)_error RequestID:(NSNumber*)_request_id
-{
-	FuseAPI_MailError(_error.intValue);
+	CallUnity("_CB_FriendsMigrated", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 #pragma mark Game Configuration Data
 
 - (void)gameConfigurationReceived
 {
-	FuseAPI_GameConfigurationReceived();
+    NSMutableArray *configData = [NSMutableArray new];
+	NSMutableDictionary* dict = [FuseAPI getGameConfiguration];
+	
+	if( dict != nil && [dict count] > 0 )
+    {
+	    NSArray* keys = [dict allKeys];
+        for( int i = 0; i < [keys count]; i++ )
+        {
+            NSString* key = [keys objectAtIndex:i];
+            NSString* value = [dict objectForKey:key];
+			
+			[configData addObject:[NSString stringWithFormat:@"%@,%@", key,value]];
+		}
+	}
+    
+	NSString *filename = @"FuseSDK-gameConfig.dat";
+    bool saved = [self writeText:[configData componentsJoinedByString:@"\n" ]  toFile:filename];
+    if(saved)
+    {
+		CallUnity("_CB_GameConfigurationReceived", filename.UTF8String);
+    }
+	
+	[configData release];
 }
 
 #pragma mark SKProductRequestDelegate methods

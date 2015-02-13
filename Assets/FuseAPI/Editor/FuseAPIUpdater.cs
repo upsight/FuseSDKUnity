@@ -102,7 +102,8 @@ public static class FuseAPIUpdater
 		}
 		if(newVer == null)
 		{
-			Debug.Log("Fuse SDK: A new version is available. Get the latest from " + LATEST_SDK_URL);
+			Debug.LogWarning("Fuse SDK: Couldn't check for update.");
+			Debug.Log("You can find the latest FuseSDK at " + LATEST_SDK_URL);
 			return;
 		}
 		if(ignore != null && HowOldIsVersion(ignore, newVer) == -1)
@@ -207,6 +208,8 @@ public static class FuseAPIUpdater
 		for(int i = 0; i < localVersion.Length; i++)
 			if(localVersion[i] < latestVersion[i])
 				return i;
+			else if(localVersion[i] > latestVersion[i])
+				return -1;
 		return -1;
 	}
 

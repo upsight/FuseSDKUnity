@@ -1934,7 +1934,7 @@ enum kFuseLoginErrors
  
  @endcode
  
- * @retval [NSString*] The API version of the form '1.22'
+ * @retval [NSString*] The API version of the form '1.38.0'
  */
 +(NSString*) libraryVersion;
 

@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.IO;
 using System.Text;
 using System.Xml;
@@ -6,10 +7,8 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Callbacks;
-#endif
 
 public static class FusePostProcess
 {
@@ -27,6 +26,7 @@ public static class FusePostProcess
 	const string SOCIAL_ID = "3FBCE7861816DD570057C062";
 	const string SECURITY_ID = "3FBCE7861816DD570057C065";
 	const string SQLITE_ID = "3FBCE7861816DD570057C069";
+	const string MCORESERVICES_ID = "3FD2BD0F1A253866002566B8";
 
 
 	const string CORETELEPHONY_FW = "3F3EE17B1757FB570038DED8";
@@ -39,6 +39,7 @@ public static class FusePostProcess
 	const string SOCIAL_FW = "3F3EE17B1757FB570038DEEE";
 	const string SECURITY_FW = "3F3EE17B1757FB570038DEED";
 	const string SQLITE_FW = "3F3EE17B1757FB570038FEED";
+	const string MCORESERVICES_FW = "A4FBC40B1A23EC33004D9A01";
     
     // List of all the frameworks to be added to the project
     public struct framework
@@ -55,7 +56,6 @@ public static class FusePostProcess
         }
     }
 
-#if UNITY_EDITOR
 	/// Processbuild Function
     [PostProcessBuild] // <- this is where the magic happens
     public static void OnPostProcessBuild(BuildTarget target, string path)	
@@ -74,7 +74,8 @@ public static class FusePostProcess
 										 new framework("Twitter.framework", TWITTER_FW, TWITTER_ID),
 										 new framework("Social.framework", SOCIAL_FW, SOCIAL_ID),
 										 new framework("Security.framework", SECURITY_FW, SECURITY_ID),
-				 						 new framework("libsqlite3.dylib", SQLITE_FW, SQLITE_ID),
+										 new framework("MobileCoreServices.framework", MCORESERVICES_FW, MCORESERVICES_ID),
+										 new framework("libsqlite3.dylib", SQLITE_FW, SQLITE_ID),
 										};
 			            
             string xcodeprojPath = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);			
@@ -84,6 +85,19 @@ public static class FusePostProcess
 			
             updateXcodeProject(xcodeprojPath, myFrameworks);			
         }
+
+		if(target == BuildTarget.Android)
+		{
+			var ver = Application.unityVersion;
+
+			if((ver.Contains("4.6.1") && !ver.Contains("p5"))
+				|| ver.Contains("4.6.2f1")
+				|| ver.Contains("4.6.2p1"))
+			{
+				UnityEngine.Debug.LogError("There are known bugs in this version of Unity. This app will not run on Android 5.0.");
+				UnityEngine.Debug.LogError("Please update your version of Unity to 4.6.1p5, 4.6.2p2 or higher. Visit http://unity3d.com/unity/qa/patch-releases for more detail (Bug 668393).");
+			}
+		}
 		
 		UnityEngine.Debug.Log("FusePostProcess - STOP");
     }    
@@ -103,13 +117,14 @@ public static class FusePostProcess
 		
 		AssetDatabase.DeleteAsset("Assets/Plugins/iOS/FuseAPI.h");
 		AssetDatabase.DeleteAsset("Assets/Plugins/iOS/libFuseAPI.a");
+
+		AssetDatabase.DeleteAsset("Assets/Plugins/FuseNativeAPI.dll");
 		
 		if(Application.platform == RuntimePlatform.Android)
 		{
 			UpdateAndroidManifest(PlayerSettings.bundleIdentifier);
 		}
 	}
-#endif // UNITY_EDITOR
 
 	
 	public static void UpdateAndroidManifest(string packageName)
@@ -161,6 +176,7 @@ public static class FusePostProcess
 	static bool bFoundSocial = false;
 	static bool bFoundSecurity = false;
 	static bool bFoundSQLite = false;
+	static bool bFoundMCS = false;
     public static void updateXcodeProject(string xcodeprojPath, framework[] listeFrameworks)
     {
 
@@ -223,6 +239,10 @@ public static class FusePostProcess
 				else if( lines[i].Contains("libsqlite3.dylib") )
 				{
 					bFoundSQLite = true;
+				}
+				else if( lines[i].Contains("mobileCoreServices.framework") )
+				{
+					bFoundMCS = true;
 				}
 
 				++i;
@@ -406,7 +426,8 @@ public static class FusePostProcess
 		    || (bFoundTwitter && name.Equals("Twitter.framework"))
 		    || (bFoundSocial && name.Equals("Social.framework"))
 		    || (bFoundSecurity && name.Equals("Security.framework"))
-		    || (bFoundSQLite && name.Equals ("libsqlite3.dylib")))
+		    || (bFoundSQLite && name.Equals("libsqlite3.dylib"))
+			|| (bFoundMCS && name.Equals("mobileCoreServices.framework")) )
 		{
 			// framework is already in the xcode project - do no process it
 			return false;
@@ -785,5 +806,6 @@ public static class FusePostProcess
 		UnityEngine.Debug.Log("OnPostProcessBuild - Add group " + name);
         
         file.Write("\t\t\t\t"+id+" /* "+name+" */,\n");
-    }	
+    }
 }
+#endif // UNITY_EDITOR

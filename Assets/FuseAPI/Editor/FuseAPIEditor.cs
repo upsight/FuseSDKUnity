@@ -2,6 +2,7 @@
 using UnityEditor;
 using System.Collections;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 [CustomEditor(typeof(FuseAPI))]
 public class FuseAPIEditor : Editor
@@ -10,12 +11,16 @@ public class FuseAPIEditor : Editor
 	public static readonly int ICON_HEIGHT = 72;
 	public static readonly int ICON_WIDTH = 72;
 
+	private static readonly string API_KEY_PATTERN = @"^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$"; //8-4-4-4-12
+	private static readonly string API_STRIP_PATTERN = @"[^\da-f\-]"; //8-4-4-4-12
+
 	private static bool _iconFoldout = false;
 
 	private FuseAPI _self;
 	private Texture2D _logo, _icon;
 	private string _error, _newIconPath;
 	private bool _p31Android, _p31iOS, _unibill;
+	private Regex _idRegex, _stripRegex;
 
 	private void OnEnable()
 	{
@@ -38,6 +43,9 @@ public class FuseAPIEditor : Editor
 		_p31Android = DoClassesExist("GoogleIABManager", "GoogleIAB", "GooglePurchase");
 		_p31iOS = DoClassesExist("StoreKitManager", "StoreKitTransaction");
 		_unibill = DoClassesExist("Unibiller");
+
+		_idRegex = new Regex(API_KEY_PATTERN);
+		_stripRegex = new Regex(API_STRIP_PATTERN);
 	}
 
 	private void OnDisable()
@@ -54,15 +62,38 @@ public class FuseAPIEditor : Editor
 			GUILayout.Label(_logo);
 		GUILayout.Space(12);
 
-		_self.AndroidGameID = EditorGUILayout.TextField("Android Game ID", _self.AndroidGameID);
-		_self.iOSGameID = EditorGUILayout.TextField("iOS Game ID", _self.iOSGameID);
+		_self.AndroidGameID = _stripRegex.Replace(EditorGUILayout.TextField("Android API Key", _self.AndroidGameID), "");
+#if UNITY_ANDROID
+		int idVer = CheckGameID(_self.AndroidGameID);
+		if(idVer < -99)
+			EditorGUILayout.HelpBox("Invalid API Key: Valid form is XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX where X is a haxadecimal character", MessageType.Error);
+		else if(idVer < 0)
+			EditorGUILayout.HelpBox("Invalid API Key: Too short", MessageType.Error);
+		else if(idVer > 0)
+			EditorGUILayout.HelpBox("Invalid API Key: Too long", MessageType.Error);
+#endif
+		_self.iOSGameID = _stripRegex.Replace(EditorGUILayout.TextField("iOS API Key", _self.iOSGameID), "");
+#if UNITY_IOS
+		int idVer = CheckGameID(_self.iOSGameID);
+		if(idVer < -99)
+			EditorGUILayout.HelpBox("Invalid API Key: Valid form is XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX where X is a haxadecimal character", MessageType.Error);
+		else if(idVer < 0)
+			EditorGUILayout.HelpBox("Invalid API Key: Too short", MessageType.Error);
+		else if(idVer > 0)
+			EditorGUILayout.HelpBox("Invalid API Key: Too long", MessageType.Error);
+#endif
 		
 		GUILayout.Space(8);
 
 		_self.GCM_SenderID = EditorGUILayout.TextField("GCM Sender ID", _self.GCM_SenderID);
 		_self.registerForPushNotifications = EditorGUILayout.Toggle("Push Notifications", _self.registerForPushNotifications);
+
+		if(_self.registerForPushNotifications && !string.IsNullOrEmpty(_self.AndroidGameID) && string.IsNullOrEmpty(_self.GCM_SenderID))
+			EditorGUILayout.HelpBox("GCM Sender ID is required for Push Notifications on Android", MessageType.Warning);
+
+		GUILayout.Space(8);
+
 		_self.logging = EditorGUILayout.Toggle("Logging", _self.logging);
-		_self.persistent = EditorGUILayout.Toggle("Persistent", _self.persistent);
 
 		GUILayout.Space(16);
 
@@ -180,6 +211,13 @@ public class FuseAPIEditor : Editor
 		{
 			EditorUtility.SetDirty(target);
 		}
+	}
+
+	private int CheckGameID(string id)
+	{
+		if(id.Length != 36)
+			return id.Length - 36;
+		return _idRegex.Match(id).Success ? 0 : -100;
 	}
 
 	private bool DoClassesExist(params string[] classes)

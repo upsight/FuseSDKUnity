@@ -13,24 +13,33 @@ public class FuseAPI_iOS : FuseAPI
 	private static extern void FuseAPI_StartSession(string gameId);
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterPushToken(Byte[] token, int size);
+	[DllImport("__Internal")]
+	private static extern void FuseAPI_SetUnityGameObject(string gameObjectName);
 	
 	private bool waitingForToken = false;	
 	private static bool _registerForPushNotificationsCalled = false;
-	private static Dictionary<string, string> gameConfig = new Dictionary<string, string>();
+	private static Dictionary<string, string> _gameConfig = new Dictionary<string, string>();
 	
 	public static bool debugOutput = false;
+
+	private void Awake()
+	{
+		GameObject go = GameObject.Find("FuseSDK");
+		if(go != null && go != gameObject && go.GetComponent<FuseAPI>() != null)
+			UnityEngine.Object.DestroyImmediate(gameObject, true);
+	}
 
 	protected override void Init()
 	{
 		// preserve the prefab and all attached scripts through level loads
-		if( persistent )
-		{
-			DontDestroyOnLoad(transform.gameObject);
-		}
+		DontDestroyOnLoad(transform.gameObject);
+
 		if(logging)
 		{
 			FuseAPI_iOS.debugOutput = true;
 		}
+
+		FuseAPI_SetUnityGameObject(gameObject.name);
 	}
 	
 	[Obsolete("StartSession now called automatically. Set gameID in the FuseAPI Component.", true)]
@@ -40,6 +49,9 @@ public class FuseAPI_iOS : FuseAPI
 	
 	new protected static void _StartSession(string gameId)
 	{
+		if(string.IsNullOrEmpty(gameId))
+			Debug.LogError("FuseSDK: Null or empty API Key. Make sure your API Key is entered in the FuseSDK prefab");
+
 		FuseLog("StartSession(" + gameId + ")");
 		
 		if (Application.platform == RuntimePlatform.IPhonePlayer)
@@ -88,11 +100,25 @@ public class FuseAPI_iOS : FuseAPI
 		}
 	}	
 	
+	private void _CB_SessionStartReceived(string param)
+	{
+		_SessionStartReceived();
+	}
+
 	private static void _SessionStartReceived()
 	{
 		FuseLog("SessionStartReceived()");
 		
 		OnSessionStartReceived();
+	}
+
+	private void _CB_SessionLoginError(string param)
+	{
+		int error;
+		if(int.TryParse(param, out error))
+			_SessionLoginError(error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _SessionLoginError");
 	}
 	
 	private static void _SessionLoginError(int error)
@@ -102,9 +128,9 @@ public class FuseAPI_iOS : FuseAPI
 		OnSessionLoginError(error);
 	}
 	
-    #endregion
+	#endregion
 	
-    #region Analytics Event
+	#region Analytics Event
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterEvent(string message);
 	[DllImport("__Internal")]
@@ -217,9 +243,9 @@ public class FuseAPI_iOS : FuseAPI
 
 		return -1;
 	}
-    #endregion
+	#endregion
 	
-    #region In-App Purchase Logging
+	#region In-App Purchase Logging
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterInAppPurchaseListStart();
 	[DllImport("__Internal")]
@@ -265,6 +291,17 @@ public class FuseAPI_iOS : FuseAPI
 			_PurchaseVerification(1, "", "");
 		}
 	}
+
+	private void _CB_PurchaseVerification(string param)
+	{
+		int verified;
+
+		var pars = param.Split(',');
+		if(pars.Length == 3 && int.TryParse(pars[0], out verified))
+			_PurchaseVerification(verified, pars[1], pars[2]);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _PurchaseVerification");
+	}
 	
 	private static void _PurchaseVerification(int verified, string transactionId, string originalTransactionId)
 	{
@@ -282,9 +319,9 @@ public class FuseAPI_iOS : FuseAPI
 		FuseAPI_RegisterUnibillPurchase(productID, receipt, receipt.Length);
 	}
 
-    #endregion
+	#endregion
 	
-    #region Fuse Ads
+	#region Fuse Ads
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_CheckAdAvailable(string adZone);
 	[DllImport("__Internal")]
@@ -318,11 +355,28 @@ public class FuseAPI_iOS : FuseAPI
 		}
 	}
 
+	private void _CB_AdAvailabilityResponse(string param)
+	{
+		int available;
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out available) && int.TryParse(pars[1], out error))
+			_AdAvailabilityResponse(available, error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _AdAvailabilityResponse");
+	}
+
 	private static void _AdAvailabilityResponse(int available, int error)
 	{
 		FuseLog("AdAvailabilityResponse(" + available + "," + error + ")");
 
 		OnAdAvailabilityResponse(available, error);
+	}
+
+	private void _CB_AdWillClose(string param)
+	{
+		_AdWillClose();
 	}
 
 	private static void _AdWillClose()
@@ -331,22 +385,21 @@ public class FuseAPI_iOS : FuseAPI
 		
 		OnAdWillClose();
 	}
-	
-	private void _VideoCompleted(string adZone)
+
+	private void _CB_RewardedVideoCompleted(string param)
 	{
-		FuseLog("VideoCompleted(" + adZone + ")");
-		OnVideoCompleted(adZone);
+		_RewardedVideoCompleted(param);
 	}
-	
-	private void _RewardedVideoCompleted(string adZone)
+
+	private static void _RewardedVideoCompleted(string adZone)
 	{
 		FuseLog("RewardedVideoCompleted(" + adZone + ")");
 		OnRewardedVideoCompleted(adZone);
 	}
 	
-    #endregion
+	#endregion
 
-    #region Notifications
+	#region Notifications
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_DisplayNotifications();
 	
@@ -372,6 +425,11 @@ public class FuseAPI_iOS : FuseAPI
 		FuseLog("IsNotificationAvailable()");
         return FuseAPI_IsNotificationAvailable();
     }
+
+	private void _CB_NotificationAction(string param)
+	{
+		_NotificationAction(param);
+	}
 	
 	private static void _NotificationAction(string action)
 	{
@@ -380,9 +438,9 @@ public class FuseAPI_iOS : FuseAPI
 		OnNotificationAction(action);
 	}
 	
-    #endregion
+	#endregion
 
-    #region More Games
+	#region More Games
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_DisplayMoreGames();
 	
@@ -399,6 +457,11 @@ public class FuseAPI_iOS : FuseAPI
 			_OverlayWillClose();
 		}
 	}
+
+	private void _CB_OverlayWillClose(string param)
+	{
+		_OverlayWillClose();
+	}
 	
 	private static void _OverlayWillClose()
 	{
@@ -406,9 +469,9 @@ public class FuseAPI_iOS : FuseAPI
 		OnOverlayWillClose();
 	}
 	
-    #endregion
+	#endregion
 	
-    #region Gender
+	#region Gender
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterGender(int gender);
 	
@@ -421,9 +484,9 @@ public class FuseAPI_iOS : FuseAPI
 			FuseAPI_RegisterGender((int)gender);
 		}
 	}
-    #endregion
+	#endregion
 	
-    #region Account Login
+	#region Account Login
 	
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_GameCenterLogin();
@@ -505,23 +568,6 @@ public class FuseAPI_iOS : FuseAPI
 		else
 		{
 			_AccountLoginComplete(AccountType.DEVICE_ID, alias);
-		}
-	}
-	
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_OpenFeintLogin(string openFeintId);
-	
-	new public static void OpenFeintLogin(string openFeintId)
-	{
-		FuseLog ("OpenFeintLogin(" + openFeintId + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_OpenFeintLogin(openFeintId);
-		}
-		else
-		{
-			_AccountLoginComplete(AccountType.OPENFEINT, openFeintId);
 		}
 	}
 	
@@ -619,6 +665,17 @@ public class FuseAPI_iOS : FuseAPI
 			return AccountType.NONE;
 		}
 	}
+
+	private void _CB_AccountLoginComplete(string param)
+	{
+		int type;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out type))
+			_AccountLoginComplete((AccountType) type, pars[1]);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _AccountLoginComplete");
+	}
 	
 	private static void _AccountLoginComplete(AccountType type, string accountId)
 	{
@@ -627,9 +684,9 @@ public class FuseAPI_iOS : FuseAPI
 		OnAccountLoginComplete(type, accountId);
 	}
 	
-    #endregion
+	#endregion
 	
-    #region Miscellaneous
+	#region Miscellaneous
 	[DllImport("__Internal")]
 	private static extern int FuseAPI_GamesPlayed();
 	
@@ -702,7 +759,16 @@ public class FuseAPI_iOS : FuseAPI
 			_TimeUpdated((DateTime.UtcNow - unixEpoch).Ticks / TimeSpan.TicksPerSecond);
 		}
 	}
-	
+
+	private void _CB_TimeUpdated(string param)
+	{
+		long timestamp;
+		if(long.TryParse(param, out timestamp))
+			_TimeUpdated(timestamp);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _TimeUpdated");
+	}
+
 	private static void _TimeUpdated(long timestamp)
 	{
 		FuseLog("TimeUpdated(" + timestamp + ")");
@@ -742,9 +808,29 @@ public class FuseAPI_iOS : FuseAPI
 		}
 	}
 
-    #endregion
+	[DllImport("__Internal")]
+	private static extern string FuseAPI_GetFuseId();
+
+	new public static string GetFuseId()
+	{
+		if(Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			string fuseId = FuseAPI_GetFuseId();
+
+			FuseLog("GetFuseId()==" + fuseId);
+
+			return fuseId;
+		}
+		else
+		{
+			FuseLog("GetFuseId()");
+
+			return "";
+		}
+	}
+	#endregion
 	
-    #region Data Opt In/Out
+	#region Data Opt In/Out
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_EnableData(bool enable);
 	
@@ -776,218 +862,9 @@ public class FuseAPI_iOS : FuseAPI
 			return true;
 		}
 	}
-    #endregion
+	#endregion
 	
-    #region User Game Data
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_SetGameDataStart(string key, bool isCollection, string fuseId);
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_SetGameDataKeyValue(string key, string value, bool isBinary);
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_SetGameDataEnd();
-	
-	new public static int SetGameData(Hashtable data)
-	{
-		return SetGameData("", data, false, GetFuseId());
-	}
-	
-	new public static int SetGameData(string key, Hashtable data)
-	{
-		return SetGameData(key, data, false, GetFuseId());
-	}
-	
-	new public static int SetGameData(string key, Hashtable data, bool isCollection)
-	{
-		return SetGameData(key, data, isCollection, GetFuseId());
-	}
-	
-	new public static int SetGameData(string key, Hashtable data, bool isCollection, string fuseId)
-	{
-		FuseLog("SetGameData(" + key + "," + isCollection + "," + fuseId + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_SetGameDataStart(key, isCollection, fuseId);
-			
-			foreach (DictionaryEntry entry in data)
-			{
-				string entryKey = entry.Key as string;
-				byte[] buffer = entry.Value as byte[];
-				if (buffer != null)
-				{
-					string entryValue = Convert.ToBase64String(buffer);
-					FuseAPI_SetGameDataKeyValue(entryKey, entryValue, true);
-				}
-				else
-				{
-					string entryValue = entry.Value.ToString();
-					FuseAPI_SetGameDataKeyValue(entryKey, entryValue, false);
-				}
-			}
-			
-			return FuseAPI_SetGameDataEnd();
-		}
-		else
-		{
-			_GameDataSetAcknowledged(-1);
-			
-			return -1;
-		}
-	}
-	
-	private static void _GameDataError(int error, int requestId)
-	{
-		FuseLog("GameDataError(" + error + "," + requestId + ")");
-		
-		OnGameDataError(error, requestId);
-	}
-	
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_GetGameDataStart(string key, string fuseId);
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_GetGameDataKey(string key);
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_GetGameDataEnd();
-	
-	new public static int GetGameData(string[] keys)
-	{
-		return GetFriendGameData("", "", keys);
-	}
-	
-	new public static int GetGameData(string key, string[] keys)
-	{
-		return GetFriendGameData("", key, keys);
-	}
-	
-	new public static int GetFriendGameData(string fuseId, string[] keys)
-	{
-		return GetFriendGameData(fuseId, "", keys);
-	}
-	
-	new public static int GetFriendGameData(string fuseId, string key, string[] keys)
-	{
-		FuseLog("GetGameData(" + fuseId + "," + key + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_GetGameDataStart(key, fuseId);
-			
-			foreach (string entry in keys)
-			{
-				FuseAPI_GetGameDataKey(entry);
-			}
-			
-			return FuseAPI_GetGameDataEnd();
-		}
-		else
-		{
-			_GameDataReceivedStart(fuseId, key, -1);
-			_GameDataReceivedEnd();
-			
-			return -1;
-		}
-	}
-	
-	private static void _GameDataSetAcknowledged(int requestId)
-	{
-		FuseLog("GameDataSetAcknowledged(" + requestId + ")");
-		
-		OnGameDataSetAcknowledged(requestId);
-	}
-	
-	private static void _GameDataReceivedStart(string fuseId, string key, int requestId)
-	{
-		FuseLog("GameDataReceivedStart(" + fuseId + "," + key + ")");
-		
-		_gameDataFuseId = fuseId;
-		_gameDataKey = key;
-		_gameData = new Hashtable();
-		_gameDataRequestId = requestId;
-	}
-	
-	private static void _GameDataReceivedKeyValue(string key, string value, bool isBinary)
-	{
-		FuseLog("GameDataReceivedKeyValue(" + key + "," + value + "," + isBinary + ")");
-		
-		if (isBinary)
-		{
-			byte[] buffer = Convert.FromBase64String(value);
-			_gameData.Add(key, buffer);
-		}
-		else
-		{
-			_gameData.Add(key, value);
-		}
-	}
-	
-	private static void _GameDataReceivedEnd()
-	{
-		FuseLog("GameDataReceivedEnd()");
-		
-		OnGameDataReceived(_gameDataFuseId, _gameDataKey, _gameData, _gameDataRequestId);
-		_gameDataRequestId = -1;
-		_gameData = null;
-		_gameDataKey = "";
-		_gameDataFuseId = "";
-	}
-	
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_RefreshGameConfiguration();
-
-	new public static Dictionary<string, string> GetGameConfig()
-	{
-		FuseLog("GetGameConfig()");
-		
-		// re-populate the game config
-		FuseAPI_RefreshGameConfiguration();		
-				
-		return gameConfig;
-	}
-	
-	private static void _GameConfigInit()
-	{
-		FuseLog("GameConfigInit()");
-		
-		// clear the dictionary
-		gameConfig.Clear();
-	}
-	
-	private static void _UpdateGameConfig(string key, string value)
-	{
-		FuseLog("UpdateGameConfig()");
-		
-		// add value for key here
-		gameConfig.Add(key, value);
-	}	
-	
-	[DllImport("__Internal")]
-	private static extern string FuseAPI_GetFuseId();
-	
-	new public static string GetFuseId()
-	{
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			string fuseId = FuseAPI_GetFuseId();
-			
-			FuseLog("GetFuseId()==" + fuseId);
-			
-			return fuseId;
-		}
-		else
-		{
-			FuseLog("GetFuseId()");
-			
-			return "";
-		}
-	}
-	
-	private static string _gameDataKey = "";
-	private static string _gameDataFuseId = "";
-	private static Hashtable _gameData = null;
-	private static int _gameDataRequestId = -1;
-    #endregion
-	
-    #region Friend List
+	#region Friend List
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_AddFriend(string fuseId);
 	new public static void AddFriend(string fuseId)
@@ -1015,6 +892,50 @@ public class FuseAPI_iOS : FuseAPI
 	{
 		FuseAPI_RejectFriend(fuseId);
 	}
+
+	private void _CB_FriendAdded(string param)
+	{
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			_FriendAdded(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendAdded");
+	}
+
+	private void _CB_FriendRemoved(string param)
+	{
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			_FriendRemoved(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendRemoved");
+	}
+
+	private void _CB_FriendAccepted(string param)
+	{
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			_FriendAccepted(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendAccepted");
+	}
+
+	private void _CB_FriendRejected(string param)
+	{
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			_FriendRejected(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendRejected");
+	}
 	
 	private static void _FriendAdded(string fuseId, int error)
 	{
@@ -1040,6 +961,17 @@ public class FuseAPI_iOS : FuseAPI
 	{
 		FuseAPI_MigrateFriends(fuseId);
 	}
+
+	private void _CB_FriendsMigrated(string param)
+	{
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			_FriendsMigrated(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendsMigrated");
+	}
 	
 	private static void _FriendsMigrated(string fuseId, int error)
 	{
@@ -1059,38 +991,60 @@ public class FuseAPI_iOS : FuseAPI
 		}
 		else
 		{
-			_FriendsListUpdatedStart();
-			_FriendsListUpdatedEnd();
+			_FriendsListUpdated();
 		}
 	}
-	
-	private static void _FriendsListUpdatedStart()
+
+	private void _CB_FriendsListUpdated(string param)
 	{
-		FuseLog("FriendsListUpdatedStart()");
+		var path = Application.persistentDataPath + "/" + param;
+		if(System.IO.File.Exists(path))
+		{
+			_friendsList.Clear();
+
+			var lines = System.IO.File.ReadAllLines(path);
+			foreach(var line in lines)
+			{
+				var parts = line.Split(',');
+				if(parts.Length == 4)
+				{
+					Friend friend = new Friend();
+					friend.fuseId = parts[0];
+					friend.accountId = parts[1];
+					friend.alias = parts[2];
+					friend.pending = parts[3] != "0";
+
+					_friendsList.Add(friend);
+				}
+				else
+				{
+					Debug.LogError("FuseSDK: Error reading FriendsList data. Invalid line: " + line);
+				}
+			}
+		}
+		else
+		{
+			Debug.LogError("FuseSDK: Error reading FriendsList data. " + path + " is not a valid file.");
+		}
 		
-		_friendsList = new List<Friend>();
+		_FriendsListUpdated();
 	}
 	
-	private static void _FriendsListUpdatedFriend(string fuseId, string accountId, string alias, bool pending)
-	{
-		FuseLog("FriendsListUpdatedFriend(" + fuseId + "," + accountId + "," + alias + "," + pending + ")");
-		
-		Friend friend = new Friend();
-		friend.fuseId = fuseId;
-		friend.accountId = accountId;
-		friend.alias = alias;
-		friend.pending = pending;
-		
-		_friendsList.Add(friend);
-	}
-	
-	private static void _FriendsListUpdatedEnd()
+	private static void _FriendsListUpdated()
 	{
 		FuseLog("FriendsListUpdatedEnd()");
 		
 		OnFriendsListUpdated(_friendsList);
-		
-		_friendsList = null;
+	}
+
+	private void _CB_FriendsListError(string param)
+	{
+		int error;
+
+		if(int.TryParse(param, out error))
+			_FriendsListError(error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendsListError");
 	}
 	
 	private static void _FriendsListError(int error)
@@ -1100,7 +1054,7 @@ public class FuseAPI_iOS : FuseAPI
 		OnFriendsListError(error);
 	}
 	
-	private static List<Friend> _friendsList = null;
+	private static List<Friend> _friendsList = new List<Friend>();
 	
 	[DllImport("__Internal")]
 	private static extern int FuseAPI_GetFriendsListCount();
@@ -1112,37 +1066,16 @@ public class FuseAPI_iOS : FuseAPI
 	private static extern string FuseAPI_GetFriendsListFriendAlias(int index);
 	[DllImport("__Internal")]
 	private static extern bool FuseAPI_GetFriendsListFriendPending(int index);
-	
+
 	new public static List<Friend> GetFriendsList()
 	{
 		FuseLog("GetFriendsList()");
-		
-		List<Friend> friendsList = new List<Friend>();
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			int friendCount = FuseAPI_GetFriendsListCount();
 			
-			for (int index = 0; index < friendCount; index++)
-			{
-				Friend friend = new Friend();
-				friend.fuseId = FuseAPI_GetFriendsListFriendFuseId(index);
-				friend.accountId = FuseAPI_GetFriendsListFriendAccountId(index);
-				friend.alias = FuseAPI_GetFriendsListFriendAlias(index);
-				friend.pending = FuseAPI_GetFriendsListFriendPending(index);
-				
-				friendsList.Add(friend);
-			}
-		}
-			
-		return friendsList;
+		return _friendsList;
 	}
-    #endregion
+	#endregion
 
-    #region Chat List
-    #endregion
-
-    #region User-to-User Push Notifications
+	#region User-to-User Push Notifications
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_UserPushNotification(string fuseId, string message);
 	
@@ -1168,201 +1101,11 @@ public class FuseAPI_iOS : FuseAPI
 			FuseAPI_FriendsPushNotification(message);
 		}
 	}
-    #endregion
-	
-    #region Gifting
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_GetMailListFromServer();
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_GetMailListFriendFromServer(string fuseId);
-	
-	new public static void GetMailListFromServer()
-	{
-		FuseLog("GetMailListFromServer()");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_GetMailListFromServer();
-		}
-		else
-		{
-			_MailListReceivedStart("");
-			_MailListReceivedEnd();
-		}
-	}
-	
-	new public static void GetMailListFriendFromServer(string fuseId)
-	{
-		FuseLog("GetMailListFriendFromServer(" + fuseId + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_GetMailListFriendFromServer(fuseId);
-		}
-		else
-		{
-			_MailListReceivedStart(fuseId);
-			_MailListReceivedEnd();
-		}
-	}
-	
-	private static void _MailListReceivedStart(string fuseId)
-	{
-		FuseLog("MailListReceivedStart()");
-		
-		_mailListFuseId = fuseId;
-		_mailList = new List<Mail>();
-	}
-	
-	private static void _MailListReceivedMail(int messageId, long timestamp, string alias, string message, int giftId, string giftName, int giftAmount)
-	{
-		FuseLog("MailListReceivedMail(" + messageId + "," + timestamp + "," + alias + "," + message + "," + giftId + "," + giftName + "," + giftAmount + ")");
-		
-		Mail mail = new Mail();
-		mail.messageId = messageId;
-		mail.timestamp = unixEpoch + TimeSpan.FromTicks(timestamp * TimeSpan.TicksPerSecond);
-		mail.alias = alias;
-		mail.message = message;
-		mail.giftId = giftId;
-		mail.giftName = giftName;
-		mail.giftAmount = giftAmount;
-		
-		_mailList.Add(mail);
-	}
-	
-	private static void _MailListReceivedEnd()
-	{
-		FuseLog("MailListReceivedEnd()");
-		
-		OnMailListReceived(_mailList, _mailListFuseId);
-		
-		_mailList = null;
-		_mailListFuseId = "";
-	}
-	
-	private static void _MailListError(int error)
-	{
-		FuseLog("MailListError(" + error + ")");
-		
-		OnMailListError(error);
-	}
-	
-	private static List<Mail> _mailList = null;
-	private static string _mailListFuseId = "";
-	
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_GetMailListCount(string fuseId);
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_GetMailListMailMessageId(string fuseId, int index);
-	[DllImport("__Internal")]
-	private static extern long FuseAPI_GetMailListMailTimestamp(string fuseId, int index);
-	[DllImport("__Internal")]
-	private static extern string FuseAPI_GetMailListMailAlias(string fuseId, int index);
-	[DllImport("__Internal")]
-	private static extern string FuseAPI_GetMailListMailMessage(string fuseId, int index);
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_GetMailListMailGiftId(string fuseId, int index);
-	[DllImport("__Internal")]
-	private static extern string FuseAPI_GetMailListMailGiftName(string fuseId, int index);
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_GetMailListMailGiftAmount(string fuseId, int index);
-	
-	new public static List<Mail> GetMailList(string fuseId)
-	{
-		FuseLog("GetMailList()");
-		
-		List<Mail> mailList = new List<Mail>();
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			int mailCount = FuseAPI_GetMailListCount(fuseId);
-			
-			for (int index = 0; index < mailCount; index++)
-			{
-				Mail mail = new Mail();
-				mail.messageId = FuseAPI_GetMailListMailMessageId(fuseId, index);
-				mail.timestamp = unixEpoch + TimeSpan.FromTicks(FuseAPI_GetMailListMailTimestamp(fuseId, index) * TimeSpan.TicksPerSecond);
-				mail.alias = FuseAPI_GetMailListMailAlias(fuseId, index);
-				mail.message = FuseAPI_GetMailListMailMessage(fuseId, index);
-				mail.giftId = FuseAPI_GetMailListMailGiftId(fuseId, index);
-				mail.giftName = FuseAPI_GetMailListMailGiftName(fuseId, index);
-				mail.giftAmount = FuseAPI_GetMailListMailGiftAmount(fuseId, index);
-				
-				mailList.Add(mail);
-			}
-		}
-			
-		return mailList;
-	}
-	
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_SetMailAsReceived(int messageId);
-	
-	new public static void SetMailAsReceived(int messageId)
-	{
-		FuseLog("SetMailAsReceived(" + messageId + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_SetMailAsReceived(messageId);
-		}
-	}
-	
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_SendMail(string fuseId, string message);
-	
-	new public static int SendMail(string fuseId, string message)
-	{
-		FuseLog("SendMail(" + fuseId + "," + message + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			return FuseAPI_SendMail(fuseId, message);
-		}
-		else
-		{
-			_MailAcknowledged(-1, fuseId, -1);
-			return -1;
-		}
-	}
-	
-	[DllImport("__Internal")]
-	private static extern int FuseAPI_SendMailWithGift(string fuseId, string message, int giftId, int giftAmount);
-	
-	new public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
-	{
-		FuseLog("SendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			return FuseAPI_SendMailWithGift(fuseId, message, giftId, giftAmount);
-		}
-		else
-		{
-			_MailAcknowledged(-1, fuseId, -1);
-			return -1;
-		}
-	}
-	
-	private static void _MailAcknowledged(int messageId, string fuseId, int requestID)
-	{
-		FuseLog("MailAcknowledged()");
-		
-		OnMailAcknowledged(messageId, fuseId, requestID);
-	}
-	
-	private static void _MailError(int error)
-	{
-		FuseLog("MailError(" + error + ")");
-		
-		OnMailError(error);
-	}
-	
-    #endregion
+	#endregion
 
-    #region Game Configuration Data
+	#region Game Configuration Data
 	[DllImport("__Internal")]
-	private static extern string FuseAPI_GetGameConfigurationValue(string key);	
+	private static extern string FuseAPI_GetGameConfigurationValue(string key);
 	
 	new public static string GetGameConfigurationValue(string key)
 	{
@@ -1381,6 +1124,42 @@ public class FuseAPI_iOS : FuseAPI
 			return "";
 		}
 	}
+
+	new public static Dictionary<string, string> GetGameConfig()
+	{
+		FuseLog("GetGameConfig()");
+
+		return _gameConfig;
+	}
+
+	private void _CB_GameConfigurationReceived(string param)
+	{
+		var path = Application.persistentDataPath + "/" + param;
+		if(System.IO.File.Exists(path))
+		{
+			_gameConfig.Clear();
+
+			var lines = System.IO.File.ReadAllLines(path);
+			foreach(var line in lines)
+			{
+				var parts = line.Split(',');
+				if(parts.Length == 2)
+				{
+					_gameConfig.Add(parts[0], parts[1]);
+				}
+				else
+				{
+					Debug.LogError("FuseSDK: Error reading GameConfiguration data. Invalid line: " + line);
+				}
+			}
+		}
+		else
+		{
+			Debug.LogError("FuseSDK: Error reading GameConfiguration data. " + path + " is not a valid file.");
+		}
+
+		_GameConfigurationReceived();
+	}
 	
 	private static void _GameConfigurationReceived()
 	{
@@ -1389,19 +1168,13 @@ public class FuseAPI_iOS : FuseAPI
 		OnGameConfigurationReceived();
 	}
 	
-    #endregion
+	#endregion
 	
-    #region Specific Event Registration
+	#region Specific Event Registration
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterLevel(int level);
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterCurrency(int type, int balance);
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_RegisterFlurryView();
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_RegisterFlurryClick();
-	[DllImport("__Internal")]
-	private static extern void FuseAPI_RegisterTapjoyReward(int amount);
 	[DllImport("__Internal")]
 	private static extern void FuseAPI_RegisterAge(int age);
 	[DllImport("__Internal")]
@@ -1427,36 +1200,6 @@ public class FuseAPI_iOS : FuseAPI
 		}
 	}
 	
-	new public static void RegisterFlurryView()
-	{
-		FuseLog("RegisterFlurryView()");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_RegisterFlurryView();
-		}
-	}
-	
-	new public static void RegisterFlurryClick()
-	{
-		FuseLog("RegisterFlurryClick()");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_RegisterFlurryClick();
-		}
-	}
-	
-	new public static void RegisterTapjoyReward(int amount)
-	{
-		FuseLog("RegisterTapjoyReward(" + amount + ")");
-		
-		if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			FuseAPI_RegisterTapjoyReward(amount);
-		}
-	}
-	
 	new public static void RegisterAge(int age)
 	{
 		// Available in 1.35.2 and above
@@ -1471,7 +1214,7 @@ public class FuseAPI_iOS : FuseAPI
 		FuseAPI_RegisterBirthday(year, month, day);
 	}
 	
-    #endregion
+	#endregion
 	
 #endif
 }
