@@ -72,7 +72,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 		
 		if( transactionIDPurchasing == transaction.transactionIdentifier )
 		{
-			FuseLog("Duplicate transaction " + transactionID);
+			FuseLog("Duplicate transaction " + transactionIDPurchasing);
 			return;
 		}
 		transactionIDPurchasing = transaction.transactionIdentifier;
@@ -126,7 +126,7 @@ public class FuseAPI_Prime31StoreKit : MonoBehaviour
 	}
 
 
-	new public static void FuseLog(string str)
+	public static void FuseLog(string str)
 	{
 		if(debugOutput)
 		{

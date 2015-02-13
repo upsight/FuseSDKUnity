@@ -1,11 +1,7 @@
-
-
-
 using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 public class FuseAPI_Stub : FuseAPI
 {
@@ -31,6 +27,8 @@ public class FuseAPI_Stub : FuseAPI
 
 	new protected static void _StartSession(string gameId)
 	{
+		if(string.IsNullOrEmpty(gameId))
+			Debug.LogError("FuseSDK: Null or empty API Key. Make sure your API Key is entered in the FuseSDK prefab");
 	}
 
 	#endregion
@@ -150,11 +148,7 @@ public class FuseAPI_Stub : FuseAPI
 	new public static void DeviceLogin(string alias)
 	{
 	}
-	
-	new public static void OpenFeintLogin(string openFeintId)
-	{
-	}
-	
+
 	new public static void FuseLogin(string fuseId, string alias)
 	{
 	}
@@ -215,6 +209,11 @@ public class FuseAPI_Stub : FuseAPI
 			Debug.Log("FuseAPI: " + str);
 		}
 	}
+	
+	new public static string GetFuseId()
+	{
+		return "00000000";
+	}
 
 	#endregion
 	
@@ -229,54 +228,6 @@ public class FuseAPI_Stub : FuseAPI
 	{
 		return false;
 	}
-	#endregion
-	
-	#region User Game Data
-	
-	new public static int SetGameData(Hashtable data)
-	{
-		return 0;
-	}
-	
-	new public static int SetGameData(string key, Hashtable data)
-	{
-		return 0;
-	}
-	
-	new public static int SetGameData(string key, Hashtable data, bool isCollection)
-	{
-		return 0;
-	}
-	
-	new public static int SetGameData(string key, Hashtable data, bool isCollection, string fuseId)
-	{
-		return 0;
-	}
-	
-	new public static int GetGameData(string[] keys)
-	{
-		return 0;
-	}
-	
-	new public static int GetGameData(string key, string[] keys)
-	{
-		return 0;
-	}
-	
-	new public static int GetFriendGameData(string fuseId, string[] keys)
-	{
-		return 0;
-	}
-	
-	new public static int GetFriendGameData(string fuseId, string key, string[] keys)
-	{
-		return 0;
-	}
-	new public static string GetFuseId()
-	{
-		return "00000000";
-	}
-	
 	#endregion
 	
 	#region Friend List
@@ -327,52 +278,16 @@ public class FuseAPI_Stub : FuseAPI
 	}
 	#endregion
 	
-	#region Gifting
-	
-	new public static void GetMailListFromServer()
-	{
-
-	}
-	
-	new public static void GetMailListFriendFromServer(string fuseId)
-	{
-
-	}
-	
-	public static readonly List<Mail>  emptyMailList;
-	
-	new public static List<Mail> GetMailList(string fuseId)
-	{
-		return emptyMailList;
-	}
-	
-	new public static void SetMailAsReceived(int messageId)
-	{
-	}
-	
-	new public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
-	{
-		return 0;
-	}
-	
-	new public static int SendMail(string fuseId, string message)
-	{
-		return 0;
-	}
-	
-	#endregion
-	
 	#region Game Configuration Data
 	
 	new public static string GetGameConfigurationValue(string key)
 	{
 		return "";
-	}		
-	public static readonly Dictionary<string,string>  emptyGameConfig;
+	}
 
 	new public static Dictionary<string, string> GetGameConfig()
 	{
-		return emptyGameConfig;
+		return null;
 	}
 	
 	#endregion
@@ -383,18 +298,6 @@ public class FuseAPI_Stub : FuseAPI
 	}
 	
 	new public static void RegisterCurrency(int type, int balance)
-	{
-	}
-	
-	new public static void RegisterFlurryView()
-	{
-	}
-	
-	new public static void RegisterFlurryClick()
-	{
-	}
-	
-	new public static void RegisterTapjoyReward(int amount)
 	{
 	}
 
@@ -424,18 +327,9 @@ public class FuseAPI_Stub : FuseAPI
 	
 	new static protected void OnAdAvailabilityResponse(int available, int error)
 	{
-
 	}
 	
 	new static protected void OnAdWillClose()
-	{
-	}
-	
-	new static protected void OnAdDisplayed()
-	{
-	}
-	
-	new static protected void OnAdClicked()
 	{
 	}
 	
@@ -452,18 +346,6 @@ public class FuseAPI_Stub : FuseAPI
 	}
 	
 	new static protected void OnTimeUpdated(DateTime time)
-	{
-	}
-	
-	new static protected void OnGameDataError(int error, int requestId)
-	{
-	}
-	
-	new static protected void OnGameDataSetAcknowledged(int requestId)
-	{
-	}
-	
-	new static protected void OnGameDataReceived(string fuseId, string dataKey, Hashtable data, int requestId)
 	{
 	}
 	
@@ -492,22 +374,6 @@ public class FuseAPI_Stub : FuseAPI
 	}
 	
 	new static protected void OnFriendsListError(int error)
-	{
-	}
-	
-	new static protected void OnMailListReceived(List<Mail> mailList, string mailFuseId)
-	{
-	}
-	
-	new static protected void OnMailListError(int error)
-	{
-	}
-	
-	new static protected void OnMailAcknowledged(int messageId, string fuseId, int requestID)
-	{
-	}
-	
-	new static protected void OnMailError(int error)
 	{
 	}
 	

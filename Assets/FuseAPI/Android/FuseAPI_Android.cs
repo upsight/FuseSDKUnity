@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using System;
 using System.Collections;
@@ -7,17 +6,26 @@ using System.Collections.Generic;
 public class FuseAPI_Android : FuseAPI
 {
 
-#if UNITY_ANDROID && !UNITY_EDITOR	
+#if UNITY_ANDROID && !UNITY_EDITOR
 	
 	public static bool debugOutput = false;
+	
+	private static GameObject _callback;
+	private static AndroidJavaClass _fusePlugin;
+	private static AndroidJavaClass _fuseUnityPlugin;
+
+	private void Awake()
+	{
+		GameObject go = GameObject.Find("FuseSDK");
+		if(go != null && go != gameObject && go.GetComponent<FuseAPI>() != null)
+			UnityEngine.Object.DestroyImmediate(gameObject, true);
+	}
 
 	protected override void Init()
 	{
 		// preserve the prefab and all attached scripts through level loads
-		if( persistent )
-		{
-			DontDestroyOnLoad(transform.gameObject);
-		}
+		DontDestroyOnLoad(transform.gameObject);
+
 		if(logging)
 		{
 			FuseAPI_Android.debugOutput = true;
@@ -52,7 +60,7 @@ public class FuseAPI_Android : FuseAPI
 		}
 	}
 
-#region Session Creation
+	#region Session Creation
 	
 	[Obsolete("StartSession now called automatically. Set gameID in the FuseAPI Component.", true)]
 	new public static void StartSession(string gameId)
@@ -61,6 +69,9 @@ public class FuseAPI_Android : FuseAPI
 
 	new protected static void _StartSession(string gameId)
 	{
+		if(string.IsNullOrEmpty(gameId))
+			Debug.LogError("FuseSDK: Null or empty API Key. Make sure your API Key is entered in the FuseSDK prefab");
+
 		FuseLog("StartSession(" + gameId + ")");
 		_fuseUnityPlugin.CallStatic("startSession", gameId);
 	}
@@ -95,7 +106,7 @@ public class FuseAPI_Android : FuseAPI
 	}
 #endregion
 
-    #region Analytics Event
+	#region Analytics Event
 	new public static void RegisterEvent(string message)
 	{
 		FuseLog("RegisterEvent(" + message + ")");
@@ -172,9 +183,9 @@ public class FuseAPI_Android : FuseAPI
 		return _fuseUnityPlugin.CallStatic<int>("registerEvent", name, paramName, paramValue, variableName, variableValue);
 	}
 
-    #endregion
+#endregion
 
-    #region In-App Purchase Logging
+	#region In-App Purchase Logging
 	new public static void RegisterInAppPurchaseList(Product[] products)
 	{
 		FuseLog("***** NOT YET SUPPORTED BY FUSE'S ANDROID API ***** FuseAPI:RegisterInAppPurchaseList([data])");
@@ -203,22 +214,22 @@ public class FuseAPI_Android : FuseAPI
 		// do nothing.  This method is for iOS only at this point.  Unibill Android can be handled with current methods
 	}
 
-	private void _PurchaseVerification(string dummy)
+	private void _PurchaseVerification(string param)
 	{
-		// args: bool verified, string transactionID, string originalTransactionID
-		if( _args.Count == 3 )
-		{
-			FuseLog ("PurchaseVerification(" + _args[0] + "," + _args[1] + "," + _args[2] + ")");
-			OnPurchaseVerification(int.Parse(_args[0]), _args[1], _args[2]);
-		}
-		else
-		{
-			Debug.LogError("Error: Invalid number of arguments for FuseAPI::PurchaseVerification");
-		}
-	}
-    #endregion
+		FuseLog ("PurchaseVerification(" + param + ")");
 
-    #region Fuse Ads
+		int verified;
+
+		var pars = param.Split(',');
+		if(pars.Length == 3 && int.TryParse(pars[0], out verified))
+			OnPurchaseVerification(verified, pars[1], pars[2]);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _PurchaseVerification");
+
+	}
+	#endregion
+
+	#region Fuse Ads
 	new public static void PreLoadAd(string adZone)
 	{
 		FuseLog("PreloadAd");
@@ -237,23 +248,17 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.CallStatic("showAd",adZone);
 	}
 
-	private void _AdAvailabilityResponse(string available)
+	private void _AdAvailabilityResponse(string param)
 	{
-		FuseLog("AdAvailabilityResponse(" + available + "," + _args[0] + ")");
-		OnAdAvailabilityResponse(int.Parse(available), int.Parse(_args[0]));
-		_args.Clear();
-	}
+		FuseLog("AdAvailabilityResponse(" + param + ")");
+		int available;
+		int error;
 
-	private void _AdDisplayed(string dummy)
-	{
-		FuseLog("AdDisplayed()");
-		OnAdDisplayed();
-	}
-
-	private void _AdClicked(string dummy)
-	{
-		FuseLog("AdClicked()");
-		OnAdClicked();
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out available) && int.TryParse(pars[1], out error))
+			OnAdAvailabilityResponse(available, error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _AdAvailabilityResponse");
 	}
 
 	private void _AdWillClose(string dummy)
@@ -262,21 +267,15 @@ public class FuseAPI_Android : FuseAPI
 		OnAdWillClose();
 	}
 	
-	private void _VideoCompleted(string adZone)
-	{
-		FuseLog("VideoCompleted(" + adZone + ")");
-		OnVideoCompleted(adZone);
-	}
-	
 	private void _RewardedVideoCompleted(string adZone)
 	{
 		FuseLog("RewardedVideoCompleted(" + adZone + ")");
 		OnRewardedVideoCompleted(adZone);
 	}
 
-    #endregion
+	#endregion
 
-    #region Notifications	
+	#region Notifications	
 	new public static void DisplayNotifications()
 	{
 		FuseLog("DisplayNotifications()");
@@ -294,25 +293,25 @@ public class FuseAPI_Android : FuseAPI
 		FuseLog("NotificationAction()");
 		OnNotificationAction(action);
 	}
-    #endregion
+	#endregion
 
-    #region More Games
+	#region More Games
 	new public static void DisplayMoreGames()
 	{
 		FuseLog("DisplayMoreGames()");
 		_fuseUnityPlugin.CallStatic("displayMoreGames");
 	}
-    #endregion
+	#endregion
 	
-    #region Gender
+	#region Gender
 	new public static void RegisterGender(Gender gender)
 	{
 		FuseLog("RegisterGender()");
 		_fuseUnityPlugin.CallStatic("registerGender", (int)gender);
 	}
-    #endregion
+	#endregion
 
-    #region Account Login
+	#region Account Login
 	new public static void FacebookLogin(string facebookId, string name, string accessToken)
 	{
 		FuseLog("FacebookLogin(" + facebookId + "," + name + "," + accessToken + ")");
@@ -337,12 +336,6 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.CallStatic("deviceLogin", alias);
 	}
 	
-	new public static void OpenFeintLogin(string openFeintId)
-	{
-		FuseLog("OpenFeintLogin(" + openFeintId + ")");
-		_fuseUnityPlugin.CallStatic("openFeintLogin", openFeintId);
-	}
-	
 	new public static void FuseLogin(string fuseId, string alias)
 	{
 		FuseLog("FuseLogin(" + fuseId + "," + alias + ")");
@@ -355,10 +348,10 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.CallStatic("googlePlayLogin", alias, token);
 	}
 
-	public static void GameCenterLogin(string accountID, string alias)
+	new public static void GameCenterLogin()
 	{
 		// only for testing - does not actually log you into game center
-		_fuseUnityPlugin.CallStatic("gamecenterLogin", accountID, alias);
+		_fuseUnityPlugin.CallStatic("gamecenterLogin", "", "");
 	}
 	
 	new public static string GetOriginalAccountAlias()
@@ -379,14 +372,21 @@ public class FuseAPI_Android : FuseAPI
 		return (AccountType)_fuseUnityPlugin.CallStatic<int>("getOriginalAccountType");
 	}
 
-	private void _AccountLoginComplete(string accountId)
+	private void _AccountLoginComplete(string param)
 	{
-		FuseLog("AccountLoginComplete(" + _args[0] + "," + accountId + ")");
-		OnAccountLoginComplete((FuseAPI.AccountType)int.Parse(_args[0]), accountId);
-	}
-    #endregion
+		FuseLog("AccountLoginComplete(" + param + ")");
 
-    #region Miscellaneous
+		int type;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out type))
+			OnAccountLoginComplete((FuseAPI.AccountType) type, pars[1]);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _AccountLoginComplete");
+	}
+	#endregion
+
+	#region Miscellaneous
 	new public static int GamesPlayed()
 	{
 		FuseLog("GamesPlayed()");
@@ -431,10 +431,15 @@ public class FuseAPI_Android : FuseAPI
 			Debug.Log("FuseAPI: " + str);
 		}
 	}
-		
-    #endregion
 
-    #region Data Opt In/Out
+	new public static string GetFuseId()
+	{
+		return _fuseUnityPlugin.CallStatic<string>("getFuseID");
+	}
+		
+	#endregion
+
+	#region Data Opt In/Out
 	new public static void EnableData(bool enable)
 	{
 		FuseLog("EnableData(" + enable + ")");
@@ -446,119 +451,9 @@ public class FuseAPI_Android : FuseAPI
 		FuseLog("DataEnabled()");
 		return _fuseUnityPlugin.CallStatic<bool>("dataEnabled");
 	}
-    #endregion
+	#endregion
 
-    #region User Game Data
-	new public static int SetGameData(Hashtable data)
-	{
-		return SetGameData("", data, false, GetFuseId());
-	}
-	
-	new public static int SetGameData(string key, Hashtable data)
-	{
-		return SetGameData(key, data, false, GetFuseId());
-	}
-	
-	new public static int SetGameData(string key, Hashtable data, bool isCollection)
-	{
-		return SetGameData(key, data, isCollection, GetFuseId());
-	}
-	
-	new public static int SetGameData(string key, Hashtable data, bool isCollection, string fuseId)
-	{
-		FuseLog ("SetGameData(" + key + ", [data]," + isCollection + "," + fuseId + ")");
-
-		_fuseUnityPlugin.CallStatic("setGameDataStart");
-			
-		foreach (DictionaryEntry entry in data)
-		{
-			string entryKey = entry.Key as string;
-			byte[] buffer = entry.Value as byte[];
-			if (buffer != null)
-			{
-				string entryValue = Convert.ToBase64String(buffer);
-				_fuseUnityPlugin.CallStatic("setGameDataKeyValue", entryKey, entryValue, true);
-			}
-			else
-			{
-				string entryValue = entry.Value.ToString();
-				_fuseUnityPlugin.CallStatic("setGameDataKeyValue", entryKey, entryValue, false);
-			}
-		}
-
-		return _fuseUnityPlugin.CallStatic<int>("setGameDataEnd", key, isCollection, fuseId);
-	}
-
-	new public static string GetFuseId()
-	{
-		return _fuseUnityPlugin.CallStatic<string>("getFuseID");
-	}
-
-	private void _GameDataSetAcknowledged(string requestId)
-	{
-		FuseLog("GameDataSetAcknowledged(" + requestId + ")");
-		OnGameDataSetAcknowledged(int.Parse(requestId));
-	}
-
-	private void _GameDataError(string fuseGameDataError)
-	{
-		FuseLog("GameDataError(" + fuseGameDataError + "," + _args[0] + ")");
-		OnGameDataError(int.Parse(fuseGameDataError), int.Parse(_args[0]));
-		_args.Clear();
-	}
-
-	new public static int GetGameData(string[] keys)
-	{
-		return GetFriendGameData("", "", keys);
-	}
-	
-	new public static int GetGameData(string key, string[] keys)
-	{
-		return GetFriendGameData("", key, keys);
-	}
-	
-	new public static int GetFriendGameData(string fuseId, string[] keys)
-	{
-		return GetFriendGameData(fuseId, "", keys);
-	}
-	
-	new public static int GetFriendGameData(string fuseId, string key, string[] keys)
-	{
-		FuseLog ("GetGameData(" + fuseId + "," + key + ",[keys])");
-		
-		_fuseUnityPlugin.CallStatic("getGameDataStart");
-			
-		foreach (string entry in keys)
-		{
-			_fuseUnityPlugin.CallStatic("getGameDataKey", entry);
-		}
-
-		return _fuseUnityPlugin.CallStatic<int>("getGameDataEnd", key, fuseId);
-	}
-
-	private void _GameDataReceived(string requestId)
-	{
-		FuseLog("GameDataReceived(" + requestId + ")");
-
-		Hashtable gameData = new Hashtable();
-		for (int index = 1; index < _args.Count; index += 3)
-		{
-			FuseLog(_args[index] + " " + _args[index+1] + " " + _args[index+2]);
-			if (_args[index] == "0")
-			{
-				gameData.Add(_args[index+1],_args[index+2]);
-			}
-			else
-			{
-				gameData.Add(_args[index+1],Convert.FromBase64String(_args[index+2]));
-			}
-		}
-
-		OnGameDataReceived(_args[0], "", gameData, int.Parse(requestId));
-	}
-    #endregion
-
-    #region Friend List	
+	#region Friend List	
 	new public static void AddFriend(string fuseId)
 	{
 		FuseLog("AddFriend(" + fuseId + ")");
@@ -581,33 +476,45 @@ public class FuseAPI_Android : FuseAPI
 	}
 	
 	
-	private void _FriendAdded(string dummy)
+	private void _FriendAdded(string param)
 	{
-		if( _args.Count == 2 && _args[0] != null && _args[1] != null )
-		{
-			OnFriendAdded(_args[0], Convert.ToInt32(_args[1]));
-		}
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			OnFriendAdded(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendAdded");
 	}
-	private void _FriendRemoved(string dummy)
+	private void _FriendRemoved(string param)
 	{
-		if( _args.Count == 2 && _args[0] != null && _args[1] != null )
-		{
-			OnFriendRemoved(_args[0], Convert.ToInt32(_args[1]));
-		}
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			OnFriendRemoved(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendAdded");
 	}
-	private void _FriendAccepted(string dummy)
+	private void _FriendAccepted(string param)
 	{
-		if( _args.Count == 2 && _args[0] != null && _args[1] != null )
-		{
-			OnFriendAccepted(_args[0], Convert.ToInt32(_args[1]));
-		}
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			OnFriendAccepted(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendAdded");
 	}
-	private void _FriendRejected(string dummy)
+	private void _FriendRejected(string param)
 	{
-		if( _args.Count == 2 && _args[0] != null && _args[1] != null )
-		{
-			OnFriendRejected(_args[0], Convert.ToInt32(_args[1]));
-		}
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			OnFriendRejected(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendAdded");
 	}	
 	
 	new public static void MigrateFriends(string fuseId)
@@ -616,12 +523,15 @@ public class FuseAPI_Android : FuseAPI
 		_fuseUnityPlugin.CallStatic("migrateFriends", fuseId);
 	}
 	
-	private void _FriendsMigrated(string dummy)
+	private void _FriendsMigrated(string param)
 	{
-		if( _args.Count == 2 && _args[0] != null && _args[1] != null )
-		{
-			OnFriendsMigrated(_args[0], Convert.ToInt32(_args[1]));
-		}
+		int error;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			OnFriendsMigrated(pars[0], error);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _FriendsMigrated");
 	}
 	
 	new public static void UpdateFriendsListFromServer()
@@ -633,32 +543,45 @@ public class FuseAPI_Android : FuseAPI
 	new public static List<Friend> GetFriendsList()
 	{
 		FuseLog("GetFriendsList()");
-		_ParseCompositeValueIntoArgs(_fuseUnityPlugin.CallStatic<string>("getFriendsList"));
-		return ArgsToFriendsList();
+		return DeserializeFriendsList(_fuseUnityPlugin.CallStatic<string[]>("getFriendsList"));
 	}
 	
-	private static List<Friend> ArgsToFriendsList()
+	private static List<Friend> DeserializeFriendsList(string[] friendList)
 	{
-		List<Friend> friendsList = new List<Friend>();
+		List<Friend> retList = new List<Friend>();
 
-		for (int index = 0; index < _args.Count; index += 4)
+		if(friendList == null)
 		{
-			Friend friend = new Friend();
-			friend.fuseId = _args[index];
-			friend.accountId = _args[index+1];
-			friend.alias = _args[index+2];
-			friend.pending = _args[index+3] == "0" ? false : true;
-				
-			friendsList.Add(friend);
+			Debug.LogWarning("FuseSDK: NULL FriendsList.");
+			return retList;
 		}
 
-		return friendsList;
+		foreach(var line in friendList)
+		{
+			var parts = line.Split(',');
+			if(parts.Length == 4)
+			{
+				Friend friend = new Friend();
+				friend.fuseId = parts[0];
+				friend.accountId = parts[1];
+				friend.alias = parts[2];
+				friend.pending = parts[3] != "0";
+
+				retList.Add(friend);
+			}
+			else
+			{
+				Debug.LogError("FuseSDK: Error reading FriendsList data. Invalid line: " + line);
+			}
+		}
+
+		return retList;
 	}
 
 	private void _FriendsListUpdated(string dummy)
 	{
 		FuseLog("FriendsListUpdated()");
-		OnFriendsListUpdated(ArgsToFriendsList());
+		OnFriendsListUpdated(GetFriendsList());
 	}
 
 	private void _FriendsListError(string error)
@@ -666,9 +589,9 @@ public class FuseAPI_Android : FuseAPI
 		FuseLog("FriendsListError(" + error + ")");
 		OnFriendsListError(int.Parse(error));
 	}
-    #endregion
+	#endregion
 
-    #region User-to-User Push Notifications
+	#region User-to-User Push Notifications
 	new public static void UserPushNotification(string fuseId, string message)
 	{
 		FuseLog("UserPushNotification(" + fuseId + "," + message + ")");
@@ -680,113 +603,24 @@ public class FuseAPI_Android : FuseAPI
 		FuseLog("FriendsPushNotification(" + message + ")");
 		_fuseUnityPlugin.CallStatic("friendsPushNotification", message);
 	}
-    #endregion
+	#endregion
 
-    #region Gifting
-	new public static void GetMailListFromServer()
-	{
-		FuseLog("GetMailListFromServer()");
-		_fuseUnityPlugin.CallStatic("getMailListFromServer");
-	}
-	
-	new public static void GetMailListFriendFromServer(string fuseId)
-	{
-		FuseLog("GetMailListFriendFromServer(" + fuseId + ")");
-		_fuseUnityPlugin.CallStatic("getMailListFriendFromServer", fuseId);
-	}
-	
-	new public static List<Mail> GetMailList(string fuseId)
-	{
-		FuseLog("GetMailList(" + fuseId + ")");
-		_ParseCompositeValueIntoArgs(_fuseUnityPlugin.CallStatic<string>("getMailList", fuseId));
-		return ArgsToMailList();
-	}
-
-	private static List<Mail> ArgsToMailList()
-	{
-		List<Mail> mailList = new List<Mail>();
-
-		for (int index = 0; index < _args.Count; index += 7)
-		{
-			Mail mail = new Mail();
-			mail.messageId = int.Parse(_args[index]);
-			mail.timestamp = TimestampToDateTime(int.Parse(_args[index+1]));
-			mail.alias = _args[index+2];
-			mail.message = _args[index+3];
-			mail.giftId = int.Parse(_args[index+4]);
-			mail.giftName = _args[index+5];
-			mail.giftAmount = int.Parse(_args[index+6]);
-				
-			mailList.Add(mail);
-		}
-
-		return mailList;
-	}
-
-	new public static void SetMailAsReceived(int messageId)
-	{
-		FuseLog("SetMailAsReceived(" + messageId + ")");
-		_fuseUnityPlugin.CallStatic("setMailAsReceived", messageId);
-	}
-	
-	new public static int SendMailWithGift(string fuseId, string message, int giftId, int giftAmount)
-	{
-		FuseLog("SendMailWithGift(" + fuseId + "," + message + "," + giftId + "," + giftAmount + ")");
-		return _fuseUnityPlugin.CallStatic<int>("sendMailWithGift", fuseId, message, giftId, giftAmount);
-	}
-	
-	new public static int SendMail(string fuseId, string message)
-	{
-		FuseLog("SendMail(" + fuseId + "," + message + ")");
-		return _fuseUnityPlugin.CallStatic<int>("sendMail", fuseId, message);
-	}
-
-	private void _MailListReceived(string fuseId)
-	{
-		FuseLog("MailListReceived(" + fuseId + ")");
-		OnMailListReceived(ArgsToMailList(), fuseId);
-	}
-
-	private void _MailListError(string error)
-	{
-		FuseLog("MailListError(" + error + ")");
-		OnMailListError(int.Parse(error));
-	}
-
-	private void _MailAcknowledged()
-	{
-		string messageId = _args[0];
-		string fuseId = _args[1];
-		string requestID = _args[2];
-		FuseLog("MailAcknowledged(" + messageId + "," + fuseId + "," + requestID + ")");
-		OnMailAcknowledged(int.Parse(messageId), fuseId, int.Parse (requestID));
-		_args.Clear();
-	}
-
-	private void _MailError(string error)
-	{
-		FuseLog("MailError(" + error + ")");
-		OnMailError(int.Parse(error));
-	}
-    #endregion
-
-    #region Game Configuration Data
+	#region Game Configuration Data
 	new public static string GetGameConfigurationValue(string key)
 	{
 		FuseLog("GetGameConfigurationValue(" + key + ")");
-		_fuseUnityPlugin.SetStatic<string>("_stringConduit", key);
-		_fuseUnityPlugin.CallStatic("getGameConfigurationValue");
-		return _fuseUnityPlugin.GetStatic<string>("_stringConduit");
+		return _fuseUnityPlugin.CallStatic<string>("getGameConfigurationValue", key);
 	}
 	
 	new public static Dictionary<string, string> GetGameConfig()
 	{
-		FuseLog("GetGameConfig()");		
+		FuseLog("GetGameConfig()");
 	
 		Dictionary<string, string> gameConfig = new Dictionary<string, string>();
 		// get a list of all the keys:
 		string[] keys = _fuseUnityPlugin.CallStatic<string[]>("getGameConfigKeys");
-		if (keys != null) {
+		if (keys != null)
+		{
 			for( int i = 0; i < keys.Length; i++ )
 			{
 				gameConfig.Add(keys[i], GetGameConfigurationValue(keys[i]));
@@ -800,9 +634,9 @@ public class FuseAPI_Android : FuseAPI
 		FuseLog("GameConfigurationReceived()");
 		OnGameConfigurationReceived();
 	}
-    #endregion
+	#endregion
 
-    #region Specific Event Registration
+	#region Specific Event Registration
 	new public static void RegisterLevel(int level)
 	{
 		FuseLog("RegisterLevel(" + level + ")");
@@ -813,24 +647,6 @@ public class FuseAPI_Android : FuseAPI
 	{
 		FuseLog("RegisterCurrency(" + type + "," + balance + ")");
 		_fuseUnityPlugin.CallStatic("registerCurrency", type, balance);
-	}
-	
-	new public static void RegisterFlurryView()
-	{
-		FuseLog("RegisterFlurryView()");
-		_fuseUnityPlugin.CallStatic("registerFlurryView");
-	}
-	
-	new public static void RegisterFlurryClick()
-	{
-		FuseLog("RegisterFlurryClick()");
-		_fuseUnityPlugin.CallStatic("registerFlurryClick");
-	}
-	
-	new public static void RegisterTapjoyReward(int amount)
-	{
-		FuseLog("RegisterTapjoyReward(" + amount + ")");
-		_fuseUnityPlugin.CallStatic("registerTapjoyReward", amount);
 	}
 	
 	new public static void RegisterAge(int age)
@@ -844,53 +660,7 @@ public class FuseAPI_Android : FuseAPI
 		FuseLog("RegisterBirthday(" + year + ", " + month + ", " + day + ")");
 		_fuseUnityPlugin.CallStatic("registerBirthday", year, month, day);
 	}	
-    #endregion
-
-    #region API bridge helpers
-	private void _ClearArgumentList(string dummy)
-	{
-		_args.Clear();
-	}
-
-	private void _ClearArgumentListAndSetFirst(string message)
-	{
-		_args.Clear();
-		_args.Add(message);
-	}
-
-	private void _AddArgument(string message)
-	{
-		FuseLog("_AddArgument: " + message);
-		_args.Add(message);
-	}
-
-	private static void _ParseCompositeValueIntoArgs(string compositeValue) // 7:Example9:composite5:value
-	{
-		_args.Clear();
-		int index = 0;
-		while (index < compositeValue.Length)
-		{
-			int numberLength = 0;
-			while (compositeValue[index + numberLength] != ':')
-			{
-				++numberLength;
-			}
-
-			int valueLength = int.Parse(compositeValue.Substring(index, numberLength));
-
-			_args.Add(compositeValue.Substring(index + numberLength + 1, valueLength));
-
-			index += numberLength + 1 + valueLength;
-		}
-	}
-
-	private static List<string> _args = new List<string>();
-    #endregion
-
-
-	private static GameObject _callback;
-	private static AndroidJavaClass _fusePlugin;
-	private static AndroidJavaClass _fuseUnityPlugin;
+	#endregion
 #endif
 }
 

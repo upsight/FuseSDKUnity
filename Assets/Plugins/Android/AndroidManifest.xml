@@ -14,12 +14,12 @@
 
 		<activity android:name="com.unity3d.player.UnityPlayerNativeActivity" android:label="@string/app_name" 
 			android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen">
-		  <meta-data android:name="android.app.lib_name" android:value="unity" />
-		  <meta-data android:name="unityplayer.ForwardNativeEventsToDalvik" android:value="true" />
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
+			  <meta-data android:name="android.app.lib_name" android:value="unity" />
+			  <meta-data android:name="unityplayer.ForwardNativeEventsToDalvik" android:value="true" />
+				  <intent-filter>
+					<action android:name="android.intent.action.MAIN" />
+					<category android:name="android.intent.category.LAUNCHER" />
+				  </intent-filter>
 		</activity>
 		
 		<!-- FuseAPI -->
@@ -40,16 +40,16 @@
 
         <activity
             android:name="com.fusepowered.m2.mobileads.M2Activity"
-            android:configChanges="keyboardHidden|orientation" />
+            android:configChanges="keyboardHidden|orientation|screenSize" />
         <activity
             android:name="com.fusepowered.m2.mobileads.M2RActivity"
-            android:configChanges="keyboardHidden|orientation" />
+            android:configChanges="keyboardHidden|orientation|screenSize" />
         <activity
             android:name="com.fusepowered.m2.common.M2Browser"
-            android:configChanges="keyboardHidden|orientation" />
+            android:configChanges="keyboardHidden|orientation|screenSize" />
         <activity
             android:name="com.fusepowered.m2.mobileads.M2RvpActivity"
-            android:configChanges="keyboardHidden|orientation" />
+            android:configChanges="keyboardHidden|orientation|screenSize" />
         <activity
             android:name="com.fusepowered.m1.android.MMActivity"
             android:configChanges="keyboardHidden|orientation|keyboard"
@@ -62,9 +62,6 @@
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
             android:hardwareAccelerated="true"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
-        <activity
-            android:name="com.fusepowered.s1.S1InterstitialActivity"
-            android:hardwareAccelerated="true" />
         <activity
             android:name="com.vungle.sdk.VungleAdvert"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -110,12 +107,47 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name="com.fusepowered.ads.adapters.MRaidVideoActivity"
+            android:hardwareAccelerated="true"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenLayout|screenSize"
+            android:theme="@android:style/Theme.Black.NoTitleBar"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name="com.fusepowered.sa.android.publish.list3d.List3DActivity"
             android:theme="@android:style/Theme" />
         <activity
             android:name="com.fusepowered.sa.android.publish.AppWallActivity"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:configChanges="orientation|keyboardHidden|screenSize" />
+        <activity
+            android:name="com.fusepowered.as.view.ASVastInterstitialActivity"
+            android:theme="@android:style/Theme.Translucent"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+        <activity
+            android:name="com.fusepowered.as.view.ASWebviewInterstitialActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+        <activity
+			android:exported="false" android:name="com.fusepowered.ap.MainActivity"
+            android:configChanges="orientation|screenSize"
+            android:theme="@android:style/Theme.Translucent" />
+        <activity
+			android:name="com.fusepowered.ap.BrowserActivity"
+            android:configChanges="orientation|screenSize" />
+        <activity
+			android:name="com.fusepowered.ap.VDActivity"
+            android:configChanges="orientation|screenSize" android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+	    <activity
+			android:name="com.fusepowered.al.ALInterstitialActivity"
+			android:configChanges="orientation|screenSize" />
+	    <activity
+			android:name="com.fusepowered.al.ALConfirmationActivity"
+			android:configChanges="orientation|screenSize" />
+        <activity
+			android:name="com.fusepowered.im.androidsdk.IMBrowserActivity"
+			android:configChanges="keyboardHidden|orientation|keyboard|smallestScreenSize|screenSize"
+			android:theme="@android:style/Theme.Translucent.NoTitleBar"
+			android:hardwareAccelerated="true" />
 		<!-- end -->
 		
 		<!-- GCM -->
@@ -147,8 +179,9 @@
 	<uses-permission android:name="com.android.vending.BILLING"/>
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/> 
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+	
   
 	<!-- Permissions for GCM -->
 	<!-- GCM requires a Google account. -->
@@ -170,6 +203,6 @@
 	<!-- Permission to vibrate -->
 	<!--<uses-permission android:name="android.permission.VIBRATE" /> -->
 	
-	<uses-sdk android:minSdkVersion="9" android:targetSdkVersion="16" />
+	<uses-sdk android:minSdkVersion="9" android:targetSdkVersion="19" />
 	
 </manifest>
