@@ -2,13 +2,14 @@
 
 ## Current Version
 
-Version: 1.38.1.0
+Version: 2.0.0.0-BETA
 
-Released: February 13th, 2015
+Released: March 19th, 2015
 
 ## To Download
 The easiest way to obtain the Fuse SDK is to click the "Download ZIP" button located in the right-hand navigation pane of the Github repository page.
-Once the package has been installed, you will be able to update the FuseSDK Wrapper through the Unity Editor.
+
+Once the package has been imported into your project, you will be able to update the FuseSDK Wrapper through the Unity Editor.
 
 ## Getting Started
 
@@ -23,21 +24,10 @@ Please visit [http://www.adrally.com](http://www.adrally.com) for an account to 
 
 ## Release Notes
 
-### 1.38.1.0
-February 13th, 2015
-* New ad provider support
-* Bug fixes
+### 2.0.0.0-BETA
+March 19th, 2015
+* Coming Soon!
 
-### 1.37.3.1
-December 10th, 2014
-* Added an auto-updating system that will allow SDK updates without ever leaving the Unity Editor
-* Added functionality to FuseSDK menu
-* Simplified and enhanced the capabilites of the FuseSDK prefab
-* Start session is now called automatically from the prefab
-* It's no longer necessary to manually edit the AndroidManifest.xml
-* Added ability to easily update Android push notification icon via the FuseSDK prefab
-* Added video completed callback
-* Easy to enable support for select billing plugins (Prime31, Unibill)
 
 ## Contact Us
 For more information, please visit [http://www.adrally.com](http://www.adrally.com). For questions or assistance, please email us at [support@adrally.com](mailto:support@adrally.com).
