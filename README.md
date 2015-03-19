@@ -18,6 +18,7 @@ Please review the [integration instructions](http://wiki.adrally.com/index.php/U
 ## References
 
 * [Integration Instructions](http://wiki.adrally.com/index.php/Unity)
+* [Documentation] (http://wiki.fusepowered.com/docs/unity/)
 
 ## Need an Account?
 Please visit [http://www.adrally.com](http://www.adrally.com) for an account to get started!
