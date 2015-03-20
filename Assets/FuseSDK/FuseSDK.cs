@@ -589,6 +589,7 @@ public partial class FuseSDK : MonoBehaviour
 
 
 	#region Members
+	#if !DOXYGEN_IGNORE
 	public string AndroidAppID;
 	public string iOSAppID;
 
@@ -608,6 +609,7 @@ public partial class FuseSDK : MonoBehaviour
 	private static bool _debugOutput = false;
 	private static string _gameId;
 	private static bool _registerForPush = true;
+	#endif // DOXYGEN_IGNORE
 	#endregion
 
 	#region Internal Event Triggers
