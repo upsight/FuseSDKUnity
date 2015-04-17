@@ -290,7 +290,7 @@ public static class FuseSDKUpdater
 		FuseSDKPrefs.DownloadType dlType = (FuseSDKPrefs.DownloadType) EditorPrefs.GetInt(AUTODOWNLOAD_KEY, 1);
 
 		bool importNow = true;
-		if(dlType == FuseSDKPrefs.DownloadType.AutoDownloadAndPromtForImport)
+		if(dlType == FuseSDKPrefs.DownloadType.AutoDownloadAndPromptForImport)
 		{
 			importNow = EditorUtility.DisplayDialog("Fuse SDK Update", "Do you want to import the new SDK now?", "Yes", "No");
 		}

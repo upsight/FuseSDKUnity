@@ -37,9 +37,9 @@
 /*!
  * @brief This method is invoked when an error has occurred when trying to start a session
  * @details To avoid cases where operations are continuing as if everything was being handled normally by the FuseSDK, this can be listened to and actions taken as a result.  This method is optional.
- * @param _error [NSError*] The error value corresponding to a value in kFuseErrors
+ * @param _error [NSError*] The error value corresponding to a value in EFuseError
  * @see FuseSDK::startSession:delegate:withOptions: for more information on starting a session with a \<FuseDelegate\>
- * @see kFuseErrors for more information on all possible error values
+ * @see EFuseError for more information on all possible error values
  */
 -(void) sessionLoginError:(NSError*)_error;
 
@@ -78,12 +78,12 @@
 /*!
  * @brief This method notifies the device that an account login request has failed
  * @details When a user logs in using one of the available FuseSDK account method, for instance FuseSDK::gameCenterLogin:, the server will send the client a notification if there is any errors encountered.
- * @param _error [NSError*] The error value corresponding to a value in kFuseErrors
+ * @param _error [NSError*] The error value corresponding to a value in EFuseError
  * @param _account_id [NSString*] The account ID of the user attempted to log in
  * @see FuseSDK::gameCenterLogin: for a sample login method
  * @since Fuse SDK version 1.29
  */
--(void) accountLoginError:(NSError*)_error Account:(NSString*)_account_id;
+-(void) account:(NSString*)_account_id  loginError:(NSError*)_error;
 
 /*!
  * @brief This method indicates that an action should be taken as a result of a notification being closed
@@ -144,8 +144,8 @@
  @endcode
  
  @param _fuse_id [NSString*] The fuse ID of the account for which the friend was added to
- @param _error [int] The error value corresponding to the a value in kFuseAddFriendErrors
- @see kFuseAddFriendErrors for all possible error codes
+ @param _error [int] The error value corresponding to the a value in EFuseError
+ @see EFuseError for all possible error codes
  @see FuseSDK::addFriend: for more information on adding a friend
  @since Fuse SDK version 1.22
  */
@@ -172,8 +172,8 @@
  @endcode
  
  @param _fuse_id [NSString*] The fuse ID of the account for which the friend was removed
- @param _error [int] The error value corresponding to the a value in kFuseRemoveFriendErrors
- @see kFuseRemoveFriendErrors for all possible error codes
+ @param _error [int] The error value corresponding to the a value in EFuseError
+ @see EFuseError for all possible error codes
  @see FuseSDK::removeFriend: for more information on removing a friend
  @since Fuse SDK version 1.22
  */
@@ -200,8 +200,8 @@
  @endcode
  
  @param _fuse_id [NSString*] The fuse ID of the account for which the friend was accepted
- @param _error [int] The error value corresponding to the a value in kFuseAcceptFriendErrors
- @see kFuseAcceptFriendErrors for all possible error codes
+ @param _error [int] The error value corresponding to the a value in EFuseError
+ @see EFuseError for all possible error codes
  @see FuseSDK::acceptFriend: for more information on accepting a friend
  @since Fuse SDK version 1.22
  */
@@ -228,8 +228,8 @@
  @endcode
  
  @param _fuse_id [NSString*] The fuse ID of the account for which the friend was rejected
- @param _error [int] The error value corresponding to the a value in kFuseRejectFriendErrors
- @see kFuseRejectFriendErrors for all possible error codes
+ @param _error [int] The error value corresponding to the a value in EFuseError
+ @see EFuseError for all possible error codes
  @see FuseSDK::rejectFriend: for more information on rejecting a friend
  @since Fuse SDK version 1.22
  */
@@ -256,8 +256,8 @@
  @endcode
  
  @param _fuse_id [NSString*] The fuse ID of the account for which the friend's are to be migrated from
- @param _error [int] The error value corresponding to the a value in kFuseMigrateFriendErrors
- @see kFuseMigrateFriendErrors for all possible error codes
+ @param _error [int] The error value corresponding to the a value in EFuseError
+ @see EFuseError for all possible error codes
  @see FuseSDK::migrateFriends: for more information on migrating friends
  @since Fuse SDK version 1.34.1
  */
@@ -314,7 +314,7 @@
  
  @endcode
  
- * @param _error [int] The error value corresponding to the a value in kFuseFriendsListErrors
+ * @param _error [int] The error value corresponding to the a value in EFuseError
  * @see FuseSDK::updateFriendsListFromServer or more information on requesting the friends list from the server
  * @since Fuse SDK version 1.22
  */
@@ -351,23 +351,15 @@
 -(void) purchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id;
 
 /*!
- * @brief This method was a misspelt version of purchaseVerification:TransactionID:OriginalTransactionID
- * @deprecated Since Fuse SDK version 1.25.  Most people spell purchase with an 'r', but not me apparently.
- */
--(void) puchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id __attribute__((deprecated));
-
-
-
-/*!
- * @brief This method is called in response to a request to check for an ad in the Fuse system
- * @details As a result of the checkAdAvailable method, this method is invoked when the status of whether an ad is available is known.  To handle this response:
+ * @brief Callback response to a request to load for an ad in the Fuse system
+ * @details As a result of the preloadAdForZoneID: method, this method is invoked when the status of whether an ad is available is known.  To handle this response:
  
  @code
  
  -(void) adAvailabilityResponse:(NSNumber*)_available Error:(NSError*)_error
  {
     BOOL isAvailable = [_available boolValue];
-    int error = [_error errorCode];
+    int error = [_error code];
  
     if (error != FUSE_AD_NO_ERROR)
     {
@@ -388,16 +380,16 @@
  
  @endcode
  
- * @param _available [NSNumber *] This indicates whether an ad is available (boolean)
- * @param _error [NSNumber *] This indicates whether an error has occurred and corresponds to values in kFuseAdErrors
- * @see checkAdAvailable for more information on how to invoke the process of checking for an ad
+ * @param _available [NSError *] This indicates whether an ad is available (boolean)
+ * @param _error [NSError *] This indicates whether an error has occurred and corresponds to values in EFuseError
+ * @see preloadAdForZoneID for more information on how to invoke the process of loading an ad zone.
  * @since Fuse SDK version 1.26
  */
 -(void) adAvailabilityResponse:(NSNumber*)_available Error:(NSError*)_error;
 
 
 /*!
- * @brief This method is called to acknowledge a successful rewarded Video Watch
+ * @brief Callback to acknowledge a successful rewarded Video Watch
 
  @param reward (FuseRewardedObject*) Object containing rewarded information
  @see FuseRewardedObject in FuseSDKDefintions.h for more information
@@ -407,7 +399,7 @@
 -(void) rewardedAdCompleteWithObject:(FuseRewardedObject*) _reward;
 
 /*!
- * @brief This method is called to acknowledge an iap offer was accepted
+ * @brief Callback to acknowledge an iap offer was accepted
  
  @param _offer (FuseIAPOfferObject*) Object containing offer information
  @see FuseIAPOfferObject in FuseSDKDefintions.h for more information
@@ -416,7 +408,7 @@
 -(void) IAPOfferAcceptedWithObject:(FuseIAPOfferObject*) _offer;
 
 /*!
- * @brief This method is called to acknowledge an virtual goods offer was accepted
+ * @brief Callback to acknowledge an virtual goods offer was accepted
  
  @param _offer (FuseVirtualGoodsOfferObject*) Object containing offer information
  @see FuseVirtualGoodsOfferObject in FuseSDKDefintions.h for more information
@@ -424,10 +416,19 @@
  */
 -(void) virtualGoodsOfferAcceptedWithObject:(FuseVirtualGoodsOfferObject*) _offer;
 
+/*!
+ * @brief Callback to inform no ad was displayed from showAdForZoneID:withOptions: call.
+
+ 
+ @see FshowAdForZoneID:withOptions:
+ @since Fuse SDK version 2.0.0
+ */
+-(void) adFailedToDisplay;
 
 @required
 /*!
- * @brief This method indicates when a full-screen (interstitial) ad is closing
+ * @brief Callback to indicates when control is being returned to the application
+ 
  * @details When an ad is being dismissed by the user and control is to be returned to the application, this method will be called.  Once called, the application can continue execution of the user flow or application.
  * @see FuseSDK::showAdWithDelegate: for more information on displaying an ad with a \<FuseDelegate\>
  * @since FuseSDK version 1.12
@@ -656,7 +657,7 @@
  
  * @param _message [NSString*] The event name to be logged
  * @param _dict [NSDictionary*] A dictionary of values associated with the event
- * @retval [int] Indicates whether the event information is valid.  Corresponds to kFuseEventErrors.
+ * @retval [int] Indicates whether the event information is valid.  Corresponds to EFuseError.
  */
 +(int) registerEvent:(NSString *)_message withDict:(NSDictionary*)_dict __attribute__((deprecated));
 
@@ -688,7 +689,7 @@
  * @param _param_name [NSString*] The event parameter name (i.e. "Level")
  * @param _param_value [NSString*] The event parameter value (i.e. "1")
  * @param _variables [NSDictionary*] A list of key value pairs of variable names and values
- * @retval [int] Indicates whether the event information is valid.  Corresponds to kFuseEventErrors.
+ * @retval [int] Indicates whether the event information is valid.  Corresponds to EFuseError.
  * @since FuseSDK version 1.26
  */
 +(int) registerEvent:(NSString*)_name ParameterName:(NSString*)_param_name ParameterValue:(NSString*)_param_value Variables:(NSDictionary*)_variables __attribute__((deprecated));
@@ -717,7 +718,7 @@
  * @param _param_value [NSString*] The event parameter value (i.e. "1")
  * @param _variable_name [NSString *] The name of the variable being logged (i.e. "Coins")
  * @param _variable_value [NSNumber*] The value of the event being logged (i.e. 10)
- * @retval [int] Indicates whether the event information is valid.  Corresponds to kFuseEventErrors.
+ * @retval [int] Indicates whether the event information is valid.  Corresponds to EFuseError.
  * @see registerEvent:ParameterName:ParameterValue:Values: to see how to call the same method more efficiently with a dictionary (when calling multiple times with the same parameters)
  * @since FuseSDK version 1.26
  */
@@ -978,6 +979,16 @@
 +(BOOL) zoneHasVirtualGoodsOffer:(NSString*) _zoneID;
 
 
+/*!
+ * @brief Get a List of All active ad zones
+ * @details This returns a list of adzones currently setup for displaying ads. It's primary function is developer side debugging in nature, as disabled or empty Adzones should be omitted.
+ @code
+ NSArray* adZoneList = [FuseSDK GetAdZoneList]
+ @endcode
+ 
+ * @since Fuse SDK version 2.0.0
+ */
+-(NSArray*) GetAdZoneList;
 
 
 #pragma mark Notifications
@@ -1514,7 +1525,7 @@
  
  @endcode
  
- * @retval [NSString*] The API version of the form '1.38.0'
+ * @retval [NSString*] The API version of the form '2.0.0'
  */
 +(NSString*) libraryVersion;
 
@@ -1661,7 +1672,7 @@
  -(void) friendsListError:(NSError*)_error
  {
     // An error has occurred in getting the friends list
-    // See kFuseFriendsListErrors for more information on all of the possible error codes
+    // See EFuseError for more information on all of the possible error codes
  }
  
  @endcode
@@ -1711,7 +1722,7 @@
  {
     // A friend has been added
     // If [error intValue] != 0, an error has occurred
-    // Please see kFuseAddFriendErrors for more information on all of the possible error codes
+    // Please see EFuseError for more information on all of the possible error codes
  }
  
  @endcode
@@ -1743,7 +1754,7 @@
  {
     // A friend has been removed
     // If [error intValue] != 0, an error has occurred
-    // Please see kFuseRemoveFriendErrors for more information on all of the possible error codes
+    // Please see EFuseError for more information on all of the possible error codes
  }
 
  @endcode
@@ -1775,7 +1786,7 @@
  {
     // A friend has been marked as accepted on the server
     // If [error intValue] != 0, an error has occurred
-    // Please see kFuseAcceptFriendErrors for more information on all of the possible error codes
+    // Please see EFuseError for more information on all of the possible error codes
  }
  
  @endcode
@@ -1808,7 +1819,7 @@
  {
     // A friend has been marked as rejected on the server
     // If [error intValue] != 0, an error has occurred
-    // Please see kFuseRejectFriendErrors for more information on all of the possible error codes
+    // Please see EFuseError for more information on all of the possible error codes
  }
  
  @endcode
@@ -1841,7 +1852,7 @@
  {
  // A friend has been added
  // If [error intValue] != 0, an error has occurred
- // Please see kFuseMigrateFriendErrors for more information on all of the possible error codes
+ // Please see EFuseError for more information on all of the possible error codes
  }
  
  @endcode

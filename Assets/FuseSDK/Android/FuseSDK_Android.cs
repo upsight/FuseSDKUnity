@@ -29,11 +29,6 @@ public partial class FuseSDK
 		if(androidUnibill && !GetComponent<FuseSDK_Unibill_Android>())
 			gameObject.AddComponent<FuseSDK_Unibill_Android>().logging = logging;
 
-		_gameId = AndroidAppID;
-		_debugOutput = logging;
-
-		registerForPushNotifications &= !string.IsNullOrEmpty(GCM_SenderID);
-
 		//_fusePlugin = new AndroidJavaClass("com.fusepowered.fuseapi.FuseAPI");
 		//FuseLog("FusePlugin " + (_fusePlugin == null ? "NOT FOUND" : "FOUND"));
 		_fuseUnityPlugin = new AndroidJavaClass("com.fusepowered.unity.FuseUnitySDK");
@@ -44,9 +39,13 @@ public partial class FuseSDK
 
 	void Start()
 	{
-		if(!string.IsNullOrEmpty(_gameId) && StartAutomatically)
+		AppID = AndroidAppID;
+		_debugOutput = logging;
+		_registerForPush = registerForPushNotifications & !string.IsNullOrEmpty(GCM_SenderID);
+
+		if(!string.IsNullOrEmpty(AppID) && StartAutomatically)
 		{
-			_StartSession(_gameId);
+			_StartSession(AppID);
 		}
 	}
 	#endregion
@@ -76,13 +75,13 @@ public partial class FuseSDK
 			_fuseUnityPlugin.CallStatic("onDestroy");
 		}
 	}
-	#endregion
+#endregion
 
 #region Session Creation
 
 	public static void StartSession()
 	{
-		_StartSession(_gameId);
+		_StartSession(AppID);
 	}
 
 	private static void _StartSession(string gameId)
@@ -371,7 +370,7 @@ public partial class FuseSDK
 	public static void UTCTimeFromServer()
 	{
 		FuseLog("TimeFromServer()");
-		_fuseUnityPlugin.CallStatic("timeFromServer");
+		_fuseUnityPlugin.CallStatic("utcTimeFromServer");
 	}
 
 	public static void FuseLog(string str)
@@ -494,7 +493,7 @@ public partial class FuseSDK
 	{
 		FuseLog("SessionStartReceived()");
 
-		if(registerForPushNotifications)
+		if(_registerForPush)
 		{
 			SetupPushNotifications(GCM_SenderID);
 		}
@@ -549,6 +548,12 @@ public partial class FuseSDK
 	{
 		FuseLog("AdWillClose()");
 		OnAdWillClose();
+	}
+
+	private void _AdFailedToDisplay(string _)
+	{
+		FuseLog("AdFailedToDisplay()");
+		OnAdFailedToDisplay();
 	}
 
 	private void _RewardedAdCompleted(string param)
@@ -649,11 +654,12 @@ public partial class FuseSDK
 	{
 		FuseLog("_AccountLoginError(" + param + ")");
 
+		int error;
 		var pars = param.Split(',');
-		if(pars.Length == 2)
-			OnAccountLoginError(pars[0], pars[1]);
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			OnAccountLoginError(pars[0], error);
 		else
-			Debug.LogError("FuseSDK: Parsing error in _AdAvailabilityResponse");
+			Debug.LogError("FuseSDK: Parsing error in _AccountLoginError");
 	}
 
 	private void _TimeUpdated(string timestamp)

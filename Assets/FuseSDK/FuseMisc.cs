@@ -46,6 +46,11 @@ namespace FuseMisc
 			return new FuseSDKDotNET.Util.Friend() { FuseId = f.FuseId, AccountId = f.AccountId, Alias = f.Alias, Pending = f.Pending };
 		}
 #endif
+
+		public override string ToString()
+		{
+			return string.Join("\0", new string[] { FuseId, AccountId, Alias, Pending?"1":"0" });
+		}
 	}
 
 	/// <summary>Representation of an item that the user is able to purchase from the App Store. IOS ONLY.</summary>
@@ -71,6 +76,11 @@ namespace FuseMisc
 			return new FuseSDKDotNET.Util.Product() { ProductId = p.ProductId, Price = p.Price, PriceLocale = p.PriceLocale };
 		}
 #endif
+
+		public override string ToString()
+		{
+			return string.Join("\0", new string[] { ProductId, Price.ToString(), PriceLocale });
+		}
 	}
 
 	/// <summary>Representation of the reward that a player will recieve for watching a rewarded video.</summary>
@@ -99,6 +109,11 @@ namespace FuseMisc
 			return new FuseSDKDotNET.Util.RewardedInfo() { PreRollMessage = r.PreRollMessage, RewardMessage = r.RewardMessage, RewardAmount = r.RewardAmount, RewardItem = r.RewardItem };
 		}
 #endif
+
+		public override string ToString()
+		{
+			return string.Join("\0", new string[] { PreRollMessage, RewardMessage, RewardItem, RewardAmount.ToString() });
+		}
 	}
 
 	/// <summary>Representation of an In-App Purchase Offer that can be presented to a player.</summary>
@@ -127,6 +142,11 @@ namespace FuseMisc
 			return new FuseSDKDotNET.Util.IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount };
 		}
 #endif
+
+		public override string ToString()
+		{
+			return string.Join("\0", new string[] { ProductId, ProductPrice.ToString(), ItemName, ItemAmount.ToString() });
+		}
 	}
 
 	/// <summary>Representation of a Virtual Good Offer that can be presented to a player.</summary>
@@ -155,6 +175,11 @@ namespace FuseMisc
 			return new FuseSDKDotNET.Util.VGOfferInfo() { PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount };
 		}
 #endif
+
+		public override string ToString()
+		{
+			return string.Join("\0", new string[] { PurchaseCurrency, PurchasePrice.ToString(), ItemName, ItemAmount.ToString() });
+		}
 	}
 
 	/// <summary>Error codes returned by the Fuse SDK.</summary>

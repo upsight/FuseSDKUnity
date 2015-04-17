@@ -24,9 +24,9 @@ public partial class FuseSDK
 		DontDestroyOnLoad(gameObject);
 
 #if UNITY_ANDROID
-		_gameId = AndroidAppID;
+		AppID = AndroidAppID;
 #else
-		_gameId = iOSAppID;
+		AppID = iOSAppID;
 #endif
 		_debugOutput = logging;
 		_registerForPush = registerForPushNotifications;
@@ -36,9 +36,9 @@ public partial class FuseSDK
 
 	void Start()
 	{
-		if(!string.IsNullOrEmpty(_gameId) && StartAutomatically)
+		if(!string.IsNullOrEmpty(AppID) && StartAutomatically)
 		{
-			_StartSession(_gameId);
+			_StartSession(AppID);
 		}
 	}
 	#endregion
@@ -55,7 +55,7 @@ public partial class FuseSDK
 
 		//Social
 		FuseDotNet.AccountLoginComplete += (type, id) => OnAccountLoginComplete((int)type, id);
-		FuseDotNet.AccountLoginError += OnAccountLoginError;
+		FuseDotNet.AccountLoginError += (e, id) => OnAccountLoginError(id, (int)FuseError.UNDEFINED);
 
 		//Notifications
 		FuseDotNet.NotificationAction += OnNotificationAction;
@@ -100,7 +100,7 @@ public partial class FuseSDK
 	/// </remarks>
 	public static void StartSession()
 	{
-		_StartSession(_gameId);
+		_StartSession(AppID);
 	}
 
 	private static void _StartSession(string gameId)
