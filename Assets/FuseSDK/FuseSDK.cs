@@ -38,9 +38,9 @@ public partial class FuseSDK : MonoBehaviour
 	/// <summary>
 	/// NOT IMPLEMENTED!
 	/// Called if an error occurs while trying to log in to an account.
-	/// Listener signature: void AccountLoginError(string error, string accountId)
+	/// Listener signature: void AccountLoginError(string accountId, FuseError error)
 	/// </summary>
-	public static event Action<string, string> AccountLoginError;
+	public static event Action<string, FuseError> AccountLoginError;
 
 	//--------------------------------------------------------Notifications
 
@@ -605,9 +605,15 @@ public partial class FuseSDK : MonoBehaviour
 	public bool iosStoreKit = false;
 	public bool iosUnibill = false;
 
+	public static string AppID
+	{
+		get { return _gameId; }
+		set { if(string.IsNullOrEmpty(_gameId))_gameId = value; }
+	}
+
 	private static bool _sessionStarted = false;
 	private static bool _debugOutput = false;
-	private static string _gameId;
+	private static string _gameId = null;
 	private static bool _registerForPush = true;
 	#endif // DOXYGEN_IGNORE
 	#endregion
@@ -651,6 +657,11 @@ public partial class FuseSDK : MonoBehaviour
 		{
 			AdWillClose();
 		}
+	}
+
+	static private void OnAdFailedToDisplay()
+	{
+
 	}
 
 	static private void OnRewardedAdCompleted(RewardedInfo rewardInfo)
@@ -701,11 +712,11 @@ public partial class FuseSDK : MonoBehaviour
 		}
 	}
 
-	static private void OnAccountLoginError(string error, string accountId)
+	static private void OnAccountLoginError(string accountId, int error)
 	{
 		if(AccountLoginComplete != null)
 		{
-			AccountLoginError(error, accountId);
+			AccountLoginError(accountId, error < (int)FuseError.UNDEFINED ? (FuseError)error : FuseError.UNDEFINED);
 		}
 	}
 

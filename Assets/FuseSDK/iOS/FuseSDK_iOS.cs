@@ -144,19 +144,18 @@ public partial class FuseSDK
 		if(iosUnibill && !GetComponent<FuseSDK_Unibill_iOS>())
 			gameObject.AddComponent<FuseSDK_Unibill_iOS>().logging = logging;
 
-
-		_gameId = iOSAppID;
-		_debugOutput = logging;
-		_registerForPush = registerForPushNotifications;
-
 		Native_SetUnityGameObject(gameObject.name);
 	}
 
 	private void Start()
 	{
+		AppID = iOSAppID;
+		_debugOutput = logging;
+		_registerForPush = registerForPushNotifications;
+
 		if(!string.IsNullOrEmpty(iOSAppID) && StartAutomatically)
 		{
-			_StartSession(_gameId, _registerForPush);
+			_StartSession(AppID, _registerForPush);
 		}
 	}
 	#endregion
@@ -165,7 +164,7 @@ public partial class FuseSDK
 
 	public static void StartSession()
 	{
-		_StartSession(_gameId, _registerForPush);
+		_StartSession(AppID, _registerForPush);
 	}
 
 	private static void _StartSession(string gameId, bool registerForPush)
@@ -292,7 +291,8 @@ public partial class FuseSDK
 			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
 			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
 			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			rInfo.RewardAmount = int.Parse(pars[3]);
+			int ra;
+			rInfo.RewardAmount = int.TryParse(pars[3], out ra) ? ra : 0;
 			return rInfo;
 		}
 		catch(Exception e)
@@ -637,7 +637,8 @@ public partial class FuseSDK
 			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
 			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
 			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			rInfo.RewardAmount = int.Parse(pars[3]);
+			int ra;
+			rInfo.RewardAmount = int.TryParse(pars[3], out ra) ? ra : 0;
 			OnRewardedAdCompleted(rInfo);
 		}
 		catch(Exception e)
@@ -658,9 +659,11 @@ public partial class FuseSDK
 			var pars = param.Split(',');
 
 			oInfo.ProductId = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			oInfo.ProductPrice = float.Parse(pars[1]);
+			float pp;
+			oInfo.ProductPrice = float.TryParse(pars[1], out pp) ? pp : 0f;
 			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			oInfo.ItemAmount = int.Parse(pars[3]);
+			int ia;
+			oInfo.ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
 			OnIAPOfferAccepted(oInfo);
 		}
 		catch(Exception e)
@@ -681,9 +684,11 @@ public partial class FuseSDK
 			var pars = param.Split(',');
 
 			oInfo.PurchaseCurrency = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			oInfo.PurchasePrice = float.Parse(pars[1]);
+			float pp;
+			oInfo.PurchasePrice = float.TryParse(pars[1], out pp) ? pp : 0f;
 			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			oInfo.ItemAmount = int.Parse(pars[3]);
+			int ia;
+			oInfo.ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
 			OnVirtualGoodsOfferAccepted(oInfo);
 		}
 		catch(Exception e)
@@ -722,11 +727,12 @@ public partial class FuseSDK
 	{
 		FuseLog("_AccountLoginError(" + param + ")");
 
+		int error;
 		var pars = param.Split(',');
-		if(pars.Length == 2)
-			OnAccountLoginError(pars[0], pars[1]);
+		if(pars.Length == 2 && int.TryParse(pars[1], out error))
+			OnAccountLoginError(pars[0], error);
 		else
-			Debug.LogError("FuseSDK: Parsing error in _AdAvailabilityResponse");
+			Debug.LogError("FuseSDK: Parsing error in _AccountLoginError");
 	}
 
 	private void _CB_TimeUpdated(string param)
