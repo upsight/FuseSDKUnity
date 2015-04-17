@@ -1,8 +1,14 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using UnityEditor.Callbacks;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.IO;
+using System.Text;
+using System.Net;
+using System;
 
 [CustomEditor(typeof(FuseSDK))]
 public class FuseSDKEditor : Editor
@@ -158,7 +164,7 @@ public class FuseSDKEditor : Editor
 			if(_icon == null)
 			{
 				_icon = new Texture2D(ICON_WIDTH, ICON_HEIGHT);
-				_icon.LoadImage(System.IO.File.ReadAllBytes(Application.dataPath + ICON_PATH));
+				_icon.LoadImage(File.ReadAllBytes(Application.dataPath + ICON_PATH));
 			}
 
 			string path = Application.dataPath + ICON_PATH;
@@ -187,14 +193,14 @@ public class FuseSDKEditor : Editor
 			{
 				try
 				{
-					var bytes = System.IO.File.ReadAllBytes(_newIconPath);
+					var bytes = File.ReadAllBytes(_newIconPath);
 					string header = System.Text.Encoding.ASCII.GetString(bytes, 1, 3);
 					_icon.LoadImage(bytes);
 					if((bytes[0] == 'J' && header == "FIF") || (bytes[0] == (byte)0x89 && header == "PNG"))
 					{
 						if(_icon.height == ICON_HEIGHT && _icon.width == ICON_WIDTH)
 						{
-							System.IO.File.WriteAllBytes(path, _icon.EncodeToPNG());
+							File.WriteAllBytes(path, _icon.EncodeToPNG());
 							_newIconPath = null;
 							_error = null;
 						}
@@ -224,6 +230,15 @@ public class FuseSDKEditor : Editor
 			DestroyImmediate(_icon);
 			_icon = null;
 		}
+
+		GUILayout.BeginHorizontal();
+		GUILayout.FlexibleSpace();
+		if(GUILayout.Button("Open Preferences"))
+		{
+			FuseSDKPrefs.Init();
+		}
+		GUILayout.FlexibleSpace();
+		GUILayout.EndHorizontal();
 
 		if(GUI.changed)
 		{
@@ -268,6 +283,93 @@ public class FuseSDKEditor : Editor
 		}
 	}
 #endif
+
+	[PostProcessBuild]
+	public static void SendAnalytics(BuildTarget target, string path)
+	{
+		if(Application.isPlaying)
+			return;
+		try
+		{
+			string appID = "", bundleID, prodName, compName, gameVer, unityVer, isPro, targetPlat;
+			string url = "http://api.staging.fusepowered.com/buildstats/";
+			string baseJson = @"{
+							""game_id"" : ""{{game_id}}"",
+							""bundle_id"" : ""{{bundle_id}}"",
+							""product_name"" : ""{{product_name}}"",
+							""company_name"" : ""{{company_name}}"",
+							""game_ver"" : ""{{game_ver}}"",
+							""platform"": 
+								{
+									""version"": ""{{version}}"",
+									""is_pro"": ""{{is_pro}}"",
+									""target"": ""{{target}}""
+								}
+							}";
+
+			//App ID
+			var fuse = AssetDatabase.LoadAssetAtPath("Assets/FuseSDK/FuseSDK.prefab", typeof(FuseSDK)) as FuseSDK;
+			if(fuse != null)
+			{
+#if UNITY_IOS
+				appID = fuse.iOSAppID;
+#elif UNITY_ANDROID
+				appID = fuse.AndroidAppID;
+#endif
+			}
+
+			//Bundle ID
+			bundleID = PlayerSettings.bundleIdentifier;
+			
+			//Bundle ID
+			prodName = PlayerSettings.productName;
+			
+			//Bundle ID
+			compName = PlayerSettings.companyName;
+
+			//Game Ver
+			gameVer = PlayerSettings.bundleVersion;
+
+			//Unity version
+			unityVer = Application.unityVersion;
+			
+			//Unity Pro
+			isPro = PlayerSettings.advancedLicense ? "1" : "0";
+
+			//Target platform
+			targetPlat = target.ToString();
+
+			//Fill out json
+			string json = System.Text.RegularExpressions.Regex.Replace(baseJson, "(\"(?:[^\"\\\\]|\\\\.)*\")|\\s+", "$1")
+				.Replace("{{game_id}}", appID)
+				.Replace("{{bundle_id}}", bundleID)
+				.Replace("{{product_name}}", prodName)
+				.Replace("{{company_name}}", compName)
+				.Replace("{{game_ver}}", gameVer)
+				.Replace("{{version}}", unityVer)
+				.Replace("{{is_pro}}", isPro)
+				.Replace("{{target}}", targetPlat);
+
+			string query = "d=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+
+			WebRequest request = WebRequest.Create(url);
+			var creds = new CredentialCache();
+			creds.Add(new Uri(url), "Basic", new NetworkCredential("jimmyjimmyjango", "awP2yTECEbXErKcn")); //oh noes, you gots our passw0rds
+			request.Credentials = creds;
+			request.Method = "POST";
+			request.ContentType = "application/x-www-form-urlencoded";
+			request.ContentLength = query.Length;
+			request.Timeout = 2000;
+
+			Stream dataStream = request.GetRequestStream();
+			byte[] data = Encoding.UTF8.GetBytes(query);
+			dataStream.Write(data, 0, data.Length);
+			dataStream.Close();
+
+			request.BeginGetResponse(new AsyncCallback(_=>{}), null);
+		}
+		catch{}
+	}
 
 
 	[MenuItem ("FuseSDK/Regenerate Prefab", false, 0)]
@@ -344,7 +446,7 @@ public class FuseSDKPrefs : EditorWindow
 	public enum DownloadType
 	{
 		AutoDownloadAndImport = 0,
-		AutoDownloadAndPromtForImport = 1,
+		AutoDownloadAndPromptForImport = 1,
 		AutoDownloadOnly = 2,
 		GoToWebsite = 3,
 		AskEverytime = 4,
@@ -358,13 +460,31 @@ public class FuseSDKPrefs : EditorWindow
 		Bugfixes = 3,
 	}
 
+	enum ActiveAdapters
+	{
+		AdColony = 1,
+		AppLovin = 2,
+		HyprMX = 4,
+	}
+
+	private static readonly string[] AdapterFilenames = new string[]
+	{
+		"libFuseAdapterAdcolony.a",
+		"libFuseAdapterAppLovin.a",
+		"libFuseAdapterHyprMx.a",
+	};
+
+	private static readonly string ADAPTERS_KEY = "FuseSDKActiveAdapters";
+	private static readonly string DISABLED_ADAPTERS_PATH = "/FuseSDK/UnusedAdapters/";
+	private static readonly string ENABLED_ADAPTERS_PATH = "/Plugins/iOS/";
+
 	[MenuItem("FuseSDK/Preferences", false, 60)]
-	static void Init()
+	public static void Init()
 	{
 #if UNITY_3_5
-		FuseSDKPrefs me = GetWindowWithRect(typeof(FuseSDKPrefs), new Rect(0, 0, 400, 60), true, "Fuse SDK Preferences") as FuseSDKPrefs;
+		FuseSDKPrefs me = GetWindowWithRect(typeof(FuseSDKPrefs), new Rect(0, 0, 400, 100), true, "Fuse SDK Preferences") as FuseSDKPrefs;
 #else
-		FuseSDKPrefs me = GetWindowWithRect<FuseSDKPrefs>(new Rect(0, 0, 400, 60), true, "Fuse SDK Preferences");
+		FuseSDKPrefs me = GetWindowWithRect<FuseSDKPrefs>(new Rect(0, 0, 400, 100), true, "Fuse SDK Preferences");
 #endif
 		me.ShowUtility();
 	}
@@ -373,6 +493,7 @@ public class FuseSDKPrefs : EditorWindow
 	{
 		UpdateType updateStream = (UpdateType)Mathf.Min(EditorPrefs.GetInt(FuseSDKUpdater.AUTOUPDATE_KEY, 4) + 1, (int)UpdateType.Bugfixes);
 		DownloadType autoDL = (DownloadType)EditorPrefs.GetInt(FuseSDKUpdater.AUTODOWNLOAD_KEY, 1);
+		ActiveAdapters activeAdapters = (ActiveAdapters)EditorPrefs.GetInt(ADAPTERS_KEY, 7);
 
 		UpdateType newStream = (UpdateType)EditorGUILayout.EnumPopup("Auto Update Checking", updateStream);
 		
@@ -387,5 +508,70 @@ public class FuseSDKPrefs : EditorWindow
 			if(newDL != autoDL)
 				EditorPrefs.SetInt(FuseSDKUpdater.AUTODOWNLOAD_KEY, (int)newDL);
 		}
+
+		GUILayout.Space(30);
+
+		ActiveAdapters newAdapters = (ActiveAdapters)EditorGUILayout.EnumMaskField("Active Adapters", activeAdapters);
+
+		if(newAdapters != activeAdapters)
+		{
+			EditorPrefs.SetInt(ADAPTERS_KEY, (int)newAdapters);
+			UpdateAdapters((uint)activeAdapters, (uint)newAdapters);
+		}
+	}
+
+	private void UpdateAdapters(uint oldAdapters, uint newAdapters)
+	{
+		if(!Directory.Exists(Application.dataPath + DISABLED_ADAPTERS_PATH))
+			Directory.CreateDirectory(Application.dataPath + DISABLED_ADAPTERS_PATH);
+
+		for(int i = 0; i < AdapterFilenames.Length && (oldAdapters >> i > 0 || newAdapters >> i > 0); i++)
+		{
+			if((oldAdapters>>i) % 2 > (newAdapters>>i) % 2)
+			{
+				try
+				{
+					File.Move(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i], Application.dataPath + DISABLED_ADAPTERS_PATH + AdapterFilenames[i]);
+				}
+				catch(IOException)
+				{
+					if(File.Exists(Application.dataPath + DISABLED_ADAPTERS_PATH + AdapterFilenames[i]) && File.Exists(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]))
+					{
+						File.Delete(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]);
+					}
+					else if(!File.Exists(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]) && !File.Exists(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]))
+					{
+						Debug.LogWarning("FuseSDK: Could not disable " + AdapterFilenames[i] + ". File does not exist.");
+					}
+				}
+				catch(System.UnauthorizedAccessException)
+				{
+					Debug.LogWarning("FuseSDK: Could not disable " + AdapterFilenames[i] + ". You do not have the required permission to move " + Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]);
+				}
+			}
+			else if((oldAdapters>>i) % 2 < (newAdapters>>i) % 2)
+			{
+				try
+				{
+					File.Move(Application.dataPath + DISABLED_ADAPTERS_PATH + AdapterFilenames[i], Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]);
+				}
+				catch(IOException)
+				{
+					if(File.Exists(Application.dataPath + DISABLED_ADAPTERS_PATH + AdapterFilenames[i]) && File.Exists(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]))
+					{
+						File.Delete(Application.dataPath + DISABLED_ADAPTERS_PATH + AdapterFilenames[i]);
+					}
+					else if(!File.Exists(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]) && !File.Exists(Application.dataPath + ENABLED_ADAPTERS_PATH + AdapterFilenames[i]))
+					{
+						Debug.LogWarning("FuseSDK: Could not enable " + AdapterFilenames[i] + ". File does not exist.");
+					}
+				}
+				catch(System.UnauthorizedAccessException)
+				{
+					Debug.LogWarning("FuseSDK: Could not enable " + AdapterFilenames[i] + ". You do not have the required permission to move " + Application.dataPath + DISABLED_ADAPTERS_PATH + AdapterFilenames[i]);
+				}
+			}
+		}
+		AssetDatabase.Refresh();
 	}
 }

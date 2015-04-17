@@ -598,9 +598,9 @@ void Native_RegisterBirthday(int year, int month, int day)
     CallUnity("_CB_AccountLoginComplete", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
-- (void)accountLoginError:(NSError*)_error Account:(NSString*)_account_id;
+-(void) account:(NSString*)_account_id loginError:(NSError*)_error;
 {
-    NSArray *values = @[[NSNumber numberWithInteger:_error.code],_account_id];
+    NSArray *values = @[_account_id, [NSNumber numberWithInteger:_error.code]];
     
     CallUnity("_CB_AccountLoginError", [[values componentsJoinedByString:@","] cStringUsingEncoding:NSUTF8StringEncoding]);
 }

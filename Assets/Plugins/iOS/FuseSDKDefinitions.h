@@ -22,7 +22,7 @@ enum kFuseGender
     FUSE_GENDER_FEMALE,             /// gender female
 };
 
-enum kFuseErrors
+enum EFuseError
 {
     FUSE_ERROR_NO_ERROR = 0,        /// No error has occurred.
     FUSE_ERROR_NOT_CONNECTED,       /// The user is not connected to the internet.
@@ -30,7 +30,7 @@ enum kFuseErrors
     FUSE_ERROR_SERVER_ERROR,        /// The request was processed, but an error occured during processing.
     FUSE_ERROR_BAD_DATA,            /// The server has indicated the data it received was not valid.
     FUSE_ERROR_SESSION_FAILURE,     /// The session has recieved an error and the operation did not complete due to this error.
-    FUSE_ERROR_INVALID_REQUEST,      /// The request was not valid, and no action will be performed.
+    FUSE_ERROR_INVALID_REQUEST,     /// The request was not valid, and no action will be performed.
     FUSE_ERROR_UNDEFINED            /// An Error occured, but there is no information about it
 };
 
