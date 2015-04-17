@@ -11,15 +11,6 @@
     <target name="android" description="Build base mediation Android Library">		
         <delete dir="./android/temp"/>
         <mkdir dir="./android/temp/classes"/>
-		
-		<!-- Rename FuseSDK*.jar to FuseSDK.jar -->
-		<fileset dir="./libs" id="jar_name">
-			<include name="**/FuseSDK*.jar"/>
-			<exclude name="**/FuseSDK.jar"/>
-		</fileset>
-		<property name="sdk.jar.name" refid="jar_name" />
-		<echo message="Renaming ${sdk.jar.name} to FuseSDK.jar" />
-		<move file="./libs/${sdk.jar.name}" tofile="./libs/FuseSDK.jar" overwrite="true"/>
         
 		<!-- Compile FuseUnityAPI classes -->
         <javac srcdir="./src" destdir="./android/temp/classes" includeantruntime="false">

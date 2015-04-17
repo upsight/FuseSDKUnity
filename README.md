@@ -2,26 +2,43 @@
 
 ## Current Version
 
-Version: 1.37.3.1
+Version: 2.0.2.0
 
-Released: December 10th, 2014
+Released: April 17th, 2015
+
+## Update Instructions
+When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
+The FuseAPI class has been renamed to FuseSDK, you will need to update your references.
 
 ## To Download
-The easiest way to obtain the Fuse SDK is to click the "Download ZIP" button located in the right-hand navigation pane of the Github repository page.
-Once the package has been installed, you will be able to update the FuseSDK Wrapper through the Unity Editor.
+The easiest way to obtain the Fuse SDK is to click the "Download ZIP" button located in the right-hand navigation pane of the Github repository page.  
+Once the package has been imported into your project, you will be able to update the FuseSDK Wrapper through the Unity Editor.
 
 ## Getting Started
 
-Please review the [integration instructions](http://wiki.adrally.com/index.php/Unity) found here for more information on integrating the Fuse SDK.
+Please review the [integration instructions](https://wiki.fusepowered.com/index.php?title=Unity) found here for more information on integrating the Fuse SDK.
 
 ## References
 
-* [Integration Instructions](http://wiki.adrally.com/index.php/Unity)
+* [Integration Instructions](https://wiki.fusepowered.com/index.php?title=Unity)
+* [Documentation] (http://wiki.fusepowered.com/docs/unity/)
 
 ## Need an Account?
-Please visit [http://www.adrally.com](http://www.adrally.com) for an account to get started!
+Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.0.2.0
+April 17th, 2015
+* IAP and Virtual Good offers
+* Rewarded video enhancements
+* Interface updates
+* FuseAPI class renamed - please use FuseSDK
+
+### 1.38.1.0
+February 13th, 2015
+* New ad provider support
+* Bug fixes
 
 ### 1.37.3.1
 December 10th, 2014
@@ -34,5 +51,6 @@ December 10th, 2014
 * Added video completed callback
 * Easy to enable support for select billing plugins (Prime31, Unibill)
 
+
 ## Contact Us
-For more information, please visit [http://www.adrally.com](http://www.adrally.com). For questions or assistance, please email us at [support@adrally.com](mailto:support@adrally.com).
+For more information, please visit [http://www.fusepowered.com](http://www.fusepowered.com). For questions or assistance, please email us at [support@fusepowered.com](mailto:support@fusepowered.com).
