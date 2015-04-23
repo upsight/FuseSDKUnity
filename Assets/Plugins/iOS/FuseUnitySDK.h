@@ -13,7 +13,7 @@ void Native_StartSession(const char* gameId, bool registerPush);
 
 #pragma mark - Analytic Event
 
-bool Native_RegisterEventWithDictionary(const char* message, const char** keys, const char** attributes, int numValues);
+bool Native_RegisterEventWithDictionary(const char* message, const char* paramName, const char* paramValue, const char** keys, double* attributes, int numValues);
 bool Native_RegisterEventVariable(const char* name, const char* paramName, const char* paramValue, const char* variableName, double variableValue);
 
 
