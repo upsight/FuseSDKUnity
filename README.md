@@ -28,6 +28,10 @@ Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an acc
 
 ## Release Notes
 
+### 2.0.3.0
+April 23rd, 2015
+* Bug fixes for external adapters, game configuration, and friends list
+
 ### 2.0.2.0
 April 17th, 2015
 * IAP and Virtual Good offers
