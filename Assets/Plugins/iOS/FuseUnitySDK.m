@@ -52,12 +52,15 @@ void Native_StartSession(const char* gameId , bool registerPush)
 
 #pragma mark - Analytics
 
-bool Native_RegisterEventWithDictionary(const char* message, const char** keys, const char** attributes, int numValues)
+bool Native_RegisterEventWithDictionary(const char* message, const char* paramName, const char* paramValue, const char** keys, double* attributes, int numValues)
 {
     NSMutableDictionary* values = [[NSMutableDictionary alloc] initWithCapacity:numValues];
     for( int i = 0; i < numValues; i++ )
     {
-        [values setObject:[NSString stringWithUTF8String:attributes[i]] forKey:[NSString stringWithUTF8String:keys[i]]];
+        if( keys[i] != nil )
+        {
+            [values setObject:[NSNumber numberWithDouble:attributes[i]] forKey:[NSString stringWithUTF8String:keys[i]]];
+        }
     }
     bool ret = [FuseSDK registerEvent:[NSString stringWithUTF8String:message] withDict:values];
     FuseSafeRelease(values);
@@ -624,9 +627,10 @@ void Native_RegisterBirthday(int year, int month, int day)
                        documentsDirectory,fileName];
     //create content - four lines of text
     //save content to the documents directory
+    
     bool stuff =  [text writeToFile:fName
                          atomically:NO
-                           encoding:NSStringEncodingConversionAllowLossy
+                           encoding:NSUTF8StringEncoding
                               error:&err];
     if(err)
     {
