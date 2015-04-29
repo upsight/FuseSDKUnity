@@ -136,12 +136,10 @@
             android:name="com.fusepowered.ap.VDActivity"
             android:configChanges="orientation|screenSize" android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
-		<activity
-            android:name="com.fusepowered.al.adview.ALInterstitialActivity"
-            android:configChanges="orientation|screenSize" />
         <activity
-            android:name="com.fusepowered.al.adview.ALConfirmationActivity"
-            android:configChanges="orientation|screenSize" />
+            android:name="com.fusepowered.al.adview.ALInterstitialActivity" />
+        <activity
+            android:name="com.fusepowered.al.adview.ALConfirmationActivity" />
 		<activity
             android:name="com.fusepowered.ads.adapters.ALActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
