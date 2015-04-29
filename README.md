@@ -4,7 +4,7 @@
 
 Version: 2.0.4.0
 
-Released: April 29rd, 2015
+Released: April 29th, 2015
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
