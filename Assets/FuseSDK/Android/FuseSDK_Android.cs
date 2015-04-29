@@ -191,8 +191,8 @@ public partial class FuseSDK
 
 	public static RewardedInfo GetRewardedInfoForZone(string zoneId)
 	{
-		FuseLog("GetRewardedInfoForZone");
-		var infoStr = _fuseUnityPlugin.CallStatic<string>("getRewardedInfoForZone", zoneId);
+		FuseLog("GetRewardedInfoForZoneID");
+		var infoStr = _fuseUnityPlugin.CallStatic<string>("getRewardedInfoForZoneID", zoneId);
 		try
 		{
 			RewardedInfo rInfo;

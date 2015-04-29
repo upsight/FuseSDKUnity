@@ -292,7 +292,7 @@ public class FuseSDKEditor : Editor
 		try
 		{
 			string appID = "", bundleID, prodName, compName, gameVer, unityVer, isPro, targetPlat;
-			string url = "http://api.staging.fusepowered.com/buildstats/";
+			string url = "http://api.fusepowered.com/buildstats/";
 			string baseJson = @"{
 							""game_id"" : ""{{game_id}}"",
 							""bundle_id"" : ""{{bundle_id}}"",
