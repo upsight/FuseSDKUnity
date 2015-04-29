@@ -2,7 +2,7 @@
 
 ## Current Version
 
-Version: 2.0.4
+Version: 2.0.4.0
 
 Released: April 29rd, 2015
 
