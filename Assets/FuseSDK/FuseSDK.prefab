@@ -42,7 +42,7 @@ MonoBehaviour:
   AndroidAppID: bc520fab-858e-4ccd-9545-c655b530e0d2
   iOSAppID: da81021b-8cd5-409c-a0e1-3e925e9ef05a
   StartAutomatically: 1
-  GCM_SenderID: 
+  GCM_SenderID: 989188369001
   registerForPushNotifications: 1
   logging: 1
   androidIAB: 0

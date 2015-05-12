@@ -503,7 +503,6 @@ public partial class FuseSDK
 	private void SetupPushNotifications(string gcmSenderID)
 	{
 		FuseLog("SetupPushNotifications(" + gcmSenderID + ")");
-		_fuseUnityPlugin.CallStatic("testGCMSetup");
 		_fuseUnityPlugin.CallStatic("registerForPushNotifications", gcmSenderID);
 	}
 

@@ -1,4 +1,4 @@
-#if UNITY_IPHONE && !UNITY_EDITOR
+﻿#if UNITY_IPHONE && !UNITY_EDITOR
 using UnityEngine;
 using System;
 using System.Collections;
@@ -12,7 +12,7 @@ public partial class FuseSDK
 	private static Dictionary<string, string> _gameConfig = new Dictionary<string, string>();
 	private static List<Friend> _friendsList = new List<Friend>();
 
-	#region Extern definitions
+#region Extern definitions
 	[DllImport("__Internal")]
 	private static extern void Native_StartSession(string gameId, bool registerForPush);
 	[DllImport("__Internal")]
@@ -126,7 +126,7 @@ public partial class FuseSDK
 	private static extern string Native_GetGameConfigurationValue(string key);
 	#endregion
 
-	#region Initialization
+#region Initialization
 
 	private void Awake()
 	{
@@ -199,8 +199,18 @@ public partial class FuseSDK
 
 		try
 		{
-			var varKeys = variables.Keys.Cast<string>().ToArray();
-			var varValues = variables.Values.Cast<object>().Select(o => Convert.ToDouble(o)).ToArray();
+			string[] varKeys = new string[variables.Count];
+			double[] varValues = new double[variables.Count];
+			variables.Keys.CopyTo(varKeys, 0);
+
+			for(int i = 0; i < variables.Count; i++)
+			{
+				varValues[i] = Convert.ToDouble(variables[varKeys[i]]);
+			}
+
+			//var varKeys = variables.Keys.Cast<string>().ToArray();
+			//var varValues = variables.Values.Cast<object>().Select(o => Convert.ToDouble(o)).ToArray();
+
 			return Native_RegisterEventWithDictionary(name, paramName, paramValue, varKeys, varValues, varKeys.Length);
 		}
 		catch(Exception e)
@@ -224,9 +234,21 @@ public partial class FuseSDK
 	public static void RegisterIOSInAppPurchaseList(Product[] products)
 	{
 		FuseLog("RegisterInAppPurchaseList(" + products.Length + ")");
-		var ids = products.Select(p => p.ProductId).ToArray();
-		var locales = products.Select(p => p.PriceLocale).ToArray();
-		var prices = products.Select(p => p.Price).ToArray();
+
+		string[] ids = new string[products.Length];
+		string[] locales = new string[products.Length];
+		float[] prices = new float[products.Length];
+
+		for(int i = 0; i < products.Length; i++)
+		{
+			ids[i] = products[i].ProductId;
+			locales[i] = products[i].PriceLocale;
+			prices[i] = products[i].Price;
+		}
+		
+		//var ids = products.Select(p => p.ProductId).ToArray();
+		//var locales = products.Select(p => p.PriceLocale).ToArray();
+		//var prices = products.Select(p => p.Price).ToArray();
 
 		Native_RegisterInAppPurchaseList(ids, locales, prices, ids.Length);
 	}
@@ -814,35 +836,26 @@ public partial class FuseSDK
 	private void _CB_FriendsListUpdated(string param)
 	{
 		FuseLog("FriendsListUpdated()");
+		
+		_friendsList.Clear();
 
-		var path = Application.persistentDataPath + "/" + param;
-		if(System.IO.File.Exists(path))
+		foreach(var line in param.Split('\u2613'))
 		{
-			_friendsList.Clear();
-
-			var lines = System.IO.File.ReadAllLines(path);
-			foreach(var line in lines)
+			var parts = line.Split('\u2603');
+			if(parts.Length == 4)
 			{
-				var parts = line.Split(',');
-				if(parts.Length == 4)
-				{
-					Friend friend = new Friend();
-					friend.FuseId = parts[0];
-					friend.AccountId = parts[1];
-					friend.Alias = parts[2];
-					friend.Pending = parts[3] != "0";
+				Friend friend = new Friend();
+				friend.FuseId = parts[0];
+				friend.AccountId = parts[1];
+				friend.Alias = parts[2];
+				friend.Pending = parts[3] != "0";
 
-					_friendsList.Add(friend);
-				}
-				else
-				{
-					Debug.LogError("FuseSDK: Error reading FriendsList data. Invalid line: " + line);
-				}
+				_friendsList.Add(friend);
 			}
-		}
-		else
-		{
-			Debug.LogError("FuseSDK: Error reading FriendsList data. " + path + " is not a valid file.");
+			else
+			{
+				Debug.LogError("FuseSDK: Error reading FriendsList data. Invalid line: " + line);
+			}
 		}
 
 		OnFriendsListUpdated(_friendsList);
@@ -864,28 +877,19 @@ public partial class FuseSDK
 	{
 		FuseLog("GameConfigurationReceived()");
 
-		var path = Application.persistentDataPath + "/" + param;
-		if(System.IO.File.Exists(path))
-		{
-			_gameConfig.Clear();
+		_gameConfig.Clear();
 
-			var lines = System.IO.File.ReadAllLines(path);
-			foreach(var line in lines)
-			{
-				var parts = line.Split(',');
-				if(parts.Length == 2)
-				{
-					_gameConfig.Add(parts[0], parts[1]);
-				}
-				else
-				{
-					Debug.LogError("FuseSDK: Error reading GameConfiguration data. Invalid line: " + line);
-				}
-			}
-		}
-		else
+		foreach(var line in param.Split('\u2613'))
 		{
-			Debug.LogError("FuseSDK: Error reading GameConfiguration data. " + path + " is not a valid file.");
+			var parts = line.Split('\u2603');
+			if(parts.Length == 2)
+			{
+				_gameConfig.Add(parts[0], parts[1]);
+			}
+			else
+			{
+				Debug.LogError("FuseSDK: Error reading GameConfiguration data. Invalid line: " + line);
+			}
 		}
 
 		OnGameConfigurationReceived();
