@@ -615,30 +615,6 @@ void Native_RegisterBirthday(int year, int month, int day)
     CallUnity("_CB_TimeUpdated", [_timeStamp stringValue].UTF8String);
 }
 
--(bool) writeText:(NSString*)text toFile:(NSString*)fileName
-{
-    NSError *err = nil;
-    //get the documents directory:
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsDirectory = [paths objectAtIndex:0];
-    
-    //make a file name to write the data to using the documents directory:
-    NSString *fName = [NSString stringWithFormat:@"%@/%@",
-                       documentsDirectory,fileName];
-    //create content - four lines of text
-    //save content to the documents directory
-    
-    bool stuff =  [text writeToFile:fName
-                         atomically:NO
-                           encoding:NSUTF8StringEncoding
-                              error:&err];
-    if(err)
-    {
-        NSLog(@"error writing string %@,%@",[err localizedFailureReason],[err domain]);
-    }
-    return stuff;
-}
-
 
 #pragma mark Friends List
 
@@ -682,15 +658,11 @@ void Native_RegisterBirthday(int year, int month, int day)
         NSString* alias = [friendEntry objectForKey:@"alias"];
         int pending = [[friendEntry objectForKey:@"pending"] intValue];
         
-        [allFriends addObject:[ @[fuseId,accountId,alias,[NSNumber numberWithInt:pending]] componentsJoinedByString:@","]];
+        [allFriends addObject:[ @[fuseId,accountId,alias,[NSNumber numberWithInt:pending]] componentsJoinedByString:@"\u2603"]];
     }
     
-    NSString *filename = @"FuseSDK-friendsList.dat";
-    bool saved = [self writeText:[allFriends componentsJoinedByString:@"\n" ]  toFile:filename];
-    if(saved)
-    {
-        CallUnity("_CB_FriendsListUpdated", filename.UTF8String);
-    }
+    CallUnity("_CB_FriendsListUpdated", [allFriends componentsJoinedByString:@"\u2613" ].UTF8String);
+
     [allFriends release];
 }
 
@@ -810,16 +782,11 @@ void Native_RegisterBirthday(int year, int month, int day)
             NSString* key = [keys objectAtIndex:i];
             NSString* value = [dict objectForKey:key];
             
-            [configData addObject:[NSString stringWithFormat:@"%@,%@", key,value]];
+            [configData addObject:[NSString stringWithFormat:@"%@\u2603%@", key,value]];
         }
     }
     
-    NSString *filename = @"FuseSDK-gameConfig.dat";
-    bool saved = [self writeText:[configData componentsJoinedByString:@"\n" ]  toFile:filename];
-    if(saved)
-    {
-        CallUnity("_CB_GameConfigurationReceived", filename.UTF8String);
-    }
+    CallUnity("_CB_GameConfigurationReceived", [configData componentsJoinedByString:@"\u2613" ].UTF8String);
     
     [configData release];
 }
