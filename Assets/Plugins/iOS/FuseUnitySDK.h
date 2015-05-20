@@ -33,7 +33,14 @@ bool Native_RegisterEventVariable(const char* name, const char* paramName, const
 
 @end
 
-void Native_RegisterInAppPurchaseList(const char** productIds, const char** priceLocales, float* prices, int numValues);
+@interface FuseSDK_ProductsResponse : NSObject
+{
+
+}
+
+@property(nonatomic, assign) NSMutableArray *products;
+
+@end
 
 @interface FuseSDK_Payment : NSObject
 {
@@ -60,6 +67,7 @@ void Native_RegisterInAppPurchaseList(const char** productIds, const char** pric
 
 @end
 
+void Native_RegisterInAppPurchaseList(const char** productIds, const char** priceLocales, float* prices, int numValues);
 void Native_RegisterInAppPurchase(const char* productId, const char* transactionId, const unsigned char* transactionReceiptBuffer, int transactionReceiptLength, int transactionState);
 void Native_RegisterUnibillPurchase(const char* productId, Byte* receipt, int receiptLength);
 

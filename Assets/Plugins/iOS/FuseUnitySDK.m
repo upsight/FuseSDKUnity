@@ -114,9 +114,47 @@ bool Native_RegisterEventVariable(const char* name, const char* paramName, const
 
 @end
 
+@implementation FuseSDK_ProductsResponse
+
+-(id)init
+{
+    self = [super init];
+    
+	if (self)
+    {
+        _products = [[NSMutableArray alloc] init];
+    }
+    
+    return self;
+}
+
+-(void)dealloc
+{
+    FuseSafeRelease(_products);
+    [super dealloc];
+}
+
+@end
+
 void Native_RegisterInAppPurchaseList(const char** productIds, const char** priceLocales, float* prices, int numValues)
 {
-    //TODO
+    FuseSDK_ProductsResponse * _FuseSDK_productsResponse = [[FuseSDK_ProductsResponse alloc] init];
+    
+    for(int i = 0 ; i < numValues ; i++)
+    {
+        FuseSDK_Product* product = [[FuseSDK_Product alloc] init];
+        product.productIdentifier = [NSString stringWithUTF8String:productIds[i]];
+        [product setLocale:priceLocales[i]];
+        [product setFloatPrice:prices[i]];
+        
+        [_FuseSDK_productsResponse.products addObject:product];
+        FuseSafeRelease(product);
+
+    }
+    
+    [FuseSDK registerInAppPurchaseList:(SKProductsResponse*)_FuseSDK_productsResponse];
+    
+    FuseSafeRelease(_FuseSDK_productsResponse);
 }
 
 @implementation FuseSDK_Payment
@@ -573,7 +611,7 @@ void Native_RegisterBirthday(int year, int month, int day)
 
 #pragma mark In-App Purchase Logging
 
-- (void)puchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id
+- (void)purchaseVerification:(NSNumber*)_verified TransactionID:(NSString*)_tx_id OriginalTransactionID:(NSString*)_o_tx_id
 {
     NSArray *values = @[_verified,_tx_id,_o_tx_id];
     
