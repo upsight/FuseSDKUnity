@@ -30,6 +30,7 @@ public static class FusePostProcess
 	const string SQLITE_ID = "3FBCE7861816DD570057C069";
 	const string MCORESERVICES_ID = "3FD2BD0F1A253866002566B8";
 	const string LIBXML_ID = "3FD2BD0F1A253866002566B9";
+	const string WEBKIT_ID = "CDECA1A21B02531000CAA921";
 
 
 	const string CORETELEPHONY_FW = "3F3EE17B1757FB570038DED8";
@@ -44,6 +45,7 @@ public static class FusePostProcess
 	const string SQLITE_FW = "3F3EE17B1757FB570038FEED";
 	const string MCORESERVICES_FW = "A4FBC40B1A23EC33004D9A01";
 	const string LIBXML_FW = "A4FBC40B1A23EC33004D9A02";
+	const string WEBKIT_FW = "CDECA1A11B02531000CAA922";
 
 	// List of all the frameworks to be added to the project
 	public struct framework
@@ -85,6 +87,7 @@ public static class FusePostProcess
 										 new framework("MobileCoreServices.framework", MCORESERVICES_FW, MCORESERVICES_ID),
 										 new framework("libsqlite3.dylib", SQLITE_FW, SQLITE_ID),
 										 new framework("libxml2.dylib", LIBXML_FW, LIBXML_ID),
+										 new framework("WebKit.framework", WEBKIT_FW, WEBKIT_ID),
 										};
 
 			string xcodeprojPath = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);
@@ -192,6 +195,7 @@ public static class FusePostProcess
 	static bool bFoundSQLite = false;
 	static bool bFoundMCS = false;
 	static bool bFoundLibXML = false;
+	static bool bFoundWebKit = false;
 	public static void updateXcodeProject(string xcodeprojPath, framework[] listeFrameworks)
 	{
 		//Modify Info.plist
@@ -321,6 +325,10 @@ public static class FusePostProcess
 			else if(lines[i].Contains("Security.framework"))
 			{
 				bFoundSecurity = true;
+			}
+			else if(lines[i].Contains("WebKit.framework"))
+			{
+				bFoundWebKit = true;
 			}
 			else if(lines[i].Contains("libsqlite3.dylib"))
 			{
@@ -571,6 +579,7 @@ public static class FusePostProcess
 			|| (bFoundTwitter && name.Equals("Twitter.framework"))
 			|| (bFoundSocial && name.Equals("Social.framework"))
 			|| (bFoundSecurity && name.Equals("Security.framework"))
+			|| (bFoundWebKit && name.Equals("WebKit.framework"))
 			|| (bFoundSQLite && name.Equals("libsqlite3.dylib"))
 			|| (bFoundLibXML && name.Equals("libxml2.dylib"))
 			|| (bFoundMCS && name.Equals("mobileCoreServices.framework")))
