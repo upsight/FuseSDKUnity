@@ -8,7 +8,7 @@ import com.unity3d.player.UnityPlayer;
 import com.fusepowered.*;
 import com.fusepowered.util.*;
 
-public class FuseUnityCallback implements FuseSDKListener
+public class FuseUnityCallback implements FuseSDKListenerWithAdClick
 {
 	private static final String _logTag = "FuseUnityCallback";
 
@@ -57,6 +57,11 @@ public class FuseUnityCallback implements FuseSDKListener
 	public void adFailedToDisplay()
 	{
 		FuseUnitySDK.SendMessage("_AdFailedToDisplay", "");
+	}
+
+	public void handleAdClickWithUrl(final String url)
+	{
+		FuseUnitySDK.SendMessage("_AdClickedWithURL", url);
 	}
 
 

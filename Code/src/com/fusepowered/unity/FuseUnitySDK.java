@@ -69,12 +69,15 @@ public class FuseUnitySDK
 // | Session Creation |
 // +------------------+
 
-	public static void startSession(final String gameId)
+	public static void startSession(final String gameId, final boolean handleAdURLs)
 	{
 		UnityPlayer.currentActivity.runOnUiThread(new Runnable() {
 			public void run() {
+				HashMap<String, String> options = new HashMap<String, String>();
+				options.put(FuseSDKConstants.FuseConfigurationKey_HandleAdUrls, Boolean.toString(handleAdURLs));
+
 				FuseSDK.setPlatform("unity-android");
-				FuseSDK.startSession(gameId, UnityPlayer.currentActivity, new FuseUnityCallback(), null);
+				FuseSDK.startSession(gameId, UnityPlayer.currentActivity, new FuseUnityCallback(), options);
 				_sessionStarted = true;
 			}
 		});
@@ -99,12 +102,19 @@ public class FuseUnitySDK
 		if(!_sessionStarted)
 			return false;
 		
-		final HashMap<String, Number> data = new HashMap<String, Number>();
+		HashMap<String, Number> data = new HashMap<String, Number>();
 		try
 		{
-			for( int i = 0; i < dataKeys.length; i++ )
+			if(dataKeys == null || dataValues == null || dataKeys.length == 0 || dataValues.length == 0)
 			{
-				data.put(dataKeys[i], new Double(dataValues[i]));
+				data = null;
+			}
+			else
+			{
+				for( int i = 0; i < dataKeys.length; i++ )
+				{
+					data.put(dataKeys[i], new Double(dataValues[i]));
+				}
 			}
 		}
 		catch(Exception e)
@@ -112,9 +122,11 @@ public class FuseUnitySDK
 			return false;
 		}
 		
+		final HashMap<String, Number> finalData = data;
+
 		UnityPlayer.currentActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				FuseAPI.registerEvent(message, paramName, paramValue, data);
+				FuseAPI.registerEvent(message, paramName, paramValue, finalData);
 			}
 		});
 		return true;
@@ -127,7 +139,7 @@ public class FuseUnitySDK
 
 		UnityPlayer.currentActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				FuseAPI.registerEvent(name, paramName, paramValue, variableName, new Double(variableValue));
+				FuseAPI.registerEvent(name, paramName, paramValue, variableName, (variableName == null || variableName.compareTo("") == 0) ? null : new Double(variableValue));
 			}
 		});
 		return true;
@@ -137,6 +149,18 @@ public class FuseUnitySDK
 // +-------------------------+
 // | In-App Purchase Logging |
 // +-------------------------+
+
+	public static void registerVirtualGoodsPurchase(final int virtualgoodID, final int currencyAmount, final int currencyID)
+	{
+		if(!_sessionStarted)
+			return;
+
+		UnityPlayer.currentActivity.runOnUiThread(new Runnable() {
+			public void run() {
+				FuseSDK.registerVirtualGoodsPurchase(virtualgoodID, currencyAmount, currencyID);
+			}
+		});
+	}
 
 	public static void registerInAppPurchase(String purchaseState, String purchaseToken, String productId, String orderId, long purchaseTime, String developerPayload, final double price, String currency)
 	{
@@ -338,16 +362,40 @@ public class FuseUnitySDK
 		});
 	}
 	
-	public static void registerCurrency(final int type, final int balance)
+	public static boolean registerCurrency(final int type, final int balance)
+	{
+		if(!_sessionStarted)
+			return false;
+
+		return FuseSDK.registerCurrency(type, balance);
+	}
+	
+	public static void registerParentalConsent(final boolean consentGranted)
 	{
 		if(!_sessionStarted)
 			return;
-
+			
 		UnityPlayer.currentActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				FuseSDK.registerCurrency(type, balance);
+				FuseSDK.registerParentalConsent(consentGranted);
 			}
 		});
+	}
+
+	public static boolean registerCustomEventString(final int eventNumber, final String value)
+	{
+		if(!_sessionStarted)
+			return false;
+			
+		return FuseSDK.registerCustomEvent(eventNumber, value);
+	}
+
+	public static boolean registerCustomEventInt(final int eventNumber, final int value)
+	{
+		if(!_sessionStarted)
+			return false;
+			
+		return FuseSDK.registerCustomEvent(eventNumber, value);
 	}
 
 
