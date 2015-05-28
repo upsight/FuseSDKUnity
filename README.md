@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.0.5.1
+Version: 2.1.0.0
 
-Released: May 20th, 2015
+Released: May 28th, 2015
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
@@ -27,6 +27,13 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.1.0.0
+May 28th, 2015
+* Added new segmentation functionality
+* Added parental consent toggle
+* Added new gender enums
+* Bug fixes 
 
 ### 2.0.5.1
 May 20th, 2015
@@ -51,22 +58,6 @@ April 17th, 2015
 * Rewarded video enhancements
 * Interface updates
 * FuseAPI class renamed - please use FuseSDK
-
-### 1.38.1.0
-February 13th, 2015
-* New ad provider support
-* Bug fixes
-
-### 1.37.3.1
-December 10th, 2014
-* Added an auto-updating system that will allow SDK updates without ever leaving the Unity Editor
-* Added functionality to FuseSDK menu
-* Simplified and enhanced the capabilites of the FuseSDK prefab
-* Start session is now called automatically from the prefab
-* It's no longer necessary to manually edit the AndroidManifest.xml
-* Added ability to easily update Android push notification icon via the FuseSDK prefab
-* Added video completed callback
-* Easy to enable support for select billing plugins (Prime31, Unibill)
 
 
 ## Contact Us
