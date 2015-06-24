@@ -425,7 +425,7 @@ public class FuseSDKEditor : Editor
 	[MenuItem("FuseSDK/Open Documentation", false, 20)]
 	static void OpenDocumentation()
 	{
-		Application.OpenURL(@"http://wiki.adrally.com/index.php/Unity");
+		Application.OpenURL(@"http://wiki.fusepowered.com/index.php/Unity");
 	}
 	
 	[MenuItem("FuseSDK/Open GitHub Project", false, 21)]

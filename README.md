@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.1.1.0
+Version: 2.1.4.0
 
-Released: June 4th, 2015
+Released: June 24th, 2015
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
@@ -27,6 +27,11 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.1.4.0
+June 24th, 2015
+* Fixed warning caused by FuseSDK.NET-Stub.dll
+* Bug fixes for Ad providers
 
 ### 2.1.1.0
 June 4th, 2015
@@ -63,6 +68,9 @@ April 17th, 2015
 * Interface updates
 * FuseAPI class renamed - please use FuseSDK
 
+
+## Legal Requirements
+By downloading the Fuse Powered SDK, you are granted a limited, non-commercial license to use and review the SDK solely for evaluation purposes.  If you wish to integrate the SDK into any commercial applications, you must register an account with [Fuse Powered](https://www.fusepowered.com) and accept the terms and conditions on the Fuse Powered website.
 
 ## Contact Us
 For more information, please visit [http://www.fusepowered.com](http://www.fusepowered.com). For questions or assistance, please email us at [support@fusepowered.com](mailto:support@fusepowered.com).
