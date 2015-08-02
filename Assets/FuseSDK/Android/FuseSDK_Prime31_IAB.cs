@@ -80,12 +80,12 @@ public class FuseSDK_Prime31_IAB : MonoBehaviour
 				}
 				catch
 				{
-					Debug.LogError("Fuse Unibill Tracking: Error parsing " + priceString + " >> Unable to parse " + stripped);
+					Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo - Error parsing " + priceString + " >> Unable to parse " + stripped);
 				}
 			}
 			else
 			{
-				Debug.LogError("Fuse Unibill Tracking: Error parsing " + priceString + " >> String did not match regex");
+				Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo - Error parsing " + priceString + " >> String did not match regex");
 			}
 		}
 
