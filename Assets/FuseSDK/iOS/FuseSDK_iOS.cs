@@ -50,6 +50,8 @@ public partial class FuseSDK
 	private static extern void Native_PreloadAdForZone(string zoneId);
 	[DllImport("__Internal")]
 	private static extern void Native_DisplayMoreGames();
+	[DllImport("__Internal")]
+	private static extern void Native_SetRewardedVideoUserID(string userID);
 
 	[DllImport("__Internal")]
 	private static extern void Native_DisplayNotifications();
@@ -132,7 +134,12 @@ public partial class FuseSDK
 
 	[DllImport("__Internal")]
 	private static extern string Native_GetGameConfigurationValue(string key);
-	#endregion
+	
+	[DllImport("__Internal")]
+	private static extern int Native_SetGameData(string fuseId, string key, string[] varKeys, string[] varValues, int length);
+	[DllImport("__Internal")]
+	private static extern int Native_GetGameData(string fuseId, string key, string[] keys, int length);
+#endregion
 
 #region Initialization
 
@@ -146,10 +153,7 @@ public partial class FuseSDK
 		}
 		DontDestroyOnLoad(gameObject);
 
-		//Initialize static variables
-		AppID = iOSAppID;
-		_debugOutput = logging;
-		_registerForPush = registerForPushNotifications;
+		_instance = this;
 
 		//Initialize IAP tracking plugins
 		if(iosStoreKit && !GetComponent<FuseSDK_Prime31StoreKit>())
@@ -166,7 +170,7 @@ public partial class FuseSDK
 	{
 		if(!string.IsNullOrEmpty(iOSAppID) && StartAutomatically)
 		{
-			_StartSession(AppID, _registerForPush, false);
+			_StartSession(iOSAppID, registerForPushNotifications, false);
 		}
 	}
 #endregion
@@ -175,7 +179,10 @@ public partial class FuseSDK
 
 	public static void StartSession()
 	{
-		_StartSession(AppID, _registerForPush, false);
+		if(_instance != null)
+			_StartSession(_instance.iOSAppID, _instance.registerForPushNotifications, false);
+		else
+			Debug.LogError("FuseSDK instance not initialized. Awake may not have been called.");
 	}
 
 	private static void _StartSession(string gameId, bool registerForPush, bool handleAdURLs)
@@ -192,6 +199,12 @@ public partial class FuseSDK
 			return;
 		}
 
+		if(registerForPush)
+		{
+			FuseSDK me = GameObject.FindObjectOfType<FuseSDK>();
+			me.StartCoroutine(me.SetupPushNotifications());
+		}
+
 		_sessionStarted = true;
 		FuseLog("StartSession(" + gameId + ")");
 		Native_StartSession(gameId, registerForPush, handleAdURLs);
@@ -203,6 +216,8 @@ public partial class FuseSDK
 	[Obsolete("Registering events is deprecated and will be removed from future releases.")]
 	public static bool RegisterEvent(string name, Dictionary<string, string> parameters)
 	{
+		name = name ?? string.Empty;
+
 		FuseLog("RegisterEvent(" + name + ", [parameters])");
 
 		if(parameters == null)
@@ -218,6 +233,10 @@ public partial class FuseSDK
 	[Obsolete("Registering events is deprecated and will be removed from future releases.")]
 	public static bool RegisterEvent(string name, string paramName, string paramValue, Hashtable variables)
 	{
+		name = name ?? string.Empty;
+		paramName = paramName ?? string.Empty;
+		paramValue = paramValue ?? string.Empty;
+
 		FuseLog("RegisterEvent(" + name + "," + paramName + "," + paramValue + ", [variables])");
 
 		if(variables == null)
@@ -250,6 +269,11 @@ public partial class FuseSDK
 	[Obsolete("Registering events is deprecated and will be removed from future releases.")]
 	public static bool RegisterEvent(string name, string paramName, string paramValue, string variableName, double variableValue)
 	{
+		name = name ?? string.Empty;
+		paramName = paramName ?? string.Empty;
+		paramValue = paramValue ?? string.Empty;
+		variableName = variableName ?? string.Empty;
+
 		FuseLog("RegisterEvent(" + name + "," + paramName + "," + paramValue + "," + variableName + "," + variableValue + ")");
 		return Native_RegisterEventVariable(name, paramName, paramValue, variableName, variableValue);
 	}
@@ -287,6 +311,9 @@ public partial class FuseSDK
 
 	public static void RegisterIOSInAppPurchase(string productId, string transactionId, byte[] transactionReceipt, IAPState transactionState)
 	{
+		productId = productId ?? string.Empty;
+		transactionId = transactionId ?? string.Empty;
+
 		FuseLog("RegisterInAppPurchase(" + productId + "," + transactionReceipt.Length + "," + transactionState + ")");
 
 		Native_RegisterInAppPurchase(productId, transactionId, transactionReceipt, transactionReceipt.Length, (int)transactionState);
@@ -294,6 +321,8 @@ public partial class FuseSDK
 
 	public static void RegisterUnibillPurchase(string productID, byte[] receipt)
 	{
+		productID = productID ?? string.Empty;
+
 		FuseLog("Registering Unibill transaction with product ID: " + productID);
 		Native_RegisterUnibillPurchase(productID, receipt, receipt.Length);
 	}
@@ -311,30 +340,40 @@ public partial class FuseSDK
 
 	public static bool IsAdAvailableForZoneID(string zoneId)
 	{
+		zoneId = zoneId ?? string.Empty;
+
 		FuseLog("IsAdAvailableForZoneID");
 		return Native_IsAdAvailableForZoneID(zoneId);
 	}
 
 	public static bool ZoneHasRewarded(string zoneId)
 	{
+		zoneId = zoneId ?? string.Empty;
+
 		FuseLog("ZoneHasRewarded");
 		return Native_ZoneHasRewarded(zoneId);
 	}
 
 	public static bool ZoneHasIAPOffer(string zoneId)
 	{
+		zoneId = zoneId ?? string.Empty;
+
 		FuseLog("ZoneHasIAPOffer");
 		return Native_ZoneHasIAPOffer(zoneId);
 	}
 
 	public static bool ZoneHasVirtualGoodsOffer(string zoneId)
 	{
+		zoneId = zoneId ?? string.Empty;
+
 		FuseLog("ZoneHasVirtualGoodsOffer");
 		return Native_ZoneHasVirtualGoodsOffer(zoneId);
 	}
 
 	public static RewardedInfo GetRewardedInfoForZone(string zoneId)
 	{
+		zoneId = zoneId ?? string.Empty;
+
 		FuseLog("GetRewardedInfoForZone");
 		var infoStr = Native_GetRewardedInfoForZone(zoneId);
 		try
@@ -345,8 +384,9 @@ public partial class FuseSDK
 			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
 			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
 			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			int ra;
+			int ra, rid;
 			rInfo.RewardAmount = int.TryParse(pars[3], out ra) ? ra : 0;
+			rInfo.RewardItemId = int.TryParse(pars[4], out rid) ? rid : 0;
 			return rInfo;
 		}
 		catch(Exception e)
@@ -359,6 +399,8 @@ public partial class FuseSDK
 
 	public static void ShowAdForZoneID(String zoneId, Dictionary<string, string> options = null)
 	{
+		zoneId = zoneId ?? string.Empty;
+
 		FuseLog("ShowAdForZoneID");
 		var keys = options == null ? new string[0] : options.Keys.ToArray();
 		var values = options == null ? new string[0] : options.Values.ToArray();
@@ -367,6 +409,8 @@ public partial class FuseSDK
 
 	public static void PreloadAdForZoneID(string zoneId)
 	{
+		zoneId = zoneId ?? string.Empty;
+
 		FuseLog("PreloadAdForZoneID");
 		Native_PreloadAdForZone(zoneId);
 	}
@@ -375,6 +419,14 @@ public partial class FuseSDK
 	{
 		FuseLog("DisplayMoreGames");
 		Native_DisplayMoreGames();
+	}
+
+	public static void SetRewardedVideoUserID(string userID)
+	{
+		userID = userID ?? string.Empty;
+
+		FuseLog("SetRewardedVideoUserID");
+		Native_SetRewardedVideoUserID(userID);
 	}
 
 #endregion
@@ -479,42 +531,69 @@ public partial class FuseSDK
 
 	public static void FacebookLogin(string facebookId, string name, string accessToken)
 	{
+		facebookId = facebookId ?? string.Empty;
+		name = name ?? string.Empty;
+		accessToken = accessToken ?? string.Empty;
+
 		FuseLog("FacebookLogin(" + facebookId + "," + name + "," + accessToken + ")");
 		Native_FacebookLogin(facebookId, name, accessToken);
 	}
 
 	public static void TwitterLogin(string twitterId, string alias)
 	{
+		twitterId = twitterId ?? string.Empty;
+		alias = alias ?? string.Empty;
+
 		FuseLog("TwitterLogin(" + twitterId + ")");
 		Native_TwitterLogin(twitterId, alias);
 	}
 
 	public static void FuseLogin(string fuseId, string alias)
 	{
+		fuseId = fuseId ?? string.Empty;
+		alias = alias ?? string.Empty;
+
 		FuseLog(" FuseLogin(" + fuseId + "," + alias + ")");
 		Native_FuseLogin(fuseId, alias);
 	}
 
 	public static void EmailLogin(string email, string alias)
 	{
+		email = email ?? string.Empty;
+		alias = alias ?? string.Empty;
+
 		FuseLog(" EmailLogin(" + email + "," + alias + ")");
 		Native_EmailLogin(email, alias);
 	}
 
 	public static void DeviceLogin(string alias)
 	{
+		alias = alias ?? string.Empty;
+
 		FuseLog("DeviceLogin(" + alias + ")");
 		Native_DeviceLogin(alias);
 	}
 
 	public static void GooglePlayLogin(string alias, string token)
 	{
+		alias = alias ?? string.Empty;
+		token = token ?? string.Empty;
+
 		FuseLog("GooglePlayLogin(" + alias + "," + token + ")");
 		Native_GooglePlayLogin(alias, token);
 	}
 #endregion
 
 #region Miscellaneous
+	
+	public static void ManualRegisterForPushNotifications(string _)
+	{
+		if(_instance != null && !_instance.registerForPushNotifications)
+		{
+			FuseSDK me = GameObject.FindObjectOfType<FuseSDK>();
+			me.StartCoroutine(me.SetupPushNotifications());
+		}
+	}
 
 	public static int GamesPlayed()
 	{
@@ -544,7 +623,7 @@ public partial class FuseSDK
 
 	public static void FuseLog(string str)
 	{
-		if(_debugOutput)
+		if(_instance != null && _instance.logging)
 		{
 			Debug.Log("FuseSDK: " + str);
 		}
@@ -588,30 +667,40 @@ public partial class FuseSDK
 
 	public static void AddFriend(string fuseId)
 	{
+		fuseId = fuseId ?? string.Empty;
+
 		FuseLog("AddFriend(" + fuseId + ")");
 		Native_AddFriend(fuseId);
 	}
 
 	public static void RemoveFriend(string fuseId)
 	{
+		fuseId = fuseId ?? string.Empty;
+
 		FuseLog("RemoveFriend(" + fuseId + ")");
 		Native_RemoveFriend(fuseId);
 	}
 
 	public static void AcceptFriend(string fuseId)
 	{
+		fuseId = fuseId ?? string.Empty;
+
 		FuseLog("AcceptFriend(" + fuseId + ")");
 		Native_AcceptFriend(fuseId);
 	}
 
 	public static void RejectFriend(string fuseId)
 	{
+		fuseId = fuseId ?? string.Empty;
+
 		FuseLog("RejectFriend(" + fuseId + ")");
 		Native_RejectFriend(fuseId);
 	}
 
 	public static void MigrateFriends(string fuseId)
 	{
+		fuseId = fuseId ?? string.Empty;
+
 		FuseLog("MigrateFriends(" + fuseId + ")");
 		Native_MigrateFriends(fuseId);
 	}
@@ -621,12 +710,17 @@ public partial class FuseSDK
 
 	public static void UserPushNotification(string fuseId, string message)
 	{
+		fuseId = fuseId ?? string.Empty;
+		message = message ?? string.Empty;
+
 		FuseLog("UserPushNotification(" + fuseId + "," + message + ")");
 		Native_UserPushNotification(fuseId, message);
 	}
 
 	public static void FriendsPushNotification(string message)
 	{
+		message = message ?? string.Empty;
+
 		FuseLog("FriendsPushNotification(" + message + ")");
 		Native_FriendsPushNotification(message);
 	}
@@ -636,6 +730,8 @@ public partial class FuseSDK
 
 	public static string GetGameConfigurationValue(string key)
 	{
+		key = key ?? string.Empty;
+
 		FuseLog("GetGameConfigurationValue(" + key + ")");
 		return Native_GetGameConfigurationValue(key);
 	}
@@ -648,8 +744,84 @@ public partial class FuseSDK
 
 #endregion
 
+#region Game Data
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int SetGameData(Dictionary<string, string> data, string fuseId = "", string key = "")
+	{
+		FuseLog ("SetGameData(" + key + ", [data]," + fuseId + ")");
+
+		if(string.IsNullOrEmpty(fuseId))
+			fuseId = GetFuseId();
+
+		if(data == null)
+			data = new Dictionary<string,string>();
+
+		string[] varKeys = new string[data.Count];
+		string[] varValues = new string[data.Count];
+		data.Keys.CopyTo(varKeys, 0);
+		data.Values.CopyTo(varValues, 0);
+
+		return Native_SetGameData(fuseId, key, varKeys, varValues, varKeys.Length);
+	}
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameData(params string[] keys)
+	{
+		return GetGameDataForFuseId("", "", keys);
+	}
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameDataForFuseId(string fuseId, string key, params string[] keys)
+	{
+		FuseLog ("GetGameData(" + fuseId + "," + key + ",[keys])");
+		var k = keys == null ? new string[0] : keys;
+		return Native_GetGameData(fuseId, key, k, k.Length);
+	}
+#endregion
+
 
 #region Callbacks
+
+	private IEnumerator SetupPushNotifications()
+	{
+		FuseLog("SetupPushNotifications()");
+		
+#if UNITY_3_5 || UNITY_4
+		NotificationServices.RegisterForRemoteNotificationTypes(RemoteNotificationType.Alert | RemoteNotificationType.Badge | RemoteNotificationType.Sound);
+#else
+		UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
+#endif
+		
+		while(true)
+		{
+			byte[] token = null;
+			string error = null;
+
+#if UNITY_3_5 || UNITY_4
+			token = NotificationServices.deviceToken;
+			error = NotificationServices.registrationError;
+#else
+			token = UnityEngine.iOS.NotificationServices.deviceToken;
+			error = UnityEngine.iOS.NotificationServices.registrationError;
+#endif
+
+			if(token != null)
+			{
+				FuseLog("Device token registered!");
+				Native_RegisterPushToken(token, token.Length);
+				break;
+			}
+			else if(error != null )
+			{
+				FuseLog("Failed to register for push notification device token with error: " + error);
+				break;
+			}
+			yield return new WaitForEndOfFrame();
+		}
+		yield break;
+	}
+
 	private void _CB_SessionStartReceived(string param)
 	{
 		FuseLog("SessionStartReceived()");
@@ -697,6 +869,25 @@ public partial class FuseSDK
 		OnAdWillClose();
 	}
 
+	private void _CB_AdFailedToDisplay(string _)
+	{
+		FuseLog("AdFailedToDisplay()");
+		OnAdFailedToDisplay();
+	}
+
+	private void _CB_AdDidShow(string param)
+	{
+		FuseLog("AdDidShow(" + param + ")");
+		int networkId;
+		int mediaType;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out networkId) && int.TryParse(pars[1], out mediaType))
+			OnAdDidShow(networkId, mediaType);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _AdDidShow");
+	}
+
 	private void _CB_RewardedAdCompleted(string param)
 	{
 		FuseLog("RewardedAdCompleted(" + param + ")");
@@ -709,8 +900,9 @@ public partial class FuseSDK
 			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
 			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
 			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			int ra;
+			int ra, rid;
 			rInfo.RewardAmount = int.TryParse(pars[3], out ra) ? ra : 0;
+			rInfo.RewardItemId = int.TryParse(pars[4], out rid) ? rid : 0;
 			OnRewardedAdCompleted(rInfo);
 		}
 		catch(Exception e)
@@ -736,6 +928,9 @@ public partial class FuseSDK
 			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
 			int ia;
 			oInfo.ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
+			long st, et;
+			oInfo.StartTime = (long.TryParse(pars[4], out st) ? st : 0).ToDateTime();
+			oInfo.EndTime = (long.TryParse(pars[5], out et) ? et : 0).ToDateTime();
 			OnIAPOfferAccepted(oInfo);
 		}
 		catch(Exception e)
@@ -761,6 +956,12 @@ public partial class FuseSDK
 			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
 			int ia;
 			oInfo.ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
+			long st, et;
+			oInfo.StartTime = (long.TryParse(pars[4], out st) ? st : 0).ToDateTime();
+			oInfo.EndTime = (long.TryParse(pars[5], out et) ? et : 0).ToDateTime();
+			int cid, vgid;
+			oInfo.CurrencyID = int.TryParse(pars[6], out cid) ? cid : 0;
+			oInfo.VirtualGoodID = int.TryParse(pars[7], out vgid) ? vgid : 0;
 			OnVirtualGoodsOfferAccepted(oInfo);
 		}
 		catch(Exception e)
@@ -950,6 +1151,71 @@ public partial class FuseSDK
 
 		OnGameConfigurationReceived();
 	}
+
+	private void _CB_GameDataSetAcknowledged(string requestId)
+	{
+		FuseLog("GameDataSetAcknowledged(" + requestId + ")");
+		int rId;
+
+		if(int.TryParse(requestId, out rId))
+			OnGameDataSetAcknowledged(rId);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _GameDataSetAcknowledged");
+	}
+
+	private void _CB_GameDataError(string param)
+	{
+		FuseLog("GameDataError(" + param + ")");
+
+		int error, requestId;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out error) && int.TryParse(pars[1], out requestId))
+			OnGameDataError(error, requestId);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _GameDataError");
+	}
+
+	private void _CB_GameDataReceived(string param)
+	{
+		FuseLog("GameDataReceived(" + param + ")");
+
+		int requestId = -1;
+		string fuseId = "";
+		string key = "";
+
+		var pars = param.Split(',');
+		if(pars.Length == 4)
+		{
+			if(!int.TryParse(pars[0], out requestId))
+				Debug.LogError("FuseSDK: Parsing error in _GameDataReceived");
+			fuseId = pars[1];
+			key = pars[2];
+		}
+		else
+		{
+			Debug.LogError("FuseSDK: Parsing error in _GameDataReceived");
+			return;
+		}
+
+		Dictionary<string, string> gameData = new Dictionary<string, string>();
+		
+
+		foreach(var line in pars[3].Split('\u2613'))
+		{
+			var parts = line.Split('\u2603');
+			if(parts.Length == 2)
+			{
+				gameData.Add(parts[0], parts[1]);
+			}
+			else
+			{
+				Debug.LogError("FuseSDK: Error reading GameData data. Invalid line: " + line);
+			}
+		}
+
+		OnGameDataReceived(fuseId, key, gameData, requestId);
+	}
 #endregion
 
 #if !DOXYGEN_IGNORE
@@ -967,8 +1233,12 @@ public partial class FuseSDK
 	/// <param name="adClickedWithURLHandler">The function to be called when certain ad types are clicked.</param>
 	public static void StartSession(System.Action<string> adClickedWithURLHandler)
 	{
-		_adClickedwithURL = adClickedWithURLHandler;
-		_StartSession(AppID, _registerForPush, true);
+		if(_instance != null)
+		{
+			_adClickedwithURL = adClickedWithURLHandler;
+			_StartSession(_instance.iOSAppID, _instance.registerForPushNotifications, true);
+		}
+		else Debug.LogError("FuseSDK instance not initialized. Awake may not have been called.");
 	}
 #endif // DOXYGEN_IGNORE
 }

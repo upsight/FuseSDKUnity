@@ -101,16 +101,11 @@ public class FuseSDK_Unibill_Android : MonoBehaviour
 			string orderId = "";
 			double purchaseTime = 0;
 
-			if(json.HasField("purchaseState"))
-				json.GetField(ref purchaseState,"purchaseState");
-			if(json.HasField("purchaseToken"))
-				json.GetField(ref purchaseToken,"purchaseToken");
-			if(json.HasField("orderId"))
-				json.GetField(ref orderId,"orderId");
-			if(json.HasField("productId"))
-				json.GetField(ref productId,"productId");
-			if(json.HasField("purchaseTime"))
-				json.GetField(ref purchaseTime,"purchaseTime");
+			json.GetField(ref purchaseState,"purchaseState");
+			json.GetField(ref purchaseToken,"purchaseToken");
+			json.GetField(ref orderId,"orderId");
+			json.GetField(ref productId,"productId");
+			json.GetField(ref purchaseTime,"purchaseTime");
 
 			double price = 0;
 			try

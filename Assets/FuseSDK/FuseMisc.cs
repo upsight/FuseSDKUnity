@@ -49,7 +49,14 @@ namespace FuseMisc
 
 		public override string ToString()
 		{
-			return string.Join("\0", new string[] { FuseId, AccountId, Alias, Pending?"1":"0" });
+			JSONObject jo = new JSONObject(JSONObject.Type.OBJECT);
+			JSONObject members = new JSONObject(JSONObject.Type.OBJECT);
+			members.AddField("FuseId", FuseId);
+			members.AddField("AccountId", AccountId);
+			members.AddField("Alias", Alias);
+			members.AddField("Pending", Pending);
+			jo.AddField("Friend", members);
+			return jo.ToString();
 		}
 	}
 
@@ -79,7 +86,13 @@ namespace FuseMisc
 
 		public override string ToString()
 		{
-			return string.Join("\0", new string[] { ProductId, Price.ToString(), PriceLocale });
+			JSONObject jo = new JSONObject(JSONObject.Type.OBJECT);
+			JSONObject members = new JSONObject(JSONObject.Type.OBJECT);
+			members.AddField("ProductId", ProductId);
+			members.AddField("Price", Price);
+			members.AddField("PriceLocale", PriceLocale);
+			jo.AddField("Product", members);
+			return jo.ToString();
 		}
 	}
 
@@ -95,24 +108,35 @@ namespace FuseMisc
 		/// <summary>The item the user will get as a reward.</summary>
 		public string RewardItem;
 
+		/// <summary>The ID of the item the user will get as a reward.</summary>
+		public int RewardItemId;
+
 		/// <summary>The amount the user will get as a reward, used when the item is a currency.</summary>
 		public int RewardAmount;
 
 #if UNITY_EDITOR
 		public static implicit operator RewardedInfo(FuseSDKDotNETLite.Util.RewardedInfo r)
 		{
-			return new RewardedInfo() { PreRollMessage = r.PreRollMessage, RewardMessage = r.RewardMessage, RewardAmount = r.RewardAmount, RewardItem = r.RewardItem };
+			return new RewardedInfo() { PreRollMessage = r.PreRollMessage, RewardMessage = r.RewardMessage, RewardAmount = r.RewardAmount, RewardItem = r.RewardItem, RewardItemId = r.RewardItemId };
 		}
 
 		public static implicit operator FuseSDKDotNETLite.Util.RewardedInfo(RewardedInfo r)
 		{
-			return new FuseSDKDotNETLite.Util.RewardedInfo() { PreRollMessage = r.PreRollMessage, RewardMessage = r.RewardMessage, RewardAmount = r.RewardAmount, RewardItem = r.RewardItem };
+			return new FuseSDKDotNETLite.Util.RewardedInfo() { PreRollMessage = r.PreRollMessage, RewardMessage = r.RewardMessage, RewardAmount = r.RewardAmount, RewardItem = r.RewardItem, RewardItemId = r.RewardItemId };
 		}
 #endif
 
 		public override string ToString()
 		{
-			return string.Join("\0", new string[] { PreRollMessage, RewardMessage, RewardItem, RewardAmount.ToString() });
+			JSONObject jo = new JSONObject(JSONObject.Type.OBJECT);
+			JSONObject members = new JSONObject(JSONObject.Type.OBJECT);
+			members.AddField("PreRollMessage", PreRollMessage);
+			members.AddField("RewardMessage", RewardMessage);
+			members.AddField("RewardItem", RewardItem);
+			members.AddField("RewardItemId", RewardItemId);
+			members.AddField("RewardAmount", RewardAmount);
+			jo.AddField("RewardedInfo", members);
+			return jo.ToString();
 		}
 	}
 
@@ -131,32 +155,53 @@ namespace FuseMisc
 		/// <summary>The amount the user will get from the IAP, used when the item is a currency.</summary>
 		public int ItemAmount;
 
+		/// <summary>The time and date when the offer should start.</summary>
+		public DateTime StartTime;
+
+		/// <summary>The time and date when the offer should end.</summary>
+		public DateTime EndTime;
+
 #if UNITY_EDITOR
 		public static implicit operator IAPOfferInfo(FuseSDKDotNETLite.Util.IAPOfferInfo o)
 		{
-			return new IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount };
+			return new IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
 		}
 
 		public static implicit operator FuseSDKDotNETLite.Util.IAPOfferInfo(IAPOfferInfo o)
 		{
-			return new FuseSDKDotNETLite.Util.IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount };
+			return new FuseSDKDotNETLite.Util.IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
 		}
 #endif
 
 		public override string ToString()
 		{
-			return string.Join("\0", new string[] { ProductId, ProductPrice.ToString(), ItemName, ItemAmount.ToString() });
+			JSONObject jo = new JSONObject(JSONObject.Type.OBJECT);
+			JSONObject members = new JSONObject(JSONObject.Type.OBJECT);
+			members.AddField("ProductId", ProductId);
+			members.AddField("ProductPrice", ProductPrice);
+			members.AddField("ItemName", ItemName);
+			members.AddField("ItemAmount", ItemAmount);
+			members.AddField("StartTime", StartTime.ToUnixTimestamp());
+			members.AddField("EndTime", EndTime.ToUnixTimestamp());
+			jo.AddField("IAPOfferInfo", members);
+			return jo.ToString();
 		}
 	}
 
 	/// <summary>Representation of a Virtual Good Offer that can be presented to a player.</summary>
 	public struct VGOfferInfo
 	{
+		/// <summary>The id of the currency that will be spent to get the item.</summary>
+		public int CurrencyID;
+
 		/// <summary>The currency that will be spent to get the item.</summary>
 		public string PurchaseCurrency;
 
 		/// <summary>The amount of currency that will be spent to get the item.</summary>
 		public float PurchasePrice;
+
+		/// <summary>The id of the item the user will receive from the offer.</summary>
+		public int VirtualGoodID;
 
 		/// <summary>The item the user will receive from the offer.</summary>
 		public string ItemName;
@@ -164,21 +209,38 @@ namespace FuseMisc
 		/// <summary>The amount the user will get from the offer, used when the item is a currency.</summary>
 		public int ItemAmount;
 
+		/// <summary>The time and date when the offer should start.</summary>
+		public DateTime StartTime;
+
+		/// <summary>The time and date when the offer should end.</summary>
+		public DateTime EndTime;
+
 #if UNITY_EDITOR
 		public static implicit operator VGOfferInfo(FuseSDKDotNETLite.Util.VGOfferInfo o)
 		{
-			return new VGOfferInfo() { PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount };
+			return new VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
 		}
 
 		public static implicit operator FuseSDKDotNETLite.Util.VGOfferInfo(VGOfferInfo o)
 		{
-			return new FuseSDKDotNETLite.Util.VGOfferInfo() { PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount };
+			return new FuseSDKDotNETLite.Util.VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
 		}
 #endif
 
 		public override string ToString()
 		{
-			return string.Join("\0", new string[] { PurchaseCurrency, PurchasePrice.ToString(), ItemName, ItemAmount.ToString() });
+			JSONObject jo = new JSONObject(JSONObject.Type.OBJECT);
+			JSONObject members = new JSONObject(JSONObject.Type.OBJECT);
+			members.AddField("CurrencyID", CurrencyID);
+			members.AddField("PurchaseCurrency", PurchaseCurrency);
+			members.AddField("PurchasePrice", PurchasePrice);
+			members.AddField("VirtualGoodID", VirtualGoodID);
+			members.AddField("ItemName", ItemName);
+			members.AddField("ItemAmount", ItemAmount);
+			members.AddField("StartTime", StartTime.ToUnixTimestamp());
+			members.AddField("EndTime", EndTime.ToUnixTimestamp());
+			jo.AddField("VGOfferInfo", members);
+			return jo.ToString();
 		}
 	}
 

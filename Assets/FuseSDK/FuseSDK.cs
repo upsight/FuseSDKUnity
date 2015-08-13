@@ -125,6 +125,17 @@ public partial class FuseSDK : MonoBehaviour
 	public static event Action AdWillClose;
 
 	/// <summary>
+	/// Called after <see cref="ShowAdForZoneID(String zoneId)"/> if Fuse is unable to show an ad
+	/// </summary>
+	public static event Action AdFailedToDisplay;
+
+	/// <summary>
+	/// Called after <see cref="ShowAdForZoneID(String zoneId)"/> if an ad was successfully shown
+	/// Listener signature: void AdDidShow(int networkId, int mediaType)
+	/// </summary>
+	public static event Action<int, int> AdDidShow;
+
+	/// <summary>
 	/// Called after a rewarded video is shown and a reward should be given to the user
 	/// Listener signature: void RewardedAdCompleted(RewardedInfo rewardInfo)
 	/// </summary>
@@ -149,6 +160,15 @@ public partial class FuseSDK : MonoBehaviour
 	/// Listener signature: void TimeUpdated(System.DateTime time)
 	/// </summary>
 	public static event Action<DateTime> TimeUpdated;
+
+	//--------------------------------------------------------Deprected
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static event Action<int, FuseError> GameDataError;
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static event Action<int> GameDataSetAcknowledged;
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static event Action<int, string, string, Dictionary<string, string>> GameDataReceived;
 	#endregion
 
 	//PUBLIC FUNCTIONS
@@ -342,6 +362,15 @@ public partial class FuseSDK : MonoBehaviour
 	/// <remarks>"More Games" can be used to showcase your own games or all games within the Fuse network.</remarks>
 	public static void DisplayMoreGames(){}
 
+	/// <summary>Sets the user ID string for rewarded video server verification.</summary>
+	/// <remarks>
+	/// To allow server side verificiation. A user id registered with this function is passed to the server when a
+	/// rewarded video has been completed. The server then faithfully transmits this id to the 3rd Party server
+	/// registered on the FusePowered Dashboard. The value is only cached for the duration of the session, and can be changed at any time.
+	/// </remarks>
+	/// <param name="userID">The user id to register.</param>
+	public static void SetRewardedVideoUserID(string userID){}
+
 
 	//--------------------------------------------------------Notifications
 	
@@ -474,6 +503,16 @@ public partial class FuseSDK : MonoBehaviour
 
 
 	//--------------------------------------------------------Miscellaneous
+	
+	/// <summary>Allows registering manually for push notifications after StartSession is called.</summary>
+	/// <param name="gcmSenderID">ID used for Android push notification. Ignored on iOS.</param>
+	/// <remarks>
+	///	In order to use this function, automatic registration should be disabled on the FuseSDK object.
+	///	If "Push Notifications" is checked this function will do nothing.
+	/// On Android, the gcmSenderID parameter is required to register for push, this is a unique ID provided by Google.
+	/// On iOS this parameter is ignored.
+	/// </remarks>
+	public static void ManualRegisterForPushNotifications(string gcmSenderID){}
 	
 	/// <summary>Get the number of times the user has opened the game.</summary>
 	/// <returns>Number of times the user has opened the game.</returns>
@@ -613,6 +652,18 @@ public partial class FuseSDK : MonoBehaviour
 	/// <remarks>The Fuse Dashboard provides a method to store game configuration variables that are provided to the application on start.</remarks>
 	/// <returns>A dictionary containing all game configuration values.</returns>
 	public static Dictionary<string, string> GetGameConfiguration(){ return null; }
+
+
+	//--------------------------------------------------------Game Data
+	
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int SetGameData(Dictionary<string, string> data, string fuseId = "", string key = ""){ return -1; }
+	
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameData(params string[] keys){ return -1; }
+	
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameDataForFuseId(string fuseId, string key, params string[] keys){ return -1; }
 #endif
 
 
@@ -634,18 +685,11 @@ public partial class FuseSDK : MonoBehaviour
 	public bool iosStoreKit = false;
 	public bool iosUnibill = false;
 
-	public static string AppID
-	{
-		get { return _gameId; }
-		set { if(string.IsNullOrEmpty(_gameId))_gameId = value; }
-	}
-
 	private static bool _sessionStarted = false;
-	private static bool _debugOutput = false;
-	private static string _gameId = null;
-	private static bool _registerForPush = true;
-
+	private static FuseSDK _instance = null;
 	private static System.Action<string> _adClickedwithURL = null;
+
+
 	#endif // DOXYGEN_IGNORE
 	#endregion
 
@@ -692,7 +736,18 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnAdFailedToDisplay()
 	{
+		if(AdFailedToDisplay != null)
+		{
+			AdFailedToDisplay();
+		}
+	}
 
+	static private void OnAdDidShow(int networkId, int mediaType)
+	{
+		if(AdDidShow != null)
+		{
+			AdDidShow(networkId, mediaType);
+		}
 	}
 
 	static private void OnRewardedAdCompleted(RewardedInfo rewardInfo)
@@ -705,7 +760,7 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnIAPOfferAccepted(IAPOfferInfo offerInfo)
 	{
-		if(RewardedAdCompletedWithObject != null)
+		if(IAPOfferAcceptedWithObject != null)
 		{
 			IAPOfferAcceptedWithObject(offerInfo);
 		}
@@ -713,7 +768,7 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnVirtualGoodsOfferAccepted(VGOfferInfo offerInfo)
 	{
-		if(RewardedAdCompletedWithObject != null)
+		if(VirtualGoodsOfferAcceptedWithObject != null)
 		{
 			VirtualGoodsOfferAcceptedWithObject(offerInfo);
 		}
@@ -737,7 +792,7 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnNotificationWillClose()
 	{
-		if(NotificationAction != null)
+		if(NotificationWillClose != null)
 		{
 			NotificationWillClose();
 		}
@@ -753,7 +808,7 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnAccountLoginError(string accountId, int error)
 	{
-		if(AccountLoginComplete != null)
+		if(AccountLoginError != null)
 		{
 			AccountLoginError(accountId, error < (int)FuseError.UNDEFINED ? (FuseError)error : FuseError.UNDEFINED);
 		}
@@ -777,7 +832,7 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnFriendRemoved(string fuseId, int error)
 	{
-		if(FriendAdded != null)
+		if(FriendRemoved != null)
 		{
 			FriendRemoved(fuseId, error < (int)FuseError.UNDEFINED ? (FuseError)error : FuseError.UNDEFINED);
 		}
@@ -785,7 +840,7 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnFriendAccepted(string fuseId, int error)
 	{
-		if(FriendAdded != null)
+		if(FriendAccepted != null)
 		{
 			FriendAccepted(fuseId, error < (int)FuseError.UNDEFINED ? (FuseError)error : FuseError.UNDEFINED);
 		}
@@ -793,7 +848,7 @@ public partial class FuseSDK : MonoBehaviour
 
 	static private void OnFriendRejected(string fuseId, int error)
 	{
-		if(FriendAdded != null)
+		if(FriendRejected != null)
 		{
 			FriendRejected(fuseId, error < (int)FuseError.UNDEFINED ? (FuseError)error : FuseError.UNDEFINED);
 		}
@@ -830,5 +885,31 @@ public partial class FuseSDK : MonoBehaviour
 			GameConfigurationReceived();
 		}
 	}
+
+#pragma warning disable
+	static private void OnGameDataError(int error, int requestId)
+	{
+		if(GameDataError != null)
+		{
+			GameDataError(requestId, error < (int)FuseError.UNDEFINED ? (FuseError)error : FuseError.UNDEFINED);
+		}
+	}
+
+	static private void OnGameDataSetAcknowledged(int requestId)
+	{
+		if(GameDataSetAcknowledged != null)
+		{
+			GameDataSetAcknowledged(requestId);
+		}
+	}
+
+	static private void OnGameDataReceived(string fuseId, string dataKey, Dictionary<string, string> data, int requestId)
+	{
+		if(GameDataReceived != null)
+		{
+			GameDataReceived(requestId, fuseId, dataKey, data);
+		}
+	}
+#pragma warning restore
 	#endregion
 }

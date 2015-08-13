@@ -444,8 +444,8 @@
  * @brief Callback to inform no ad was displayed from showAdForZoneID:withOptions: call.
 
  
- @see FshowAdForZoneID:withOptions:
- @since Fuse SDK version 2.0.0
+ * @see FshowAdForZoneID:withOptions:
+ * @since Fuse SDK version 2.0.0
  */
 -(void) adFailedToDisplay;
 
@@ -455,10 +455,19 @@
     It is then the application's responsibility to present an age gate and continue with the click-through if appropriate
  
  * In Order to use this Delegate Call, The option kFuseSDKOptionKey_HandleAdURLs must be passed with the value @YES
- @since Fuse SDK version 2.1.0
+ * @since Fuse SDK version 2.1.0
  */
 
 -(void) handleAdClickWithURL:(NSURL*)_url;
+
+/*!
+* @brief Callback to inform ad Did show
+ 
+ * @see FshowAdForZoneID:withOptions:
+ * @since Fuse SDK version 2.0.0
+*/
+-(void) adDidShow:(NSNumber *)_networkID mediaType:(NSNumber *)_mediaType;
+
 
 @required
 /*!
@@ -903,6 +912,18 @@
 
 
 #pragma mark Interstitial Ads
+/*
+ 
+ * @brief This method sets the user ID string for rewarded video server verification
+ * @details To allow server side verificiation. A user id registered with this function is passed to the server when a rewarded video has been completed. The server then transmits faithfully this id 
+    to the 3rd Party server registered on the FusePowered Dashboard. The value is only cached for the duration of the session, and can be changed at any time.
+ 
+ @code
+ [FuseSDK setRewardedVideoUserID:@"bobSmith1994"];
+ 
+ */
+
++(void) setRewardedVideoUserID:(NSString *) _userID;
 
 
 /*!

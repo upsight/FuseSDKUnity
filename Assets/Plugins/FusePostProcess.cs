@@ -111,6 +111,19 @@ public static class FusePostProcess
 			}
 		}
 
+#if UNITY_5
+		if(target == BuildTarget.iOS)
+		{
+			var ver = Application.unityVersion;
+
+			if(ver.Contains("5.1.1") || ver.Contains("5.1.2"))
+			{
+				UnityEngine.Debug.LogError("There are known bugs in this version of Unity. The app will not function properly on iOS 7.");
+				UnityEngine.Debug.LogError("Please use Unity version 5.0.*");
+			}
+		}
+#endif
+
 		UnityEngine.Debug.Log("FusePostProcess - STOP");
 	}
 
