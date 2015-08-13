@@ -84,6 +84,7 @@ bool Native_ZoneHasRewarded(const char* _zoneId);
 bool Native_ZoneHasIAPOffer(const char* _zoneId);
 bool Native_ZoneHasVirtualGoodsOffer(const char* _zoneId);
 void Native_DisplayMoreGames();
+void Native_SetRewardedVideoUserID(const char* _userID);
 
 
 #pragma mark - Notifications
@@ -142,6 +143,12 @@ void Native_FriendsPushNotification(const char* message);
 #pragma mark - Game Configuration Data
 
 const char* Native_GetGameConfigurationValue(const char* key);
+
+
+#pragma mark - Game Data
+
+int Native_SetGameData(const char* fuseId, const char* key, const char** varKeys, const char** varValues, int length);
+int Native_GetGameData(const char* fuseId, const char* key, const char** keys, int length);
 
 
 #pragma mark - Specific Event Registration

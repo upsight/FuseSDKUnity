@@ -43,8 +43,10 @@ public class FuseSDKEditor : Editor
 		_self = (FuseSDK)target;
 #if UNITY_3_5
 		_logo = Resources.LoadAssetAtPath(logoPath, typeof(Texture2D)) as Texture2D;
-#else
+#elif UNITY_4 || UNITY_5_0
 		_logo = Resources.LoadAssetAtPath<Texture2D>(logoPath);
+#else
+		_logo = AssetDatabase.LoadAssetAtPath<Texture2D>(logoPath);
 #endif
 		_icon = null;
 		_error = null;
@@ -465,6 +467,8 @@ public class FuseSDKPrefs : EditorWindow
 		AdColony = 1,
 		AppLovin = 2,
 		HyprMX = 4,
+		LeadBolt = 8,
+		NativeX = 16,
 	}
 
 	private static readonly string[] AdapterFilenames = new string[]
@@ -472,6 +476,8 @@ public class FuseSDKPrefs : EditorWindow
 		"libFuseAdapterAdcolony.a",
 		"libFuseAdapterAppLovin.a",
 		"libFuseAdapterHyprMx.a",
+		"libFuseAdapterLeadBolt.a",
+		"libFuseAdapterNativeX.a",
 	};
 
 	private static readonly string ADAPTERS_KEY = "FuseSDKActiveAdapters";
@@ -493,7 +499,7 @@ public class FuseSDKPrefs : EditorWindow
 	{
 		UpdateType updateStream = (UpdateType)Mathf.Min(EditorPrefs.GetInt(FuseSDKUpdater.AUTOUPDATE_KEY, 4) + 1, (int)UpdateType.Bugfixes);
 		DownloadType autoDL = (DownloadType)EditorPrefs.GetInt(FuseSDKUpdater.AUTODOWNLOAD_KEY, 1);
-		ActiveAdapters activeAdapters = (ActiveAdapters)EditorPrefs.GetInt(ADAPTERS_KEY, 7);
+		ActiveAdapters activeAdapters = (ActiveAdapters)EditorPrefs.GetInt(ADAPTERS_KEY, 31);
 
 		UpdateType newStream = (UpdateType)EditorGUILayout.EnumPopup("Auto Update Checking", updateStream);
 		

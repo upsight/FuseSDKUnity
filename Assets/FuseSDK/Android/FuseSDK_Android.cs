@@ -11,7 +11,7 @@ public partial class FuseSDK
 	private static AndroidJavaClass _fusePlugin;
 	private static AndroidJavaClass _fuseUnityPlugin;
 
-	#region Initialization
+#region Initialization
 
 	private void Awake()
 	{
@@ -23,10 +23,7 @@ public partial class FuseSDK
 		}
 		DontDestroyOnLoad(gameObject);
 
-		//Set static variables
-		AppID = AndroidAppID;
-		_debugOutput = logging;
-		_registerForPush = registerForPushNotifications & !string.IsNullOrEmpty(GCM_SenderID);
+		_instance = this;
 
 		//Initialize IAP tracking plugins
 		if(androidIAB && !GetComponent<FuseSDK_Prime31_IAB>())
@@ -44,12 +41,12 @@ public partial class FuseSDK
 
 	void Start()
 	{
-		if(!string.IsNullOrEmpty(AppID) && StartAutomatically)
+		if(!string.IsNullOrEmpty(AndroidAppID) && StartAutomatically)
 		{
-			_StartSession(AppID, false);
+			_StartSession(AndroidAppID, false);
 		}
 	}
-	#endregion
+#endregion
 
 
 #region Application State
@@ -64,6 +61,7 @@ public partial class FuseSDK
 			}
 			else
 			{
+				_instance.StartCoroutine(__WaitForAdWillClose(0.5f));
 				_fuseUnityPlugin.CallStatic("onResume");
 			}
 		}
@@ -71,7 +69,7 @@ public partial class FuseSDK
 
 	void OnDestroy()
 	{
-		if(_fuseUnityPlugin != null)
+		if(_fuseUnityPlugin != null && _instance == this)
 		{
 			_fuseUnityPlugin.CallStatic("onDestroy");
 		}
@@ -82,7 +80,10 @@ public partial class FuseSDK
 
 	public static void StartSession()
 	{
-		_StartSession(AppID, false);
+		if(_instance != null)
+			_StartSession(_instance.AndroidAppID, false);
+		else
+			Debug.LogError("FuseSDK instance not initialized. Awake may not have been called.");
 	}
 
 	private static void _StartSession(string gameId, bool handleAdURLs)
@@ -223,6 +224,7 @@ public partial class FuseSDK
 			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
 			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
 			rInfo.RewardAmount = int.Parse(pars[3]);
+			rInfo.RewardItemId = int.Parse(pars[4]);
 			return rInfo;
 		}
 		catch(Exception e)
@@ -235,6 +237,9 @@ public partial class FuseSDK
 
 	public static void ShowAdForZoneID(String zoneId, Dictionary<string, string> options = null)
 	{
+		FuseSDK.AdWillClose += __AdWillCloseMoneybackGuaranteeR;
+		__AdWillCloseCalled = false;
+
 		FuseLog("ShowAdForZoneID");
 		var keys = options == null ? new string[0] : options.Keys.ToArray();
 		var values = options == null ? new string[0] : options.Values.ToArray();
@@ -251,6 +256,12 @@ public partial class FuseSDK
 	{
 		FuseLog("DisplayMoreGames");
 		_fuseUnityPlugin.CallStatic("displayMoreGames");
+	}
+
+	public static void SetRewardedVideoUserID(string userID)
+	{
+		FuseLog("SetRewardedVideoUserID");
+		_fuseUnityPlugin.CallStatic("setRewardedVideoUserID", userID);
 	}
 
 #endregion
@@ -388,6 +399,16 @@ public partial class FuseSDK
 #endregion
 
 #region Miscellaneous
+	
+	public static void ManualRegisterForPushNotifications(string gcmSenderID)
+	{
+		if(_instance != null && !_instance.registerForPushNotifications && !string.IsNullOrEmpty(gcmSenderID))
+		{
+			FuseLog("ManualRegisterForPushNotifications(" + gcmSenderID + ")");
+			_fuseUnityPlugin.CallStatic("registerForPushNotifications", gcmSenderID);
+		}
+	}
+
 	public static int GamesPlayed()
 	{
 		FuseLog("GamesPlayed()");
@@ -414,7 +435,7 @@ public partial class FuseSDK
 
 	public static void FuseLog(string str)
 	{
-		if(_debugOutput)
+		if(_instance != null && _instance.logging)
 		{
 			Debug.Log("FuseSDK: " + str);
 		}
@@ -538,13 +559,45 @@ public partial class FuseSDK
 	}
 #endregion
 
+#region Game Data
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int SetGameData(Dictionary<string, string> data, string fuseId = "", string key = "")
+	{
+		FuseLog ("SetGameData(" + key + ", [data]," + fuseId + ")");
+
+		if(string.IsNullOrEmpty(fuseId))
+			fuseId = GetFuseId();
+
+		if(data == null)
+			data = new Dictionary<string,string>();
+
+		var varKeys = data.Keys.ToArray();
+		var varValues = data.Values.ToArray();
+		return _fuseUnityPlugin.CallStatic<int>("setGameData", fuseId, key, varKeys, varValues);
+	}
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameData(params string[] keys)
+	{
+		return GetGameDataForFuseId("", "", keys);
+	}
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameDataForFuseId(string fuseId, string key, params string[] keys)
+	{
+		FuseLog ("GetGameData(" + fuseId + "," + key + ",[keys])");
+		return _fuseUnityPlugin.CallStatic<int>("getGameData", fuseId, key, keys == null ? new string[0] : keys);
+	}
+#endregion
+
 
 #region Callbacks
 	private void _SessionStartReceived(string _)
 	{
 		FuseLog("SessionStartReceived()");
 
-		if(_registerForPush)
+		if(registerForPushNotifications)
 		{
 			SetupPushNotifications(GCM_SenderID);
 		}
@@ -606,6 +659,19 @@ public partial class FuseSDK
 		OnAdFailedToDisplay();
 	}
 
+	private void _AdDidShow(string param)
+	{
+		FuseLog("AdDidShow(" + param + ")");
+		int networkId;
+		int mediaType;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out networkId) && int.TryParse(pars[1], out mediaType))
+			OnAdDidShow(networkId, mediaType);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _AdDidShow");
+	}
+
 	private void _RewardedAdCompleted(string param)
 	{
 		FuseLog("RewardedAdCompleted(" + param + ")");
@@ -619,6 +685,7 @@ public partial class FuseSDK
 			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
 			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
 			rInfo.RewardAmount = int.Parse(pars[3]);
+			rInfo.RewardItemId = int.Parse(pars[4]);
 			OnRewardedAdCompleted(rInfo);
 		}
 		catch(Exception e)
@@ -642,6 +709,8 @@ public partial class FuseSDK
 			oInfo.ProductPrice = float.Parse(pars[1]);
 			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
 			oInfo.ItemAmount = int.Parse(pars[3]);
+			oInfo.StartTime = long.Parse(pars[4]).ToDateTime();
+			oInfo.EndTime = long.Parse(pars[5]).ToDateTime();
 			OnIAPOfferAccepted(oInfo);
 		}
 		catch(Exception e)
@@ -665,6 +734,10 @@ public partial class FuseSDK
 			oInfo.PurchasePrice = float.Parse(pars[1]);
 			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
 			oInfo.ItemAmount = int.Parse(pars[3]);
+			oInfo.StartTime = long.Parse(pars[4]).ToDateTime();
+			oInfo.EndTime = long.Parse(pars[5]).ToDateTime();
+			oInfo.CurrencyID = int.Parse(pars[6]);
+			oInfo.VirtualGoodID = int.Parse(pars[7]);
 			OnVirtualGoodsOfferAccepted(oInfo);
 		}
 		catch(Exception e)
@@ -837,6 +910,94 @@ public partial class FuseSDK
 		FuseLog("GameConfigurationReceived()");
 		OnGameConfigurationReceived();
 	}
+
+	private void _GameDataSetAcknowledged(string requestId)
+	{
+		FuseLog("GameDataSetAcknowledged(" + requestId + ")");
+		int rId;
+
+		if(int.TryParse(requestId, out rId))
+			OnGameDataSetAcknowledged(rId);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _GameDataSetAcknowledged");
+	}
+
+	private void _GameDataError(string param)
+	{
+		FuseLog("GameDataError(" + param + ")");
+
+		int error, requestId;
+
+		var pars = param.Split(',');
+		if(pars.Length == 2 && int.TryParse(pars[0], out error) && int.TryParse(pars[1], out requestId))
+			OnGameDataError(error, requestId);
+		else
+			Debug.LogError("FuseSDK: Parsing error in _GameDataError");
+	}
+
+	private void _GameDataReceived(string param)
+	{
+		FuseLog("GameDataReceived(" + param + ")");
+
+		int requestId = -1;
+		string fuseId = "";
+
+		var pars = param.Split(',');
+		if(pars.Length == 2)
+		{
+			fuseId = pars[1];
+			if(!int.TryParse(pars[0], out requestId))
+				Debug.LogError("FuseSDK: Parsing error in _GameDataReceived");
+		}
+
+		Dictionary<string, string> gameData = new Dictionary<string, string>();
+
+		int pageSize = 100;
+		int offset = 0;
+		AndroidJNI.AttachCurrentThread();
+		AndroidJNI.PushLocalFrame(0);
+		string[] keys = _fuseUnityPlugin.CallStatic<string[]>("getGameDataKeys", offset, pageSize);
+		while (keys != null && keys.Length > 0)
+		{
+			FuseLog("Getting gameData: Offset = " + offset + ", keys.Length = " + keys.Length);
+			for(int i = 0; i < keys.Length; i++)
+			{
+				gameData.Add(keys[i], _fuseUnityPlugin.CallStatic<string>("getGameDataKey", keys[i]));
+			}
+			offset += pageSize;
+			AndroidJNI.PopLocalFrame(IntPtr.Zero);
+			AndroidJNI.PushLocalFrame(0);
+
+			keys = _fuseUnityPlugin.CallStatic<string[]>("getGameDataKeys", offset, pageSize);
+		}
+		AndroidJNI.PopLocalFrame(IntPtr.Zero);
+		FuseLog("Got " + gameData.Count + " game data values");
+		
+		OnGameDataReceived(fuseId, "", gameData, requestId);
+	}
+
+	private static bool __AdWillCloseCalled = true;
+	private static void __AdWillCloseMoneybackGuaranteeR()
+	{
+		__AdWillCloseCalled = true;
+		FuseSDK.AdWillClose -= __AdWillCloseMoneybackGuaranteeR;
+	}
+
+	private IEnumerator __WaitForAdWillClose(float timeout)
+	{
+		if(__AdWillCloseCalled)
+			yield break;
+
+		yield return new WaitForSeconds(timeout);
+
+		if(__AdWillCloseCalled)
+			yield break;
+
+		FuseSDK.AdWillClose -= __AdWillCloseMoneybackGuaranteeR;
+		OnAdWillClose();
+		__AdWillCloseCalled = true;
+		yield break;
+	}
 #endregion
 
 #if !DOXYGEN_IGNORE
@@ -861,8 +1022,12 @@ public partial class FuseSDK
 	/// <param name="adClickedWithURLHandler">The function to be called when certain ad types are clicked.</param>
 	public static void StartSession(System.Action<string> adClickedWithURLHandler)
 	{
-		_adClickedwithURL = adClickedWithURLHandler;
-		_StartSession(AppID, true);
+		if(_instance != null)
+		{
+			_adClickedwithURL = adClickedWithURLHandler;
+			_StartSession(_instance.AndroidAppID, true);
+		}
+		else Debug.LogError("FuseSDK instance not initialized. Awake may not have been called.");
 	}
 #endif // DOXYGEN_IGNORE
 }

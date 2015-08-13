@@ -23,22 +23,22 @@ public partial class FuseSDK
 		}
 		DontDestroyOnLoad(gameObject);
 
-#if UNITY_ANDROID
-		AppID = AndroidAppID;
-#else
-		AppID = iOSAppID;
-#endif
-		_debugOutput = logging;
-		_registerForPush = registerForPushNotifications;
+		_instance = this;
 
 		RegisterEvents();
 	}
 
 	void Start()
 	{
-		if(!string.IsNullOrEmpty(AppID) && StartAutomatically)
+		string id;
+#if UNITY_ANDROID
+		id = AndroidAppID;
+#else
+		id = iOSAppID;
+#endif
+		if(!string.IsNullOrEmpty(id) && StartAutomatically)
 		{
-			_StartSession(AppID);
+			_StartSession(id);
 		}
 	}
 	#endregion
@@ -76,6 +76,8 @@ public partial class FuseSDK
 		//Ads
 		FuseDotNet.AdAvailabilityResponse += (b, e) => OnAdAvailabilityResponse(b ? 1 : 0, (int)e);
 		FuseDotNet.AdWillClose += OnAdWillClose;
+		FuseDotNet.AdFailedToDisplay += OnAdFailedToDisplay;
+		FuseDotNet.AdDidShow += OnAdDidShow;
 		FuseDotNet.RewardedAdCompletedWithObject += r => OnRewardedAdCompleted(r);
 		FuseDotNet.IAPOfferAcceptedWithObject += o => OnIAPOfferAccepted(o);
 		FuseDotNet.VirtualGoodsOfferAcceptedWithObject += o => OnVirtualGoodsOfferAccepted(o);
@@ -100,7 +102,15 @@ public partial class FuseSDK
 	/// </remarks>
 	public static void StartSession()
 	{
-		_StartSession(AppID);
+		if(_instance != null)
+		{
+#if UNITY_ANDROID
+		_StartSession(_instance.AndroidAppID);
+#else
+		_StartSession(_instance.iOSAppID);
+#endif
+		}
+		else Debug.LogError("FuseSDK instance not initialized. Awake may not have been called.");
 	}
 
 	private static void _StartSession(string gameId)
@@ -118,12 +128,12 @@ public partial class FuseSDK
 		}
 
 		_sessionStarted = true;
-		FuseLog("StartSession(" + gameId + ") with push notifications " + (_registerForPush ? "enabled" : "disabled"));
+		FuseLog("StartSession(" + gameId + ")");
 		FuseDotNet.StartSession(gameId);
 	}
 	#endregion
 
-	#region Analytics Event
+#region Analytics Event
 
 	[Obsolete("Registering events is deprecated and will be removed from future releases.")]
 	public static bool RegisterEvent(string name, Dictionary<string, string> parameters)
@@ -146,9 +156,9 @@ public partial class FuseSDK
 		return false;
 	}
 
-	#endregion
+#endregion
 
-	#region In-App Purchase Logging
+#region In-App Purchase Logging
 	
 	/// <summary>Records when a virtual good purchase has been made.</summary>
 	/// <remarks>
@@ -234,9 +244,9 @@ public partial class FuseSDK
 	{
 		//OnPurchaseVerification(verified, transactionId, originalTransactionId);
 	}
-	#endregion
+#endregion
 
-	#region Fuse Ads
+#region Fuse Ads
 
 	/// <summary>Used to check if an ad was loaded in a particular zone.</summary>
 	/// <param name="zoneId">The zone id to check.</param>
@@ -358,9 +368,22 @@ public partial class FuseSDK
 		FuseDotNet.DisplayMoreGames();
 	}
 
-	#endregion
+	/// <summary>Sets the user ID string for rewarded video server verification.</summary>
+	/// <remarks>
+	/// To allow server side verificiation. A user id registered with this function is passed to the server when a
+	/// rewarded video has been completed. The server then faithfully transmits this id to the 3rd Party server
+	/// registered on the FusePowered Dashboard. The value is only cached for the duration of the session, and can be changed at any time.
+	/// </remarks>
+	/// <param name="userID">The user id to register.</param>
+	public static void SetRewardedVideoUserID(string userID)
+	{
+		FuseLog("SetRewardedVideoUserID");
+		FuseDotNet.SetRewardedVideoUserID(userID);
+	}
 
-	#region Notifications
+#endregion
+
+#region Notifications
 
 	/// <summary>Display and in-game Fuse notification.</summary>
 	/// <remarks>
@@ -387,9 +410,9 @@ public partial class FuseSDK
 		FuseLog("IsNotificationAvailable()");
 		return FuseDotNet.IsNotificationAvailable();
 	}
-	#endregion
+#endregion
 
-	#region User Info
+#region User Info
 
 	/// <summary>Registers a gender for the user.</summary>
 	/// <param name="gender">The user's gendar.</param>
@@ -461,9 +484,9 @@ public partial class FuseSDK
 		FuseLog("RegisterCustomEvent()");
 		return FuseDotNet.RegisterCustomEvent(eventNumber, value);
 	}
-	#endregion
+#endregion
 
-	#region Account Login
+#region Account Login
 
 	/// <summary>Returns the public Fuse ID for the logged in user.</summary>
 	/// <remarks>
@@ -564,9 +587,19 @@ public partial class FuseSDK
 	{
 		FuseDotNet.GooglePlayLogin(alias, token);
 	}
-	#endregion
+#endregion
 
-	#region Miscellaneous
+#region Miscellaneous
+
+	/// <summary>Allows registering manually for push notifications after StartSession is called.</summary>
+	/// <param name="gcmSenderID">ID used for Android push notification. Ignored on iOS.</param>
+	/// <remarks>
+	///	In order to use this function, automatic registration should be disabled on the FuseSDK object.
+	///	If "Push Notifications" is checked this function will do nothing.
+	/// On Android, the gcmSenderID parameter is required to register for push, this is a unique ID provided by Google.
+	/// On iOS this parameter is ignored.
+	/// </remarks>
+	public static void ManualRegisterForPushNotifications(string gcmSenderID) { }
 
 	/// <summary>Get the number of times the user has opened the game.</summary>
 	/// <returns>Number of times the user has opened the game.</returns>
@@ -611,15 +644,15 @@ public partial class FuseSDK
 	/// <param name="str">Message to log.</param>
 	public static void FuseLog(string str)
 	{
-		if(_debugOutput)
+		if(_instance != null && _instance.logging)
 		{
 			Debug.Log("FuseSDK: " + str);
 		}
 	}
 
-	#endregion
+#endregion
 
-	#region Data Opt In/Out
+#region Data Opt In/Out
 
 	/// <summary>Opts a user in to data being collected by the SDK.</summary>
 	public static void EnableData()
@@ -642,9 +675,9 @@ public partial class FuseSDK
 		FuseLog("DataEnabled()");
 		return FuseDotNet.DataEnabled();
 	}
-	#endregion
+#endregion
 
-	#region Friend List
+#region Friend List
 
 	/// <summary>Get a the user's friends list.</summary>
 	/// <remarks>
@@ -728,9 +761,9 @@ public partial class FuseSDK
 		FuseLog("MigrateFriends(" + fuseId + ")");
 		FuseDotNet.MigrateFriends(fuseId);
 	}
-	#endregion
+#endregion
 
-	#region User-to-User Push Notifications
+#region User-to-User Push Notifications
 
 	/// <summary>Send a push notification to another user.</summary>
 	/// <remarks>
@@ -757,9 +790,9 @@ public partial class FuseSDK
 		FuseLog("FriendsPushNotification(" + message + ")");
 		FuseDotNet.FriendsPushNotification(message);
 	}
-	#endregion
+#endregion
 
-	#region Game Configuration Data
+#region Game Configuration Data
 
 	/// <summary>Returns a single server configuration value.</summary>
 	/// <remarks>
@@ -785,6 +818,30 @@ public partial class FuseSDK
 		FuseLog("GetGameConfiguration()");
 		return FuseDotNet.GetGameConfiguration();
 	}
-	#endregion
+#endregion
+
+#region Game Data
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int SetGameData(Dictionary<string, string> data, string fuseId = "", string key = "")
+	{
+		FuseLog("SetGameData()");
+		return -1;
+	}
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameData(params string[] keys)
+	{
+		FuseLog("GetGameData()");
+		return -1;
+	}
+
+	[Obsolete("Game data is deprecated and will be removed from future releases.")]
+	public static int GetGameDataForFuseId(string fuseId, string key, params string[] keys)
+	{
+		FuseLog("GetGameDataForFuseId()");
+		return -1;
+	}
+#endregion
 }
 #endif

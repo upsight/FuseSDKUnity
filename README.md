@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.1.4.0
+Version: 2.2.1.0
 
-Released: June 24th, 2015
+Released: August 13th, 2015
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
@@ -27,6 +27,18 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.2.1.0
+August 13th, 2015
+* Added new ad providers
+* Added VAST support
+* Added rewarded video authentication 
+  * Added method FuseSDK.SetRewardedVideoUserID(string userID) to identify the user
+  * The RewardedInfo struct now contains RewardItemId
+* Added StartTime and EndTime to the IAPOfferInfo struct
+* Added CurrencyID, VirtualGoodID, StartTime and EndTime to the VGOfferInfo struct
+* Fix for game data get/set
+* Bug fixes
 
 ### 2.1.4.0
 June 24th, 2015

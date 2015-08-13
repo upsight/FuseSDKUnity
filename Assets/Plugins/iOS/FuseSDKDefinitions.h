@@ -11,7 +11,7 @@
 
 
 #import <StoreKit/StoreKit.h>
-#import <GameKit/GKLocalPlayer.h>
+#import <GameKit/GameKit.h>
 
 extern NSString * kFuseErrorDomain;
 
@@ -91,6 +91,8 @@ extern NSString * const kFuseRewardedOptionKey_PostRollContinueButtonText;
 @property (nonatomic , copy , readwrite) NSString* rewardItem;
 @property (nonatomic , copy , readwrite) NSNumber* rewardAmount;
 
+@property(nonatomic, readwrite) int itemID; // the rewarded item ID as specified on the Fuse Dashboard
+
 @end
 
 
@@ -103,6 +105,11 @@ extern NSString * const kFuseRewardedOptionKey_PostRollContinueButtonText;
 @property (nonatomic , copy , readwrite) NSString* itemName;
 @property (nonatomic , copy , readwrite) NSNumber* itemAmount;
 
+
+@property (nonatomic , copy , readwrite) NSNumber* startTime;
+@property (nonatomic , copy , readwrite) NSNumber* endTime;
+
+
 @end
 
 @interface FuseVirtualGoodsOfferObject : NSObject
@@ -112,6 +119,12 @@ extern NSString * const kFuseRewardedOptionKey_PostRollContinueButtonText;
 
 @property (nonatomic , copy , readwrite) NSString* itemName;
 @property (nonatomic , copy , readwrite) NSNumber* itemAmount;
+
+@property (nonatomic , copy , readwrite) NSNumber* startTime;
+@property (nonatomic , copy , readwrite) NSNumber* endTime;
+
+@property (nonatomic , copy , readwrite) NSNumber* currencyID;
+@property (nonatomic , copy , readwrite) NSNumber* virtualGoodID;
 
 @end
 
