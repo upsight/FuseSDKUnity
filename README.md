@@ -2,16 +2,17 @@
 
 ## Current Version
 
-Version: 2.2.1.0
+Version: 2.3.2.0
 
-Released: August 13th, 2015
+Released: October 14th, 2015
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
 The FuseAPI class has been renamed to FuseSDK, you will need to update your references.
 
 ## To Download
-The easiest way to obtain the Fuse SDK is to click the "Download ZIP" button located in the right-hand navigation pane of the Github repository page.  
+[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK.unitypackage)  
+[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK-Unity5.unitypackage)  
 Once the package has been imported into your project, you will be able to update the FuseSDK Wrapper through the Unity Editor.
 
 ## Getting Started
@@ -27,6 +28,15 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.3.2.0
+October 14th, 2015
+* Custom Offer meta-data
+* Custom Call to Action on campaign videos
+* Ad provider updates
+* Bug fixes
+* Android 6.0 and iOS 9 compatibility
+* Unity 5 package now uses a single .aar file for Android
 
 ### 2.2.1.0
 August 13th, 2015

@@ -31,9 +31,10 @@ public static class FusePostProcess
 	const string MCORESERVICES_ID = "3FD2BD0F1A253866002566B8";
 	const string LIBXML_ID = "3FD2BD0F1A253866002566B9";
 	const string WEBKIT_ID = "CDECA1A21B02531000CAA921";
+    const string GAMEKIT_ID = "CDECA1A21B02531000CAA931";
 
 
-	const string CORETELEPHONY_FW = "3F3EE17B1757FB570038DED8";
+    const string CORETELEPHONY_FW = "3F3EE17B1757FB570038DED8";
 	const string ADSUPPORT_FW = "3F3EE1791757FB4D0038DED9";
 	const string STOREKIT_FW = "3F3EE17D1757FB610038DED0";
 	const string MESSAGEUI_FW = "2076D92010F4D46C00CEE78B";
@@ -46,9 +47,10 @@ public static class FusePostProcess
 	const string MCORESERVICES_FW = "A4FBC40B1A23EC33004D9A01";
 	const string LIBXML_FW = "A4FBC40B1A23EC33004D9A02";
 	const string WEBKIT_FW = "CDECA1A11B02531000CAA922";
+    const string GAMEKIT_FW = "CDECA1A11B02531000CAA932";
 
-	// List of all the frameworks to be added to the project
-	public struct framework
+    // List of all the frameworks to be added to the project
+    public struct framework
 	{
 		public string sName;
 		public string sId;
@@ -85,10 +87,11 @@ public static class FusePostProcess
 										 new framework("Social.framework", SOCIAL_FW, SOCIAL_ID),
 										 new framework("Security.framework", SECURITY_FW, SECURITY_ID),
 										 new framework("MobileCoreServices.framework", MCORESERVICES_FW, MCORESERVICES_ID),
-										 new framework("libsqlite3.dylib", SQLITE_FW, SQLITE_ID),
-										 new framework("libxml2.dylib", LIBXML_FW, LIBXML_ID),
+										 new framework("libsqlite3.tbd", SQLITE_FW, SQLITE_ID),
+										 new framework("libxml2.tbd", LIBXML_FW, LIBXML_ID),
 										 new framework("WebKit.framework", WEBKIT_FW, WEBKIT_ID),
-										};
+                                         new framework("GameKit.framework", GAMEKIT_FW, GAMEKIT_ID),
+                                        };
 
 			string xcodeprojPath = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);
 
@@ -130,35 +133,80 @@ public static class FusePostProcess
 	[PostProcessScene] // <- for old version cleanup
 	public static void OnPostProcessScene()
 	{
-		// delete older versions of API jar
-		for(int i = 0; i < 10; i++)
+		try
 		{
-			string oldAPIjar = "Assets/Plugins/Android/FuseAndroidAPI_v1.2" + i + ".jar";
-			AssetDatabase.DeleteAsset(oldAPIjar);
+			// delete older versions of API jar
+			for(int i = 0; i < 10; i++)
+			{
+				string oldAPIjar = "Assets/Plugins/Android/FuseAndroidAPI_v1.2" + i + ".jar";
+				AssetDatabase.DeleteAsset(oldAPIjar);
+			}
+
+			AssetDatabase.DeleteAsset("Assets/Plugins/Android/FuseAPI.jar");
+			AssetDatabase.DeleteAsset("Assets/Plugins/Android/FuseUnityAPI.jar");
+
+			AssetDatabase.DeleteAsset("Assets/Plugins/iOS/FuseAPI.h");
+			AssetDatabase.DeleteAsset("Assets/Plugins/iOS/libFuseAPI.a");
+
+			AssetDatabase.DeleteAsset("Assets/Plugins/FuseNativeAPI.dll");
+
+			if(File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET-Stub.dll") && File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET.dll"))
+			{
+				AssetDatabase.DeleteAsset("Assets/Plugins/FuseSDK.NET.dll");
+			}
+
+			if(Directory.Exists(Application.dataPath + "/FuseAPI"))
+			{
+				UnityEngine.Debug.LogError("FuseSDK: Please remove the Assets/FuseAPI folder from your project. The FuseSDk is now located in Assets/FuseSDK.");
+			}
+
+			if(Directory.Exists(Application.dataPath + "/Plugins/Android/libs"))
+			{
+				if(Directory.Exists(Application.dataPath + "/Plugins/Android/libs/x86"))
+				{
+					if(File.Exists(Application.dataPath + "/Plugins/Android/libs/x86/libFuseCommonCore.so"))
+					{
+						AssetDatabase.DeleteAsset("Plugins/Android/libs/x86/libFuseCommonCore.so");
+					}
+
+					if(Directory.GetFiles(Application.dataPath + "/Plugins/Android/libs/x86").Length == 0 && Directory.GetDirectories(Application.dataPath + "/Plugins/Android/libs/x86").Length == 0)
+					{
+						Directory.Delete(Application.dataPath + "/Plugins/Android/libs/x86");
+						if(File.Exists(Application.dataPath + "/Plugins/Android/libs/x86.meta"))
+							File.Delete(Application.dataPath + "/Plugins/Android/libs/x86.meta");
+                    }
+				}
+
+				if(Directory.Exists(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a"))
+				{
+					if(File.Exists(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a/libFuseCommonCore.so"))
+					{
+						AssetDatabase.DeleteAsset("Plugins/Android/libs/armeabi-v7a/libFuseCommonCore.so");
+					}
+
+					if(Directory.GetFiles(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a").Length == 0 && Directory.GetDirectories(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a").Length == 0)
+					{
+						Directory.Delete(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a");
+						if(File.Exists(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a.meta"))
+							File.Delete(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a.meta");
+					}
+				}
+
+				if(Directory.GetFiles(Application.dataPath + "/Plugins/Android/libs").Length == 0 && Directory.GetDirectories(Application.dataPath + "/Plugins/Android/libs").Length == 0)
+				{
+					Directory.Delete(Application.dataPath + "/Plugins/Android/libs");
+					if(File.Exists(Application.dataPath + "/Plugins/Android/libs.meta"))
+						File.Delete(Application.dataPath + "/Plugins/Android/libs.meta");
+				}
+			}
+
+			if(Application.platform == RuntimePlatform.Android)
+			{
+				UpdateAndroidManifest(PlayerSettings.bundleIdentifier);
+			}
 		}
-
-		AssetDatabase.DeleteAsset("Assets/Plugins/Android/FuseAPI.jar");
-		AssetDatabase.DeleteAsset("Assets/Plugins/Android/FuseUnityAPI.jar");
-
-		AssetDatabase.DeleteAsset("Assets/Plugins/iOS/FuseAPI.h");
-		AssetDatabase.DeleteAsset("Assets/Plugins/iOS/libFuseAPI.a");
-
-		AssetDatabase.DeleteAsset("Assets/Plugins/FuseNativeAPI.dll");
-
-		if(File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET-Stub.dll") && File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET.dll"))
-		{
-			AssetDatabase.DeleteAsset("Assets/Plugins/FuseSDK.NET.dll");
-		}
-
-		if(Directory.Exists(Application.dataPath + "/FuseAPI"))
-		{
-			UnityEngine.Debug.LogError("FuseSDK: Please remove the Assets/FuseAPI folder from your project. The FuseSDk is now located in Assets/FuseSDK.");
-		}
-
-		if(Application.platform == RuntimePlatform.Android)
-		{
-			UpdateAndroidManifest(PlayerSettings.bundleIdentifier);
-		}
+		catch
+		{ }
 	}
 
 
@@ -214,61 +262,81 @@ public static class FusePostProcess
 	static bool bFoundMCS = false;
 	static bool bFoundLibXML = false;
 	static bool bFoundWebKit = false;
+    static bool bFoundGameKit = false;
 	public static void updateXcodeProject(string xcodeprojPath, framework[] listeFrameworks)
 	{
 		//Modify Info.plist
-		//Currently only adds an SSL flag if enabled
-#if FUSE_USE_SSL
 		string infoPath = xcodeprojPath + "/../Info.plist";
 		if(File.Exists(infoPath))
 		{
 			string[] plistLines = File.ReadAllLines(infoPath);
-
+			List<string> newPlist = new List<string>(plistLines);
+			long len = plistLines.Length - 1;
 			int insertLine = -1; //If the entry is found this will be kept at -1
-			for(int l = 0; l < plistLines.Length - 1; l++)
+
+			//Add an SSL flag if enabled
+#if FUSE_USE_SSL
+			for(int l = 0; l < len; l++)
 			{
-				if(plistLines[l].Contains("plist") && plistLines[l+1].Contains("dict"))
+				if(newPlist[l].Contains("plist") && newPlist[l+1].Contains("dict"))
 				{
 					insertLine = l + 2;
 				}
 
-				if(plistLines[l].Contains("fuse_ssl"))
+				if(newPlist[l].Contains("fuse_ssl"))
 				{
-					if(plistLines[l+1].Contains("false"))
+					if(newPlist[l+1].Contains("false"))
 					{
-						plistLines[l+1] = plistLines[l+1].Replace("false", "true");
+						newPlist[l+1] = newPlist[l+1].Replace("false", "true");
 					}
 					insertLine = -1;
 					break;
 				}
 			}
 
-			List<string> newPlist = null;
+			//If the flag doesn't exist, add it now
 			if(insertLine != -1)
 			{
-				//If the flag doesn't exist, add it now
-				newPlist = new List<string>(plistLines.Length + 2);
-				for(int l = 0; l < insertLine; l++)
-					newPlist.Add(plistLines[l]);
+				newPlist.Insert(insertLine, @"    <key>fuse_ssl</key>");
+				newPlist.Insert(insertLine + 1, @"    <true/>");
+			}
+#endif
+			//Add the NSAppTransportSecurity entry if it doesnt exist
+			insertLine = -1;
+			len = newPlist.Count - 1;
+			for(int l = 0; l < len; l++)
+			{
+				if(newPlist[l].Contains("plist") && newPlist[l + 1].Contains("dict"))
+				{
+					insertLine = l + 2;
+				}
 
-				newPlist.Add(@"    <key>fuse_ssl</key>");
-				newPlist.Add(@"    <true />");
-				
-				for(int l = insertLine; l < plistLines.Length; l++)
-					newPlist.Add(plistLines[l]);
+				if(newPlist[l].Contains("NSAppTransportSecurity"))
+				{
+					insertLine = -1;
+					break;
+				}
 			}
 
-			//Write either the modified key, or the 2 added lines
-			if(newPlist == null)
-				File.WriteAllLines(infoPath, plistLines);
-			else
-				File.WriteAllLines(infoPath, newPlist.ToArray());
+			//If the flag doesn't exist, add it now
+			if(insertLine != -1)
+			{
+				newPlist.Insert(insertLine, @"    <key>NSAppTransportSecurity</key>");
+				newPlist.Insert(insertLine + 1, @"    <dict>");
+				newPlist.Insert(insertLine + 2, @"        <key>NSAllowsArbitraryLoads</key>");
+				newPlist.Insert(insertLine + 3, @"        <true/>");
+				newPlist.Insert(insertLine + 4, @"    </dict>");
+			}
+
+
+			//Write out the new plist
+			File.WriteAllLines(infoPath, newPlist.ToArray());
 		}
 		else
 		{
-			UnityEngine.Debug.LogError("Could not find Info.plist. You will need to add the flag: key:fuse_ssl, value:true manually");
+			UnityEngine.Debug.LogError("Could not find Info.plist. You will need to edit this file manually");
 		}
-#endif
+
 
 
 		// STEP 1 : We open up the file generated by Unity and read into memory as
@@ -281,7 +349,7 @@ public static class FusePostProcess
 		}
 
 
-#if UNITY_IPHONE
+#if UNITY_IOS
 //		Uncomment to Test xml project settings
 //		ProcessStartInfo proc = new ProcessStartInfo();
 //		proc.FileName = "plutil";
@@ -348,7 +416,11 @@ public static class FusePostProcess
 			{
 				bFoundWebKit = true;
 			}
-			else if(lines[i].Contains("libsqlite3.dylib"))
+            else if (lines[i].Contains("GameKit.framework"))
+            {
+                bFoundGameKit = true;
+            }
+            else if(lines[i].Contains("libsqlite3.tbd"))
 			{
 				bFoundSQLite = true;
 			}
@@ -356,7 +428,7 @@ public static class FusePostProcess
 			{
 				bFoundMCS = true;
 			}
-			else if(lines[i].Contains("libxml2.dylib"))
+			else if(lines[i].Contains("libxml2.tbd"))
 			{
 				bFoundLibXML = true;
 			}
@@ -598,8 +670,9 @@ public static class FusePostProcess
 			|| (bFoundSocial && name.Equals("Social.framework"))
 			|| (bFoundSecurity && name.Equals("Security.framework"))
 			|| (bFoundWebKit && name.Equals("WebKit.framework"))
-			|| (bFoundSQLite && name.Equals("libsqlite3.dylib"))
-			|| (bFoundLibXML && name.Equals("libxml2.dylib"))
+            || (bFoundGameKit && name.Equals("GameKit.framework"))
+            || (bFoundSQLite && name.Equals("libsqlite3.tbd"))
+			|| (bFoundLibXML && name.Equals("libxml2.tbd"))
 			|| (bFoundMCS && name.Equals("mobileCoreServices.framework")))
 		{
 			// framework is already in the xcode project - do no process it
@@ -678,7 +751,7 @@ public static class FusePostProcess
 		UnityEngine.Debug.Log("OnPostProcessBuild - Adding framework file reference (xml) - " + name);
 
 		string path = "System/Library/Frameworks"; // all the frameworks come from here
-		if(name == "libsqlite3.dylib" || name == "libxml2.dylib")           // except for dylibs
+		if(name == "libsqlite3.tbd" || name == "libxml2.tbd")           // except for tbds
 		{
 			path = "usr/lib";
 		}
@@ -946,10 +1019,10 @@ public static class FusePostProcess
 
 		string path = "System/Library/Frameworks"; // all the frameworks come from here
 		string type = "wrapper.framework";
-		if(name == "libsqlite3.dylib" || name == "libxml2.dylib")           // except for dylibs
+		if(name == "libsqlite3.tbd" || name == "libxml2.tbd")           // except for tbds
 		{
 			path = "usr/lib";
-			type = "\"compiled.mach-o.dylib\"";
+			type = "\"compiled.mach-o.tbd\"";
 		}
 
 		file.Write("\t\t" + id + " /* " + name + " */ = {isa = PBXFileReference; lastKnownFileType = " + type + "; name = " + name + "; path = " + path + "/" + name + "; sourceTree = SDKROOT; };\n");

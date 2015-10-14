@@ -68,14 +68,15 @@ bool Native_RegisterEventWithDictionary(const char* message, const char* paramNa
 			[values setObject:[NSNumber numberWithDouble:attributes[i]] forKey:[NSString stringWithUTF8String:keys[i]]];
 		}
 	}
-	bool ret = [FuseSDK registerEvent:[NSString stringWithUTF8String:message] ParameterName:(paramName ? [NSString stringWithUTF8String:paramName] : nil) ParameterValue:(paramValue ? [NSString stringWithUTF8String:paramValue] : nil) Variables:values];
+	int ret = [FuseSDK registerEvent:[NSString stringWithUTF8String:message] ParameterName:(paramName ? [NSString stringWithUTF8String:paramName] : nil) ParameterValue:(paramValue ? [NSString stringWithUTF8String:paramValue] : nil) Variables:values];
 	FuseSafeRelease(values);
-	return ret;
+	return ret == 0;
 }
 
 bool Native_RegisterEventVariable(const char* name, const char* paramName, const char* paramValue, const char* variableName, double variableValue)
 {
-	return [FuseSDK registerEvent:[NSString stringWithUTF8String:name] ParameterName:(paramName ? [NSString stringWithUTF8String:paramName] : nil) ParameterValue:(paramValue ? [NSString stringWithUTF8String:paramValue] : nil) VariableName:(variableName ? [NSString stringWithUTF8String:variableName] : nil) VariableValue:[NSNumber numberWithDouble:variableValue]];
+	int ret = [FuseSDK registerEvent:[NSString stringWithUTF8String:name] ParameterName:(paramName ? [NSString stringWithUTF8String:paramName] : nil) ParameterValue:(paramValue ? [NSString stringWithUTF8String:paramValue] : nil) VariableName:(variableName ? [NSString stringWithUTF8String:variableName] : nil) VariableValue:[NSNumber numberWithDouble:variableValue]];
+	return ret == 0;
 }
 
 
@@ -335,7 +336,6 @@ NSString * base64NSNumber(NSNumber * num)
 
 const char* Native_GetRewardedInfoForZone(const char* _zoneId)
 {
-	
 	FuseRewardedObject* rewObj = [FuseSDK getRewardedInfoForZoneID:[NSString stringWithUTF8String:_zoneId]];
 	if(rewObj == nil)
 	{
@@ -357,6 +357,77 @@ const char* Native_GetRewardedInfoForZone(const char* _zoneId)
 		FuseSafeRelease(rewardID);
 		ReturnNSString([values componentsJoinedByString:@","]);
 	}
+	ReturnNSString(@"");
+}
+
+const char* Native_GetVirtualGoodsOfferInfoForZoneID(const char* _zoneId)
+{
+	FuseVirtualGoodsOfferObject* offerObj = [FuseSDK getVirtualGoodsOfferInfoForZoneID:[NSString stringWithUTF8String:_zoneId]];
+	if(offerObj == nil)
+	{
+		ReturnNSString(@"");
+	}
+	
+	NSArray * values = nil;
+	
+	NSString * purchaseCurrency = base64NSString(offerObj.purchaseCurrency);
+	NSString * purchasePrice = [NSString stringWithFormat:@"%@",offerObj.purchasePrice];
+	NSString * itemName = base64NSString(offerObj.itemName);
+	NSString * itemAmount = [NSString stringWithFormat:@"%@",offerObj.itemAmount];
+	NSString * startTime = [offerObj.startTime stringValue];
+	NSString * endTime = [offerObj.endTime stringValue];
+	NSString * currencyID = [NSString stringWithFormat:@"%@",offerObj.currencyID];
+	NSString * virtualGoodID = [NSString stringWithFormat:@"%@",offerObj.virtualGoodID];
+	NSString * metadata = base64NSString(offerObj.metadata);
+	
+	if(purchaseCurrency && purchasePrice && itemName && itemAmount && startTime && endTime && currencyID && virtualGoodID && metadata)
+	{
+		values = @[purchaseCurrency, purchasePrice, itemName, itemAmount, startTime, endTime, currencyID, virtualGoodID, metadata];
+
+		FuseSafeRelease(purchaseCurrency);
+		FuseSafeRelease(itemName);
+		FuseSafeRelease(metadata);
+		ReturnNSString([values componentsJoinedByString:@","]);
+	}
+	
+	FuseSafeRelease(purchaseCurrency);
+	FuseSafeRelease(itemName);
+	FuseSafeRelease(metadata);
+	ReturnNSString(@"");
+}
+
+const char* Native_GetIAPOfferInfoForZoneID(const char* _zoneId)
+{
+	FuseIAPOfferObject* offerObj = [FuseSDK getIAPOfferInfoForZoneID:[NSString stringWithUTF8String:_zoneId]];
+	if(offerObj == nil)
+	{
+		ReturnNSString(@"");
+	}
+	
+	NSArray * values = nil;
+	
+	NSString * productID = base64NSString(offerObj.productID);
+	NSString * productPrice = [NSString stringWithFormat:@"%@",offerObj.productPrice];
+	NSString * itemName = base64NSString(offerObj.itemName);
+	NSString * itemAmount = [NSString stringWithFormat:@"%@",offerObj.itemAmount];
+	NSString * startTime = [offerObj.startTime stringValue];
+	NSString * endTime = [offerObj.endTime stringValue];
+	NSString * metadata = base64NSString(offerObj.metadata);
+	
+	if(productID && productPrice && itemName && itemAmount && startTime && endTime && metadata)
+	{
+		values = @[productID, productPrice, itemName, itemAmount, startTime, endTime, metadata];
+		
+		FuseSafeRelease(productID);
+		FuseSafeRelease(itemName);
+		FuseSafeRelease(metadata);
+		ReturnNSString([values componentsJoinedByString:@","]);
+	}
+	
+	FuseSafeRelease(productID);
+	FuseSafeRelease(itemName);
+	FuseSafeRelease(metadata);
+
 	ReturnNSString(@"");
 }
 
@@ -589,7 +660,7 @@ int Native_SetGameData(const char* _fuseId, const char* _key, const char** _varK
 	int requestId = -1;
 	if (fuseId.length > 0)
 	{
-		requestId = [FuseSDK setGameData:_gameData FuseID:fuseId Key:(_gdKey.length > 0 ? _gdKey : nil) Delegate:_FuseSDK_delegate IsCollection:@NO];
+		requestId = [FuseSDK setGameData:_gameData FuseID:fuseId Key:(_gdKey.length > 0 ? _gdKey : nil) Delegate:_FuseSDK_delegate IsCollection:NO];
 	}
 	else
 	{
@@ -861,20 +932,21 @@ bool Native_RegisterCustomEventInt(int eventNumber, int value)
 	NSString * itemAmount = [NSString stringWithFormat:@"%@",_offer.itemAmount];
 	NSString * startTime = [_offer.startTime stringValue];
 	NSString * endTime = [_offer.endTime stringValue];
+	NSString * metadata = base64NSString(_offer.metadata);
 	
-	if(productID && productPrice && itemName && itemAmount && startTime && endTime)
+	if(productID && productPrice && itemName && itemAmount && startTime && endTime && metadata)
 	{
-		values = @[productID, productPrice, itemName, itemAmount, startTime, endTime];
+		values = @[productID, productPrice, itemName, itemAmount, startTime, endTime, metadata];
 		CallUnity("_CB_IAPOfferAccepted", [values componentsJoinedByString:@","].UTF8String);
 	}
 	
 	FuseSafeRelease(productID);
 	FuseSafeRelease(itemName);
+	FuseSafeRelease(metadata);
 }
 
 -(void) virtualGoodsOfferAcceptedWithObject:(FuseVirtualGoodsOfferObject*) _offer
 {
-	
 	if(_offer == nil)
 	{
 		return;
@@ -890,15 +962,17 @@ bool Native_RegisterCustomEventInt(int eventNumber, int value)
 	NSString * endTime = [_offer.endTime stringValue];
 	NSString * currencyID = [NSString stringWithFormat:@"%@",_offer.currencyID];
 	NSString * virtualGoodID = [NSString stringWithFormat:@"%@",_offer.virtualGoodID];
+	NSString * metadata = base64NSString(_offer.metadata);
 	
-	if(purchaseCurrency && purchasePrice && itemName && itemAmount && startTime && endTime)
+	if(purchaseCurrency && purchasePrice && itemName && itemAmount && startTime && endTime && metadata)
 	{
-		values = @[purchaseCurrency, purchasePrice, itemName, itemAmount, startTime, endTime, currencyID, virtualGoodID];
+		values = @[purchaseCurrency, purchasePrice, itemName, itemAmount, startTime, endTime, currencyID, virtualGoodID, metadata];
 		CallUnity("_CB_VirtualGoodsOfferAccepted", [values componentsJoinedByString:@","].UTF8String);
 	}
 	
 	FuseSafeRelease(purchaseCurrency);
 	FuseSafeRelease(itemName);
+	FuseSafeRelease(metadata);
 }
 
 -(void) adWillClose

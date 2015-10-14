@@ -215,24 +215,21 @@ public partial class FuseSDK
 	{
 		FuseLog("GetRewardedInfoForZoneID");
 		var infoStr = _fuseUnityPlugin.CallStatic<string>("getRewardedInfoForZoneID", zoneId);
-		try
-		{
-			RewardedInfo rInfo;
-			var pars = infoStr.Split(',');
+		return new RewardedInfo(infoStr);
+	}
 
-			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
-			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			rInfo.RewardAmount = int.Parse(pars[3]);
-			rInfo.RewardItemId = int.Parse(pars[4]);
-			return rInfo;
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing RewardInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return default(RewardedInfo);
-		}
+	public static VGOfferInfo GetVGOfferInfoForZone(string zoneId)
+	{
+		FuseLog("GetVGOfferInfoForZone");
+		var infoStr = _fuseUnityPlugin.CallStatic<string>("getVirtualGoodsOfferInfoForZoneID", zoneId);
+		return new VGOfferInfo(infoStr);
+	}
+
+	public static IAPOfferInfo GetIAPOfferInfoForZone(string zoneId)
+	{
+		FuseLog("GetIAPOfferInfoForZone");
+		var infoStr = _fuseUnityPlugin.CallStatic<string>("getIAPOfferInfoForZoneID", zoneId);
+		return new IAPOfferInfo(infoStr);
 	}
 
 	public static void ShowAdForZoneID(String zoneId, Dictionary<string, string> options = null)
@@ -250,12 +247,6 @@ public partial class FuseSDK
 	{
 		FuseLog("PreloadAdForZoneID");
 		_fuseUnityPlugin.CallStatic("preloadAdForZoneID", zoneId);
-	}
-
-	public static void DisplayMoreGames()
-	{
-		FuseLog("DisplayMoreGames");
-		_fuseUnityPlugin.CallStatic("displayMoreGames");
 	}
 
 	public static void SetRewardedVideoUserID(string userID)
@@ -675,77 +666,19 @@ public partial class FuseSDK
 	private void _RewardedAdCompleted(string param)
 	{
 		FuseLog("RewardedAdCompleted(" + param + ")");
-
-		try
-		{
-			RewardedInfo rInfo;
-			var pars = param.Split(',');
-
-			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
-			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			rInfo.RewardAmount = int.Parse(pars[3]);
-			rInfo.RewardItemId = int.Parse(pars[4]);
-			OnRewardedAdCompleted(rInfo);
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing RewardInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return;
-		}
+		OnRewardedAdCompleted(new RewardedInfo(param));
 	}
 
 	private void _IAPOfferAccepted(string param)
 	{
 		FuseLog("IAPOfferAccepted(" + param + ")");
-
-		try
-		{
-			IAPOfferInfo oInfo;
-			var pars = param.Split(',');
-
-			oInfo.ProductId = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			oInfo.ProductPrice = float.Parse(pars[1]);
-			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			oInfo.ItemAmount = int.Parse(pars[3]);
-			oInfo.StartTime = long.Parse(pars[4]).ToDateTime();
-			oInfo.EndTime = long.Parse(pars[5]).ToDateTime();
-			OnIAPOfferAccepted(oInfo);
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing IAPOfferInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return;
-		}
+		OnIAPOfferAccepted(new IAPOfferInfo(param));
 	}
 
 	private void _VirtualGoodsOfferAccepted(string param)
 	{
 		FuseLog("VirtualGoodsOfferAccepted(" + param + ")");
-
-		try
-		{
-			VGOfferInfo oInfo;
-			var pars = param.Split(',');
-
-			oInfo.PurchaseCurrency = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			oInfo.PurchasePrice = float.Parse(pars[1]);
-			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			oInfo.ItemAmount = int.Parse(pars[3]);
-			oInfo.StartTime = long.Parse(pars[4]).ToDateTime();
-			oInfo.EndTime = long.Parse(pars[5]).ToDateTime();
-			oInfo.CurrencyID = int.Parse(pars[6]);
-			oInfo.VirtualGoodID = int.Parse(pars[7]);
-			OnVirtualGoodsOfferAccepted(oInfo);
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing VGOfferInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return;
-		}
+		OnVirtualGoodsOfferAccepted(new VGOfferInfo(param));
 	}
 
 	private void _AdClickedWithURL(string url)

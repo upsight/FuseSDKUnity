@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Debug = UnityEngine.Debug;
 
 namespace FuseMisc
 {
@@ -107,7 +108,7 @@ namespace FuseMisc
 
 		/// <summary>The item the user will get as a reward.</summary>
 		public string RewardItem;
-
+ 
 		/// <summary>The ID of the item the user will get as a reward.</summary>
 		public int RewardItemId;
 
@@ -138,6 +139,26 @@ namespace FuseMisc
 			jo.AddField("RewardedInfo", members);
 			return jo.ToString();
 		}
+
+		public RewardedInfo(string infoString) : this()
+		{
+			try
+			{
+				var pars = infoString.Split(',');
+				int ra, rid;
+
+				PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
+				RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
+				RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
+				RewardAmount = int.TryParse(pars[3], out ra) ? ra : 0;
+				RewardItemId = int.TryParse(pars[4], out rid) ? rid : 0;
+			}
+			catch(Exception e)
+			{
+				Debug.LogError("FuseSDK: Error parsing RewardInfo. Returning default value.");
+				Debug.LogException(e);
+			}
+		}
 	}
 
 	/// <summary>Representation of an In-App Purchase Offer that can be presented to a player.</summary>
@@ -161,15 +182,18 @@ namespace FuseMisc
 		/// <summary>The time and date when the offer should end.</summary>
 		public DateTime EndTime;
 
+		/// <summary>The metadata configured for this offer.</summary>
+		public string Metadata;
+
 #if UNITY_EDITOR
 		public static implicit operator IAPOfferInfo(FuseSDKDotNETLite.Util.IAPOfferInfo o)
 		{
-			return new IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
+			return new IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
 		}
 
 		public static implicit operator FuseSDKDotNETLite.Util.IAPOfferInfo(IAPOfferInfo o)
 		{
-			return new FuseSDKDotNETLite.Util.IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
+			return new FuseSDKDotNETLite.Util.IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
 		}
 #endif
 
@@ -183,8 +207,34 @@ namespace FuseMisc
 			members.AddField("ItemAmount", ItemAmount);
 			members.AddField("StartTime", StartTime.ToUnixTimestamp());
 			members.AddField("EndTime", EndTime.ToUnixTimestamp());
+			members.AddField("Metadata", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Metadata)));
 			jo.AddField("IAPOfferInfo", members);
 			return jo.ToString();
+		}
+
+		public IAPOfferInfo(string infoString) : this()
+		{
+			try
+			{
+				var pars = infoString.Split(',');
+				float pp;
+				int ia;
+				long st, et;
+
+				ProductId = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
+				ProductPrice = float.TryParse(pars[1], out pp) ? pp : 0f;
+				ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
+				ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
+				StartTime = (long.TryParse(pars[4], out st) ? st : 0).ToDateTime();
+				EndTime = (long.TryParse(pars[5], out et) ? et : 0).ToDateTime();
+				Metadata = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[6]));
+			}
+			catch(Exception e)
+			{
+				Debug.LogError("FuseSDK: Error parsing IAPOfferInfo. Returning default value.");
+				Debug.LogException(e);
+				return;
+			}
 		}
 	}
 
@@ -215,15 +265,18 @@ namespace FuseMisc
 		/// <summary>The time and date when the offer should end.</summary>
 		public DateTime EndTime;
 
+		/// <summary>The metadata configured for this offer.</summary>
+		public string Metadata;
+
 #if UNITY_EDITOR
 		public static implicit operator VGOfferInfo(FuseSDKDotNETLite.Util.VGOfferInfo o)
 		{
-			return new VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
+			return new VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
 		}
 
 		public static implicit operator FuseSDKDotNETLite.Util.VGOfferInfo(VGOfferInfo o)
 		{
-			return new FuseSDKDotNETLite.Util.VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime };
+			return new FuseSDKDotNETLite.Util.VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
 		}
 #endif
 
@@ -239,8 +292,37 @@ namespace FuseMisc
 			members.AddField("ItemAmount", ItemAmount);
 			members.AddField("StartTime", StartTime.ToUnixTimestamp());
 			members.AddField("EndTime", EndTime.ToUnixTimestamp());
+			members.AddField("Metadata", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Metadata)));
 			jo.AddField("VGOfferInfo", members);
 			return jo.ToString();
+		}
+
+		public VGOfferInfo(string infoString) : this()
+		{
+			try
+			{
+				var pars = infoString.Split(',');
+				float pp;
+				int ia;
+				long st, et;
+				int cid, vgid;
+
+				PurchaseCurrency = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
+				PurchasePrice = float.TryParse(pars[1], out pp) ? pp : 0f;
+				ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
+				ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
+				StartTime = (long.TryParse(pars[4], out st) ? st : 0).ToDateTime();
+				EndTime = (long.TryParse(pars[5], out et) ? et : 0).ToDateTime();
+				CurrencyID = int.TryParse(pars[6], out cid) ? cid : 0;
+				VirtualGoodID = int.TryParse(pars[7], out vgid) ? vgid : 0;
+				Metadata = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[8]));
+			}
+			catch(Exception e)
+			{
+				Debug.LogError("FuseSDK: Error parsing VGOfferInfo. Returning default value.");
+				Debug.LogException(e);
+				return;
+			}
 		}
 	}
 

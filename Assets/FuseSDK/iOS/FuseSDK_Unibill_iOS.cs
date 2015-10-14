@@ -10,7 +10,7 @@ public class FuseSDK_Unibill_iOS : MonoBehaviour
 {	
 	public bool logging = false;
 	// Uncomment the #define at the top of this file if you are using the Prime31 StoreKit plugin for iOS
-#if UNITY_IPHONE && USING_UNIBILL_IOS
+#if UNITY_IOS && USING_UNIBILL_IOS
 	public static bool debugOutput = false;
 
 	public static bool ActionsRegistered = false;
@@ -102,5 +102,5 @@ public class FuseSDK_Unibill_iOS : MonoBehaviour
 		}
 	}
 	
-#endif//UNITY_IPHONE && USING_UNIBILL_IOS
+#endif//UNITY_IOS && USING_UNIBILL_IOS
 }

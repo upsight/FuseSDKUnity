@@ -6,6 +6,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 
+#if UNITY_ANDROID && USING_PRIME31_ANDROID
+using Prime31;
+#endif
+
 public class FuseSDK_Prime31_IAB : MonoBehaviour
 {
 	public bool logging = false;
@@ -29,7 +33,7 @@ public class FuseSDK_Prime31_IAB : MonoBehaviour
 	{
 		// add hooks for Prime31 IAB events
 		GoogleIABManager.purchaseSucceededEvent += PurchaseSucceeded;
-		GoogleIABManager.purchaseFailedEvent += PurchaseFailed;		
+		GoogleIABManager.purchaseFailedEvent += PurchaseFailed;
 	}
 	
 	void OnDestroy()
@@ -80,12 +84,12 @@ public class FuseSDK_Prime31_IAB : MonoBehaviour
 				}
 				catch
 				{
-					Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo - Error parsing " + priceString + " >> Unable to parse " + stripped);
+					Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo: Error parsing " + priceString + " >> Unable to parse " + stripped);
 				}
 			}
 			else
 			{
-				Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo - Error parsing " + priceString + " >> String did not match regex");
+				Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo: Error parsing " + priceString + " >> String did not match regex");
 			}
 		}
 
@@ -108,7 +112,7 @@ public class FuseSDK_Prime31_IAB : MonoBehaviour
 		savedPurchase = purchase;				
 	}
 	
-	void PurchaseFailed( string error )
+	void PurchaseFailed(string error, int response)
 	{
 		//FuseSDK.RegisterAndroidInAppPurchase(FuseSDK.PurchaseState.CANCELED, "", "", "", System.DateTime.Now, "");			
 	}

@@ -300,6 +300,16 @@ public partial class FuseSDK : MonoBehaviour
 	/// <returns>A struct with the reward information.</returns>
 	public static RewardedInfo GetRewardedInfoForZone(string zoneId){ return default(RewardedInfo); }
 
+	/// <summary>Get the information about the Virtual Good Offer set in the dashboard for this zone.</summary>
+	/// <remarks>If a zone is configured with Virtual Good Offers, this will return an object containing details about it.</remarks>
+	/// <param name="zoneId">The zone id containing the offer.</param>
+	public static VGOfferInfo GetVGOfferInfoForZone(string zoneId){ return default(VGOfferInfo); }
+
+	/// <summary>Get the information about the IAP Offer set in the dashboard for this zone.</summary>
+	/// <remarks>If a zone is configured with IAP Offers, this will return an object containing details about it.</remarks>
+	/// <param name="zoneId">The zone id containing the offer.</param>
+	public static IAPOfferInfo GetIAPOfferInfoForZone(string zoneId){ return default(IAPOfferInfo); }
+
 	/// <summary>Displays an ad, rewarded video, or offer for a given zone. Zone contents can be configured via the Fuse Dashboard.</summary>
 	/// <remarks>
 	/// This attempts to display an ad if one is available.  If no ad is immediately ready to display
@@ -357,10 +367,6 @@ public partial class FuseSDK : MonoBehaviour
 	/// </remarks>
 	/// <param name="zoneId">The zone id to fetch the ad from.</param>
 	public static void PreloadAdForZoneID(string zoneId){}
-
-	/// <summary>Displays the "More Games" screen.</summary>
-	/// <remarks>"More Games" can be used to showcase your own games or all games within the Fuse network.</remarks>
-	public static void DisplayMoreGames(){}
 
 	/// <summary>Sets the user ID string for rewarded video server verification.</summary>
 	/// <remarks>

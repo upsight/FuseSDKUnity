@@ -5,11 +5,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+#if UNITY_IOS && USING_PRIME31_IOS
+using Prime31;
+#endif
+
 public class FuseSDK_Prime31StoreKit : MonoBehaviour
 {	
 	public bool logging = false;
 	// Uncomment the #define at the top of this file if you are using the Prime31 StoreKit plugin for iOS
-#if UNITY_IPHONE && USING_PRIME31_IOS
+#if UNITY_IOS && USING_PRIME31_IOS
 	public static bool debugOutput = false;
 
 	// cached in order to send failed and cancelled messages
@@ -134,5 +138,5 @@ public class FuseSDK_Prime31StoreKit : MonoBehaviour
 		}
 	}
 	
-#endif//UNITY_IPHONE && USING_PRIME31_IOS
+#endif//UNITY_IOS && USING_PRIME31_IOS
 }

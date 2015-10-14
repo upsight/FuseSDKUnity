@@ -80,6 +80,8 @@ bool Native_IsAdAvailableForZoneID(const char* _zoneId);
 void Native_ShowAdForZoneID(const char* _zoneId, const char** optionKeys, const char** optionValues, int numOptions);
 void Native_PreloadAdForZone(const char* _zoneId);
 const char* Native_GetRewardedInfoForZone(const char* _zoneId);
+const char* Native_GetVirtualGoodsOfferInfoForZoneID(const char* _zoneId);
+const char* Native_GetIAPOfferInfoForZoneID(const char* _zoneId);
 bool Native_ZoneHasRewarded(const char* _zoneId);
 bool Native_ZoneHasIAPOffer(const char* _zoneId);
 bool Native_ZoneHasVirtualGoodsOffer(const char* _zoneId);
