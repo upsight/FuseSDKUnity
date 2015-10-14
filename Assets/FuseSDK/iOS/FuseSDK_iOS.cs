@@ -1,4 +1,4 @@
-﻿#if UNITY_IPHONE && !UNITY_EDITOR
+﻿#if UNITY_IOS && !UNITY_EDITOR
 using UnityEngine;
 using System;
 using System.Collections;
@@ -45,11 +45,13 @@ public partial class FuseSDK
 	[DllImport("__Internal")]
 	private static extern string Native_GetRewardedInfoForZone(string zoneId);
 	[DllImport("__Internal")]
+	private static extern string Native_GetVirtualGoodsOfferInfoForZoneID(string zoneId);
+	[DllImport("__Internal")]
+	private static extern string Native_GetIAPOfferInfoForZoneID(string zoneId);
+	[DllImport("__Internal")]
 	private static extern void Native_ShowAdForZoneID(string zoneId, string[] optionKeys, string[] optionValues, int numOptions);
 	[DllImport("__Internal")]
 	private static extern void Native_PreloadAdForZone(string zoneId);
-	[DllImport("__Internal")]
-	private static extern void Native_DisplayMoreGames();
 	[DllImport("__Internal")]
 	private static extern void Native_SetRewardedVideoUserID(string userID);
 
@@ -376,25 +378,25 @@ public partial class FuseSDK
 
 		FuseLog("GetRewardedInfoForZone");
 		var infoStr = Native_GetRewardedInfoForZone(zoneId);
-		try
-		{
-			RewardedInfo rInfo;
-			var pars = infoStr.Split(',');
+		return new RewardedInfo(infoStr);
+	}
 
-			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
-			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			int ra, rid;
-			rInfo.RewardAmount = int.TryParse(pars[3], out ra) ? ra : 0;
-			rInfo.RewardItemId = int.TryParse(pars[4], out rid) ? rid : 0;
-			return rInfo;
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing RewardInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return default(RewardedInfo);
-		}
+	public static VGOfferInfo GetVGOfferInfoForZone(string zoneId)
+	{
+		zoneId = zoneId ?? string.Empty;
+
+		FuseLog("GetVGOfferInfoForZone");
+		var infoStr = Native_GetVirtualGoodsOfferInfoForZoneID(zoneId);
+		return new VGOfferInfo(infoStr);
+	}
+
+	public static IAPOfferInfo GetIAPOfferInfoForZone(string zoneId)
+	{
+		zoneId = zoneId ?? string.Empty;
+
+		FuseLog("GetIAPOfferInfoForZone");
+		var infoStr = Native_GetIAPOfferInfoForZoneID(zoneId);
+		return new IAPOfferInfo(infoStr);
 	}
 
 	public static void ShowAdForZoneID(String zoneId, Dictionary<string, string> options = null)
@@ -413,12 +415,6 @@ public partial class FuseSDK
 
 		FuseLog("PreloadAdForZoneID");
 		Native_PreloadAdForZone(zoneId);
-	}
-
-	public static void DisplayMoreGames()
-	{
-		FuseLog("DisplayMoreGames");
-		Native_DisplayMoreGames();
 	}
 
 	public static void SetRewardedVideoUserID(string userID)
@@ -891,85 +887,19 @@ public partial class FuseSDK
 	private void _CB_RewardedAdCompleted(string param)
 	{
 		FuseLog("RewardedAdCompleted(" + param + ")");
-
-		try
-		{
-			RewardedInfo rInfo;
-			var pars = param.Split(',');
-
-			rInfo.PreRollMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			rInfo.RewardMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[1]));
-			rInfo.RewardItem = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			int ra, rid;
-			rInfo.RewardAmount = int.TryParse(pars[3], out ra) ? ra : 0;
-			rInfo.RewardItemId = int.TryParse(pars[4], out rid) ? rid : 0;
-			OnRewardedAdCompleted(rInfo);
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing RewardInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return;
-		}
+		OnRewardedAdCompleted(new RewardedInfo(param));
 	}
 
 	private void _CB_IAPOfferAccepted(string param)
 	{
 		FuseLog("IAPOfferAccepted(" + param + ")");
-
-		try
-		{
-			IAPOfferInfo oInfo;
-			var pars = param.Split(',');
-
-			oInfo.ProductId = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			float pp;
-			oInfo.ProductPrice = float.TryParse(pars[1], out pp) ? pp : 0f;
-			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			int ia;
-			oInfo.ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
-			long st, et;
-			oInfo.StartTime = (long.TryParse(pars[4], out st) ? st : 0).ToDateTime();
-			oInfo.EndTime = (long.TryParse(pars[5], out et) ? et : 0).ToDateTime();
-			OnIAPOfferAccepted(oInfo);
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing IAPOfferInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return;
-		}
+		OnIAPOfferAccepted(new IAPOfferInfo(param));
 	}
 
 	private void _CB_VirtualGoodsOfferAccepted(string param)
 	{
 		FuseLog("VirtualGoodsOfferAccepted(" + param + ")");
-
-		try
-		{
-			VGOfferInfo oInfo;
-			var pars = param.Split(',');
-
-			oInfo.PurchaseCurrency = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[0]));
-			float pp;
-			oInfo.PurchasePrice = float.TryParse(pars[1], out pp) ? pp : 0f;
-			oInfo.ItemName = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(pars[2]));
-			int ia;
-			oInfo.ItemAmount = int.TryParse(pars[3], out ia) ? ia : 0;
-			long st, et;
-			oInfo.StartTime = (long.TryParse(pars[4], out st) ? st : 0).ToDateTime();
-			oInfo.EndTime = (long.TryParse(pars[5], out et) ? et : 0).ToDateTime();
-			int cid, vgid;
-			oInfo.CurrencyID = int.TryParse(pars[6], out cid) ? cid : 0;
-			oInfo.VirtualGoodID = int.TryParse(pars[7], out vgid) ? vgid : 0;
-			OnVirtualGoodsOfferAccepted(oInfo);
-		}
-		catch(Exception e)
-		{
-			Debug.LogError("FuseSDK: Error parsing VGOfferInfo. Ignoring callback.");
-			Debug.LogException(e);
-			return;
-		}
+		OnVirtualGoodsOfferAccepted(new VGOfferInfo(param));
 	}
 
 	private void _CB_HandleAdClickWithURL(string url)
@@ -1135,18 +1065,25 @@ public partial class FuseSDK
 		FuseLog("GameConfigurationReceived()");
 
 		_gameConfig.Clear();
-
-		foreach(var line in param.Split('\u2613'))
+		
+		if(!string.IsNullOrEmpty(param))
 		{
-			var parts = line.Split('\u2603');
-			if(parts.Length == 2)
+			foreach(var line in param.Split('\u2613'))
 			{
-				_gameConfig.Add(parts[0], parts[1]);
+				var parts = line.Split('\u2603');
+				if(parts.Length == 2)
+				{
+					_gameConfig.Add(parts[0], parts[1]);
+				}
+				else
+				{
+					Debug.LogError("FuseSDK: Error reading GameConfiguration data. Invalid line: " + line);
+				}
 			}
-			else
-			{
-				Debug.LogError("FuseSDK: Error reading GameConfiguration data. Invalid line: " + line);
-			}
+		}
+		else
+		{
+			Debug.Log("FuseSDK: No game configuration values received.");
 		}
 
 		OnGameConfigurationReceived();

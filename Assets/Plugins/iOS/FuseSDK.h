@@ -114,7 +114,8 @@
  * @brief This method indicates that a visible notification is being closed
 
  * @see FuseSDK::displayNotifications for more information on displaying in-game notifications
- */-(void) notficationWillClose;
+ */
+-(void) notficationWillClose;
 
 /*!
  * @brief This method indicates that the game configuration values have been received by the client.
@@ -418,27 +419,6 @@
  */
 -(void) virtualGoodsOfferAcceptedWithObject:(FuseVirtualGoodsOfferObject*) _offer;
 
-/*!
- * @brief Callback to acknowledge an News Ad was clicked and the app should react to _message
- @param _message Dashboard set token for the application to respond to. Ex. 'openStore'
-
- 
- @code
- 
- -(void) onAdClickedWithMessage:(NSString*) _message
- {
-    if([_message isEqualToString:@"openStore"])
-    {
-        [game OpenCoinStore];
-    }
- 
- }
- 
- @endcode
- 
- @since Fuse SDK version 2.1.0
- */
--(void) onAdClickedWithMessage:(NSString*) _message;
 
 /*!
  * @brief Callback to inform no ad was displayed from showAdForZoneID:withOptions: call.
@@ -463,18 +443,19 @@
 /*!
 * @brief Callback to inform ad Did show
  
- * @see FshowAdForZoneID:withOptions:
- * @since Fuse SDK version 2.0.0
+ * @see FuseSDK::showAdForZoneID:withOptions:
+ * @since Fuse SDK version 2.2.1
 */
 -(void) adDidShow:(NSNumber *)_networkID mediaType:(NSNumber *)_mediaType;
 
 
 @required
+
 /*!
  * @brief Callback to indicates when control is being returned to the application
  
  * @details When an ad is being dismissed by the user and control is to be returned to the application, this method will be called.  Once called, the application can continue execution of the user flow or application.
- * @see FuseSDK::showAdWithDelegate: for more information on displaying an ad with a \<FuseDelegate\>
+ * @see FuseSDK::showAdForZoneID:withOptions: for more information on displaying an ad with a \<FuseDelegate\>
  * @since FuseSDK version 1.12
  */
 -(void) adWillClose;
@@ -508,6 +489,17 @@
  
     [FuseSDK startSession: @"YOUR APP ID" Delegate:self withOptions:nil];
 
+ ...
+ }
+ @endcode
+ 
+ Using Fuse SDK Options
+ @code
+ - (void)applicationDidFinishLaunching:(UIApplication *)application
+ {
+ 
+ [FuseSDK startSession: @"YOUR APP ID" Delegate:self withOptions:@{kFuseSDKOptionRegisterForPush:@YES,kFuseSDKOptionKey_HandleAdURLs:@NO} ];
+ 
  ...
  }
  @endcode
@@ -972,6 +964,19 @@
  @param _zoneID (NSString*) The name of the ad zone to display.  You can configure different zones via the Fuse Dashboard. May be nil, will use default ad zone
  @param _options (NSDictionary*) Options for showing the ad, like showing the preroll and postroll for rewarded videos. Can be found in FuseSDKDefinitions.h, may be nil
  
+ 
+ Using Options for ShowAd
+ @code
+ - (void)functionForShowingFuseAd
+ {
+    [FuseSDK showAdForZoneID:@"zoneID" options: 
+        @{ kFuseRewardedAdOptionKey_ShowPreRoll: @YES
+        ,kFuseRewardedAdOptionKey_ShowPostRoll: @NO
+        ,kFuseRewardedOptionKey_PreRollYesButtonText: @"I want it!" }
+    ];
+ }
+ @endcode
+ 
  * @see startSession:delegate:withOptions: to see how to register a \<FuseDelegate\> object to receive the optional callback
  * @since Fuse SDK version 2.0.0
  */
@@ -998,7 +1003,7 @@
 #pragma mark AdZone Queries
 
 /*!
- * @brief This Method returns the FuseRewardedObject for a give zoneID, or nil if there is no rewards available
+ * @brief This Method returns the FuseRewardedObject for a given zoneID, or nil if there is no rewards available
  * @details If a zone is configured to show rewarded videos, this will return an object containing
  * those details.
  
@@ -1012,6 +1017,39 @@
  * @since Fuse SDK version 2.0.0
  */
 +(FuseRewardedObject*) getRewardedInfoForZoneID:(NSString*) _zoneID;
+
+
+
+/*!
+ * @brief This Method returns the FuseIAPOfferObject for a given zoneID, or nil if there is no IAP offer available.
+ * @details If a zone currently contains a IAP offer, that information will be passed back.
+ 
+ 
+ @code
+ FuseIAPOfferObject * zoneReward = [FuseSDK getIAPOfferInfoForZoneID:@"zoneID"];
+ @endcode
+ 
+ * @param _zoneID (NSString*)the name to the ad zone to get the reward object from.  May be nil, will use default ad zone.
+ * @return a FuseIAPOfferObject with the offer information
+ * @since Fuse SDK version 2.2.0
+ */
++(FuseIAPOfferObject*) getIAPOfferInfoForZoneID:(NSString*) _zoneID;
+
+/*!
+ * @brief This Method returns the FuseRewardedObject for a give zoneID, or nil if there is Virtual Good offer available.
+ * @details  If a zone currently contains a Virtual Goods offer, that information will be passed back.
+ 
+ 
+ @code
+ FuseVirtualGoodsOfferObject * zoneReward = [FuseSDK getVirtualGoodsOfferInfoForZoneID:@"zoneID"];
+ @endcode
+ 
+ * @param _zoneID (NSString*)the name to the ad zone to get the reward object from.  May be nil, will use default ad zone.
+ * @return a FuseVirtualGoodsOfferObject with the offer information
+ * @since Fuse SDK version 2.2.0
+ */
++(FuseVirtualGoodsOfferObject*) getVirtualGoodsOfferInfoForZoneID:(NSString*) _zoneID;
+
 
 
 /*!
@@ -1055,7 +1093,7 @@
  * @brief Get a List of All active ad zones
  * @details This returns a list of adzones currently setup for displaying ads. It's primary function is developer side debugging in nature, as disabled or empty Adzones should be omitted.
  @code
- NSArray* adZoneList = [FuseSDK GetAdZoneList]
+ NSArray* adZoneList = [[FuseSDK get] GetAdZoneList]
  @endcode
  
  * @since Fuse SDK version 2.0.0
@@ -1083,33 +1121,6 @@
  */
 +(BOOL) isNotificationAvailable;
 
-#pragma mark More Games 
-/*!
- @brief This method is use to display the "More Games" section
- @details The "More Games" section can be used to showcase your own games or all games within the Fuse network (including yours!).  To call the "More Games" overlay, simply call:
- 
- @code
- [FuseSDK displayMoreGames];
- @endcode
- 
- add this delegate method:
- 
- @code
- 
- @implementation YourMoreGamesObject
- 
- -(void) adWillClose
- {
-    // more games overlay has closed
- }
- 
- @end
- 
- @endcode
- 
- @see FuseDelegate::adWillClose for more information on the delegate method call
- */
-+(void) displayMoreGames;
 
 #pragma mark Gender
 /*!
@@ -1937,7 +1948,9 @@
  @since Fuse SDK version 1.34
  */
 +(void) migrateFriends:(NSString*)_fuse_id;
+
 #pragma mark User-to-User Push Notifications
+
 /*!
  * @brief Send an Apple push notification to another user
  * @details Use this method to send a push notification to another user, using their Fuse ID to each of their devices that have logged in with that ID (and that have registered to receive notifications).  This system is dependent upon both the sender and the recipient to have logged in with either a Game Center account (see gameCenterLogin:) or similar method.  This system would most likely be used in conjunction with another social tool, such as the friend's list (see getFriendsList), where a list of users and their associated Fuse IDs would be known.  Messages can be no longer than 256 characters in length.

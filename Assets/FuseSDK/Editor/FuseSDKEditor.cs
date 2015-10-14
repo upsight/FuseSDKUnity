@@ -9,11 +9,14 @@ using System.IO;
 using System.Text;
 using System.Net;
 using System;
+using Ionic.Zip;
 
 [CustomEditor(typeof(FuseSDK))]
 public class FuseSDKEditor : Editor
 {
 	public static readonly string ICON_PATH = "/Plugins/Android/res/drawable/ic_launcher.png";
+	public static readonly string AAR_ICON_COPY = "/FuseSDK/Editor/ic_launcher.png";
+	public static readonly string AAR_PATH = "/Plugins/Android/FuseSDK.aar";
 	public static readonly int ICON_HEIGHT = 72;
 	public static readonly int ICON_WIDTH = 72;
 
@@ -43,7 +46,7 @@ public class FuseSDKEditor : Editor
 		_self = (FuseSDK)target;
 #if UNITY_3_5
 		_logo = Resources.LoadAssetAtPath(logoPath, typeof(Texture2D)) as Texture2D;
-#elif UNITY_4 || UNITY_5_0
+#elif UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_5_0
 		_logo = Resources.LoadAssetAtPath<Texture2D>(logoPath);
 #else
 		_logo = AssetDatabase.LoadAssetAtPath<Texture2D>(logoPath);
@@ -166,10 +169,8 @@ public class FuseSDKEditor : Editor
 			if(_icon == null)
 			{
 				_icon = new Texture2D(ICON_WIDTH, ICON_HEIGHT);
-				_icon.LoadImage(File.ReadAllBytes(Application.dataPath + ICON_PATH));
+				_icon.LoadImage(File.ReadAllBytes(LoadIcon()));
 			}
-
-			string path = Application.dataPath + ICON_PATH;
 
 			GUILayout.Space(10);
 			
@@ -191,35 +192,9 @@ public class FuseSDKEditor : Editor
 
 			GUILayout.EndHorizontal();
 
-			if(!string.IsNullOrEmpty(_newIconPath) && _newIconPath != path)
+			if(!string.IsNullOrEmpty(_newIconPath) && _newIconPath != (Application.dataPath + ICON_PATH))
 			{
-				try
-				{
-					var bytes = File.ReadAllBytes(_newIconPath);
-					string header = System.Text.Encoding.ASCII.GetString(bytes, 1, 3);
-					_icon.LoadImage(bytes);
-					if((bytes[0] == 'J' && header == "FIF") || (bytes[0] == (byte)0x89 && header == "PNG"))
-					{
-						if(_icon.height == ICON_HEIGHT && _icon.width == ICON_WIDTH)
-						{
-							File.WriteAllBytes(path, _icon.EncodeToPNG());
-							_newIconPath = null;
-							_error = null;
-						}
-						else
-						{
-							_error = "The image is not " + ICON_WIDTH + "x" + ICON_HEIGHT + " pixels.";
-						}
-					}
-					else
-					{
-						_error = "File is not a valid image.";
-					}
-				}
-				catch
-				{
-					_error = "File could not be read.";
-				}
+				UpdateIcon();
 			}
 			else
 			{
@@ -231,6 +206,15 @@ public class FuseSDKEditor : Editor
 		{
 			DestroyImmediate(_icon);
 			_icon = null;
+#if UNITY_5
+			string path = LoadIcon(true);
+			if(File.Exists(path))
+				File.Delete(path);
+
+			path += ".meta";
+			if(File.Exists(path))
+				File.Delete(path);
+#endif
 		}
 
 		GUILayout.BeginHorizontal();
@@ -245,6 +229,82 @@ public class FuseSDKEditor : Editor
 		if(GUI.changed)
 		{
 			EditorUtility.SetDirty(target);
+		}
+	}
+
+	private string LoadIcon(bool getOnly = false)
+	{
+#if UNITY_5
+		string path = Application.dataPath + AAR_ICON_COPY;
+		if(!getOnly && File.GetLastWriteTime(path) < File.GetLastWriteTime(Application.dataPath + AAR_PATH))
+		{
+			try
+			{
+				string tempPath = "/FuseSDK/Editor/.fusetemp/";
+				using(var aar = ZipFile.Read(Application.dataPath + AAR_PATH))
+				{
+					aar.ExtractSelectedEntries("ic_launcher.png", "res/drawable", Application.dataPath + tempPath, ExtractExistingFileAction.OverwriteSilently);
+				}
+				File.Copy(Application.dataPath + tempPath + "res/drawable/ic_launcher.png", path, true);
+				Directory.Delete(Application.dataPath + tempPath, true);
+			}
+			catch(Exception e)
+			{
+				_error = "Error extracting icon: " + e.Message;
+			}
+		}
+		return path;
+#else
+		return Application.dataPath + ICON_PATH;
+#endif
+	}
+
+	private void UpdateIcon()
+	{
+		try
+		{
+			var bytes = File.ReadAllBytes(_newIconPath);
+			string header = System.Text.Encoding.ASCII.GetString(bytes, 1, 3);
+			_icon.LoadImage(bytes);
+			if((bytes[0] == 'J' && header == "FIF") || (bytes[0] == (byte)0x89 && header == "PNG"))
+			{
+				if(_icon.height == ICON_HEIGHT && _icon.width == ICON_WIDTH)
+				{
+#if UNITY_5
+					string path = Application.dataPath + AAR_ICON_COPY;
+					File.WriteAllBytes(path, _icon.EncodeToPNG());
+					try
+					{
+						using(var aar = ZipFile.Read(Application.dataPath + AAR_PATH))
+						{
+							aar.UpdateFile(path, "res/drawable");
+							aar.Save();
+						}
+					}
+					catch(Exception e)
+					{
+						_error = "Error writing to FuseSDK.aar: " + e.Message;
+					}
+					File.Delete(path);
+#else
+					File.WriteAllBytes(Application.dataPath + ICON_PATH, _icon.EncodeToPNG());
+#endif
+					_newIconPath = null;
+					_error = null;
+				}
+				else
+				{
+					_error = "The image is not " + ICON_WIDTH + "x" + ICON_HEIGHT + " pixels.";
+				}
+			}
+			else
+			{
+				_error = "File is not a valid image.";
+			}
+		}
+		catch
+		{
+			_error = "File could not be read.";
 		}
 	}
 
@@ -458,17 +518,18 @@ public class FuseSDKPrefs : EditorWindow
 	{
 		Never = 0,
 		MajorReleases = 1,
-		MinorReleases = 2,
+		RegularReleases = 2,
 		Bugfixes = 3,
 	}
 
 	enum ActiveAdapters
 	{
-		AdColony = 1,
-		AppLovin = 2,
-		HyprMX = 4,
-		LeadBolt = 8,
-		NativeX = 16,
+		AdColony = 1 << 0,
+		AppLovin = 1 << 1,
+		HyprMX = 1 << 2,
+		LeadBolt = 1 << 3,
+		NativeX = 1 << 4,
+		AerServ = 1 << 5,
 	}
 
 	private static readonly string[] AdapterFilenames = new string[]
@@ -478,6 +539,7 @@ public class FuseSDKPrefs : EditorWindow
 		"libFuseAdapterHyprMx.a",
 		"libFuseAdapterLeadBolt.a",
 		"libFuseAdapterNativeX.a",
+		"libFuseAdapterAerServ.a",
 	};
 
 	private static readonly string ADAPTERS_KEY = "FuseSDKActiveAdapters";

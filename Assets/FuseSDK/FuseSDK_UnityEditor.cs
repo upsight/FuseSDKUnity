@@ -294,6 +294,24 @@ public partial class FuseSDK
 		return FuseDotNet.GetRewardedInfoForZone(zoneId);
 	}
 
+	/// <summary>Get the information about the Virtual Good Offer set in the dashboard for this zone.</summary>
+	/// <remarks>If a zone is configured with Virtual Good Offers, this will return an object containing details about it.</remarks>
+	/// <param name="zoneId">The zone id containing the offer.</param>
+	public static VGOfferInfo GetVGOfferInfoForZone(string zoneId)
+	{
+		FuseLog("GetVGOfferInfoForZone");
+		return FuseDotNet.GetVGOfferInfoForZone(zoneId);
+	}
+
+	/// <summary>Get the information about the IAP Offer set in the dashboard for this zone.</summary>
+	/// <remarks>If a zone is configured with IAP Offers, this will return an object containing details about it.</remarks>
+	/// <param name="zoneId">The zone id containing the offer.</param>
+	public static IAPOfferInfo GetIAPOfferInfoForZone(string zoneId)
+	{
+		FuseLog("GetIAPOfferInfoForZone");
+		return FuseDotNet.GetIAPOfferInfoForZone(zoneId);
+	}
+
 	/// <summary>Displays an ad, rewarded video, or offer for a given zone. Zone contents can be configured via the Fuse Dashboard.</summary>
 	/// <remarks>
 	/// This attempts to display an ad if one is available.  If no ad is immediately ready to display
@@ -360,14 +378,6 @@ public partial class FuseSDK
 		FuseDotNet.PreloadAdForZoneID(zoneId);
 	}
 
-	/// <summary>Displays the "More Games" screen.</summary>
-	/// <remarks>"More Games" can be used to showcase your own games or all games within the Fuse network.</remarks>
-	public static void DisplayMoreGames()
-	{
-		FuseLog("DisplayMoreGames");
-		FuseDotNet.DisplayMoreGames();
-	}
-
 	/// <summary>Sets the user ID string for rewarded video server verification.</summary>
 	/// <remarks>
 	/// To allow server side verificiation. A user id registered with this function is passed to the server when a
@@ -381,9 +391,9 @@ public partial class FuseSDK
 		FuseDotNet.SetRewardedVideoUserID(userID);
 	}
 
-#endregion
+	#endregion
 
-#region Notifications
+	#region Notifications
 
 	/// <summary>Display and in-game Fuse notification.</summary>
 	/// <remarks>

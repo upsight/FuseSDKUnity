@@ -23,19 +23,7 @@
 		</activity>
 		
 		<!-- FuseAPI -->
-		<meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
-		
-        <activity
-            android:name="com.fusepowered.fuseactivities.FuseApiMoregamesBrowser"
-            android:label="FuseApiMoregamesBrowser">
-            <intent-filter>
-                <action android:name="com.fusepowered.fuseactivities.FuseApiMoregamesBrowser" />
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>		
-		
+		<meta-data android:name="com.google.android.gms.version" android:value="6587000" />	
 
         <activity
             android:name="com.fusepowered.m2.mobileads.M2Activity"

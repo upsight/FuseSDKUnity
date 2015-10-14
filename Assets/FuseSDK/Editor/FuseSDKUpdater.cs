@@ -118,7 +118,7 @@ public static class FuseSDKUpdater
 
 		int outOfDate = HowOldIsVersion(myVer, newVer);
 
-		string[] revType = new string[] {"This is a major release!", "This is a minor release.", "This is a bugfix revision.", "This is a bugfix revision."};
+		string[] revType = new string[] {"This is a major release!", "This is a regular release.", "This is a bugfix revision.", "This is a bugfix revision."};
 		if(outOfDate > -1 && (EditorPrefs.GetInt(AUTOUPDATE_KEY, 4) >= outOfDate || force))
 		{
 			int retVal = EditorUtility.DisplayDialogComplex("An update to Fuse SDK is available", 
