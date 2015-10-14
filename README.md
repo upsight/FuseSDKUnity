@@ -11,8 +11,8 @@ When updating the Fuse SDK from version 1.* to 2.* or higher, you must first del
 The FuseAPI class has been renamed to FuseSDK, you will need to update your references.
 
 ## To Download
-[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK.unitypackage)
-[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK-Unity5.unitypackage)
+[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK.unitypackage)  
+[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK-Unity5.unitypackage)  
 Once the package has been imported into your project, you will be able to update the FuseSDK Wrapper through the Unity Editor.
 
 ## Getting Started
