@@ -322,7 +322,7 @@ public static class FuseSDKUpdater
 
 				if(Application.platform == RuntimePlatform.Android)
 				{
-					FusePostProcess.UpdateAndroidManifest(PlayerSettings.bundleIdentifier);
+					FuseSDKEditor.UpdateAndroidManifest();
 				}
 			}
 			catch

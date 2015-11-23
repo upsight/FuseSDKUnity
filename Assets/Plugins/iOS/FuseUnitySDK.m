@@ -461,7 +461,12 @@ void Native_RegisterPushToken(Byte* token, int size)
 {
 	NSData * data = [[NSData alloc] initWithBytes:token length:size];
 	[FuseSDK applicationdidRegisterForRemoteNotificationsWithDeviceToken:data];
-	
+}
+
+void Native_ReceivedRemoteNotification(const char* notificationID)
+{
+    NSDictionary* userInfo = @{@"notification_id":[NSString stringWithUTF8String:notificationID]};
+    [FuseSDK applicationdidReceiveRemoteNotification:userInfo];
 }
 
 

@@ -202,48 +202,11 @@ public static class FusePostProcess
 
 			if(Application.platform == RuntimePlatform.Android)
 			{
-				UpdateAndroidManifest(PlayerSettings.bundleIdentifier);
+				EditorApplication.ExecuteMenuItem("FuseSDK/Update Android Manifest");
 			}
 		}
 		catch
 		{ }
-	}
-
-
-	public static void UpdateAndroidManifest(string packageName)
-	{
-		if(string.IsNullOrEmpty(packageName))
-			return;
-
-		Regex re = new Regex(@"\s*<\s*meta-data\s+android:name\s*=\s*""com.fusepowered.replace.packageId""\s*android:value\s*=\s*""(?<id>\S+)""\s*/>.*", RegexOptions.Singleline);
-		string[] manifest = File.ReadAllLines(Application.dataPath + "/Plugins/Android/AndroidManifest.xml");
-
-		if(manifest.Length > 1)
-		{
-			for(int i = 0; i < manifest.Length; i++)
-			{
-				Match match;
-				string id;
-				if((match = re.Match(manifest[i])).Success && !string.IsNullOrEmpty(id = match.Groups["id"].Value) && id != packageName)
-				{
-					manifest[i] = manifest[i].Replace(id, packageName);
-					i++;
-					manifest[i] = manifest[i].Replace(id, packageName);
-
-					if(!manifest[i].Contains(packageName))
-					{
-						UnityEngine.Debug.LogWarning("Fuse SDK: Android Manifest has been changed manually. Unable to set package ID.");
-					}
-				}
-			}
-		}
-		else
-		{
-			UnityEngine.Debug.LogWarning("Fuse SDK: Unable to read Android Manifest. Unable to set package ID.");
-			return;
-		}
-
-		File.WriteAllLines(Application.dataPath + "/Plugins/Android/AndroidManifest.xml", manifest);
 	}
 
 	// MAIN FUNCTION

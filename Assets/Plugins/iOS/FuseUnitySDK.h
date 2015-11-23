@@ -92,6 +92,7 @@ void Native_SetRewardedVideoUserID(const char* _userID);
 #pragma mark - Notifications
 
 void Native_RegisterPushToken(Byte* token, int size);
+void Native_ReceivedRemoteNotification(const char* notificationID);
 void Native_DisplayNotifications();
 bool Native_IsNotificationAvailable();
 

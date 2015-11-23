@@ -18,6 +18,8 @@ public partial class FuseSDK
 	[DllImport("__Internal")]
 	private static extern void Native_RegisterPushToken(byte[] token, int size);
 	[DllImport("__Internal")]
+	private static extern void Native_ReceivedRemoteNotification(string notificationId);
+	[DllImport("__Internal")]
 	private static extern void Native_SetUnityGameObject(string gameObjectName);
 
 	[DllImport("__Internal")]
@@ -173,6 +175,32 @@ public partial class FuseSDK
 		if(!string.IsNullOrEmpty(iOSAppID) && StartAutomatically)
 		{
 			_StartSession(iOSAppID, registerForPushNotifications, false);
+		}
+	}
+#endregion
+
+#region Application State
+
+	void OnApplicationPause(bool pausing)
+	{
+		if(pausing)
+		{
+		}
+		else
+		{
+#if UNITY_3_5 || UNITY_4
+			foreach(var n in NotificationServices.remoteNotifications)
+				if(n.userInfo.Contains("notification_id"))
+					Native_ReceivedRemoteNotification(n.userInfo["notification_id"].ToString());
+			
+			NotificationServices.ClearRemoteNotifications();
+#else
+			foreach(var n in UnityEngine.iOS.NotificationServices.remoteNotifications)
+				if(n.userInfo.Contains("notification_id"))
+					Native_ReceivedRemoteNotification(n.userInfo["notification_id"].ToString());
+			
+			UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+#endif
 		}
 	}
 #endregion
