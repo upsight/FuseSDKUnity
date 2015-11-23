@@ -16,6 +16,7 @@ public class FuseSDKEditor : Editor
 {
 	public static readonly string ICON_PATH = "/Plugins/Android/res/drawable/ic_launcher.png";
 	public static readonly string AAR_ICON_COPY = "/FuseSDK/Editor/ic_launcher.png";
+	public static readonly string MANIFEST_COPY = "/FuseSDK/Editor/AndroidManifest.xml";
 	public static readonly string AAR_PATH = "/Plugins/Android/FuseSDK.aar";
 	public static readonly int ICON_HEIGHT = 72;
 	public static readonly int ICON_WIDTH = 72;
@@ -478,10 +479,82 @@ public class FuseSDKEditor : Editor
 		AssetDatabase.SaveAssets();
 	}
 
+	//FusePostProcess.OnPostProcessScene calls this by the menu name
 	[MenuItem("FuseSDK/Update Android Manifest", false, 1)]
 	public static void UpdateAndroidManifest()
 	{
-		FusePostProcess.UpdateAndroidManifest(PlayerSettings.bundleIdentifier);
+		string packageName = PlayerSettings.bundleIdentifier;
+		string path = Application.dataPath + "/Plugins/Android/AndroidManifest.xml";
+
+		if(string.IsNullOrEmpty(packageName))
+			return;
+
+#if UNITY_5
+		path = Application.dataPath + MANIFEST_COPY;
+		try
+		{
+			string tempPath = "/FuseSDK/Editor/.fusetemp/";
+			using(var aar = ZipFile.Read(Application.dataPath + AAR_PATH))
+			{
+				aar.ExtractSelectedEntries("AndroidManifest.xml", "", Application.dataPath + tempPath, ExtractExistingFileAction.OverwriteSilently);
+			}
+			File.Copy(Application.dataPath + tempPath + "AndroidManifest.xml", path, true);
+			Directory.Delete(Application.dataPath + tempPath, true);
+		}
+		catch(Exception e)
+		{
+			Debug.LogError("Error extracting AndroidManifest.xml. Unable to set package ID: " + e.Message);
+			File.Delete(path);
+			return;
+		}
+#endif
+
+		Regex re = new Regex(@"\s*<\s*meta-data\s+android:name\s*=\s*""com.fusepowered.replace.packageId""\s*android:value\s*=\s*""(?<id>\S+)""\s*/>.*", RegexOptions.Singleline);
+		string[] manifest = File.ReadAllLines(path);
+
+		if(manifest.Length > 1)
+		{
+			for(int i = 0; i < manifest.Length; i++)
+			{
+				Match match;
+				string id;
+				if((match = re.Match(manifest[i])).Success && !string.IsNullOrEmpty(id = match.Groups["id"].Value) && id != packageName)
+				{
+					manifest[i] = manifest[i].Replace(id, packageName);
+					i++;
+					manifest[i] = manifest[i].Replace(id, packageName);
+
+					if(!manifest[i].Contains(packageName))
+					{
+						Debug.LogWarning("Fuse SDK: Android Manifest has been changed manually. Unable to set package ID.");
+					}
+				}
+			}
+		}
+		else
+		{
+			Debug.LogError("Fuse SDK: Unable to read Android Manifest. Unable to set package ID.");
+			return;
+		}
+
+		File.WriteAllLines(path, manifest);
+
+#if UNITY_5
+		try
+		{
+			using(var aar = ZipFile.Read(Application.dataPath + AAR_PATH))
+			{
+				aar.UpdateFile(path, "");
+				aar.UpdateFile(path, "aapt");
+				aar.Save();
+			}
+		}
+		catch(Exception e)
+		{
+			Debug.LogError("Error writing AndroidManifest.xml to aar. Unable to set package ID: " + e.Message);
+		}
+		File.Delete(path);
+#endif
 	}
 
 	[MenuItem("FuseSDK/Open Documentation", false, 20)]
