@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.4.1.0
+Version: 2.4.2.0
 
-Released: November 23rd, 2015
+Released: November 26th, 2015
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
@@ -28,6 +28,10 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.4.2.0
+November 26th, 2015
+* Ad Provider optimizations
 
 ### 2.4.1.0
 November 23rd, 2015
