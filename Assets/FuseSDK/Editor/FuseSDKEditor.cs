@@ -24,6 +24,49 @@ public class FuseSDKEditor : Editor
 	private static readonly string API_KEY_PATTERN = @"^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$"; //8-4-4-4-12
 	private static readonly string API_STRIP_PATTERN = @"[^\da-f\-]"; //8-4-4-4-12
 
+	private static readonly string[] MANIFEST_GCM_RECEIVER_ENTRY = new string[] { "\t\t<meta-data android:name=\"com.fusepowered.replace.gcmReceiver\" android:value=\"{{timestamp}}\" />",
+					"\t\t<!-- GCM -->",
+					"\t\t<activity",
+					"            android:name=\"com.fusepowered.unity.GCMJava\"",
+					"            android:label=\"@string/app_name\" >",
+					"\t\t</activity>",
+					"\t\t<receiver",
+					"            android:name=\"com.fusepowered.unity.FuseUnityGCMReceiver\"",
+					"            android:permission=\"com.google.android.c2dm.permission.SEND\" >",
+					"            <intent-filter>",
+					"                <!-- Receives the actual messages. -->",
+					"                <action android:name=\"com.google.android.c2dm.intent.RECEIVE\" />",
+					"                <!-- Receives the registration id. -->",
+					"                <action android:name=\"com.google.android.c2dm.intent.REGISTRATION\" />",
+					"\t\t\t\t",
+					"\t\t\t\t<meta-data android:name=\"com.fusepowered.replace.packageId\" android:value=\"{{packageId}}\" />",
+					"                <category android:name=\"{{packageId}}\" />",
+					"",
+					"            </intent-filter>",
+					"\t\t</receiver>",
+					"\t\t<service android:name=\"com.fusepowered.unity.GCMIntentService\" />",
+					"\t\t<!-- end -->",
+	};
+
+	private static readonly string[] MANIFEST_GCM_PERMISSIONS_ENTRY = new string[] { "\t<meta-data android:name=\"com.fusepowered.replace.gcmPermissions\" android:value=\"{{timestamp}}\" />",
+					"\t<!-- Permissions for GCM -->",
+					"\t<!-- GCM requires a Google account. -->",
+					"\t<uses-permission android:name=\"android.permission.GET_ACCOUNTS\" />",
+					"\t",
+					"\t<!-- Keeps the processor from sleeping when a message is received. -->",
+					"\t<uses-permission android:name=\"android.permission.WAKE_LOCK\" />",
+					"\t",
+					"\t<!-- Creates a custom permission so only this app can receive its messages. -->",
+					"\t<meta-data android:name=\"com.fusepowered.replace.packageId\" android:value=\"{{packageId}}\" />",
+					"\t<permission android:name=\"{{packageId}}.permission.C2D_MESSAGE\"\tandroid:protectionLevel=\"signature\" />",
+					"",
+					"\t<meta-data android:name=\"com.fusepowered.replace.packageId\" android:value=\"{{packageId}}\" />",
+					"\t<uses-permission android:name=\"{{packageId}}.permission.C2D_MESSAGE\" />",
+					"\t",
+					"\t<!-- This app has permission to register and receive data message. -->",
+					"\t<uses-permission android:name=\"com.google.android.c2dm.permission.RECEIVE\" />",
+	};
+
 	private static bool _iconFoldout = false;
 
 	private FuseSDK _self;
@@ -242,6 +285,7 @@ public class FuseSDKEditor : Editor
 			try
 			{
 				string tempPath = "/FuseSDK/Editor/.fusetemp/";
+				Directory.CreateDirectory(Application.dataPath + tempPath);
 				using(var aar = ZipFile.Read(Application.dataPath + AAR_PATH))
 				{
 					aar.ExtractSelectedEntries("ic_launcher.png", "res/drawable", Application.dataPath + tempPath, ExtractExistingFileAction.OverwriteSilently);
@@ -347,6 +391,7 @@ public class FuseSDKEditor : Editor
 	}
 #endif
 
+#if !FUSE_DISABLE_INTERNAL_ANALYTICS
 	[PostProcessBuild]
 	public static void SendAnalytics(BuildTarget target, string path)
 	{
@@ -422,7 +467,7 @@ public class FuseSDKEditor : Editor
 			request.Method = "POST";
 			request.ContentType = "application/x-www-form-urlencoded";
 			request.ContentLength = query.Length;
-			request.Timeout = 2000;
+			request.Timeout = 500;
 
 			Stream dataStream = request.GetRequestStream();
 			byte[] data = Encoding.UTF8.GetBytes(query);
@@ -433,6 +478,7 @@ public class FuseSDKEditor : Editor
 		}
 		catch{}
 	}
+#endif
 
 
 	[MenuItem ("FuseSDK/Regenerate Prefab", false, 0)]
@@ -494,6 +540,7 @@ public class FuseSDKEditor : Editor
 		try
 		{
 			string tempPath = "/FuseSDK/Editor/.fusetemp/";
+			Directory.CreateDirectory(Application.dataPath + tempPath);
 			using(var aar = ZipFile.Read(Application.dataPath + AAR_PATH))
 			{
 				aar.ExtractSelectedEntries("AndroidManifest.xml", "", Application.dataPath + tempPath, ExtractExistingFileAction.OverwriteSilently);
@@ -509,25 +556,66 @@ public class FuseSDKEditor : Editor
 		}
 #endif
 
-		Regex re = new Regex(@"\s*<\s*meta-data\s+android:name\s*=\s*""com.fusepowered.replace.packageId""\s*android:value\s*=\s*""(?<id>\S+)""\s*/>.*", RegexOptions.Singleline);
+		Regex packageIdRegex = new Regex(@"\s*<\s*meta-data\s+android:name\s*=\s*""com.fusepowered.replace.packageId""\s*android:value\s*=\s*""(?<id>\S+)""\s*/>.*", RegexOptions.Singleline);
+		Regex gcmReceiverRegex = new Regex(@"\s*<\s*meta-data\s+android:name\s*=\s*""com.fusepowered.replace.gcmReceiver""\s*android:value\s*=\s*""(?<time>\S+)""\s*/>.*", RegexOptions.Singleline);
+		Regex gcmPermissionsRegex = new Regex(@"\s*<\s*meta-data\s+android:name\s*=\s*""com.fusepowered.replace.gcmPermissions""\s*android:value\s*=\s*""(?<time>\S+)""\s*/>.*", RegexOptions.Singleline);
 		string[] manifest = File.ReadAllLines(path);
+		List<string> newManifest = new List<string>();
 
-		if(manifest.Length > 1)
+		string tsNow = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds.ToString("F0");
+
+		if(manifest.Length > 0)
 		{
 			for(int i = 0; i < manifest.Length; i++)
 			{
 				Match match;
-				string id;
-				if((match = re.Match(manifest[i])).Success && !string.IsNullOrEmpty(id = match.Groups["id"].Value) && id != packageName)
+				string captured;
+				long time;
+				if((match = gcmReceiverRegex.Match(manifest[i])).Success && !string.IsNullOrEmpty(captured = match.Groups["time"].Value) && long.TryParse(captured, out time))
 				{
-					manifest[i] = manifest[i].Replace(id, packageName);
+					if(time == 0)
+					{
+						//Manifest doesn't contain the GCM Receiver entries
+						foreach(var l in MANIFEST_GCM_RECEIVER_ENTRY)
+							newManifest.Add(l.Replace("{{timestamp}}", tsNow).Replace("{{packageId}}", packageName));
+					}
+					else
+					{
+						//Manifest contains the GCM Receiver entries, update them by continuing
+						newManifest.Add(manifest[i].Replace("{{timestamp}}", tsNow));
+					}
+
+				}
+				else if((match = gcmPermissionsRegex.Match(manifest[i])).Success && !string.IsNullOrEmpty(captured = match.Groups["time"].Value) && long.TryParse(captured, out time))
+				{
+					if(time == 0)
+					{
+						//Manifest doesn't contain the GCM Permissions entries
+						foreach(var l in MANIFEST_GCM_PERMISSIONS_ENTRY)
+							newManifest.Add(l.Replace("{{timestamp}}", tsNow).Replace("{{packageId}}", packageName));
+					}
+					else
+					{
+						//Manifest contains the GCM Permissions entries, update them by continuing
+						newManifest.Add(manifest[i].Replace("{{timestamp}}", tsNow));
+					}
+				}
+				else if((match = packageIdRegex.Match(manifest[i])).Success && !string.IsNullOrEmpty(captured = match.Groups["id"].Value) && captured != packageName)
+				{
+					//Found pre-existing entries, update them
+					newManifest.Add(manifest[i].Replace(captured, packageName));
 					i++;
-					manifest[i] = manifest[i].Replace(id, packageName);
+					newManifest.Add(manifest[i].Replace(captured, packageName));
 
 					if(!manifest[i].Contains(packageName))
 					{
 						Debug.LogWarning("Fuse SDK: Android Manifest has been changed manually. Unable to set package ID.");
 					}
+				}
+				else
+				{
+					//Line doesn't match anything special, just copy it over
+					newManifest.Add(manifest[i]);
 				}
 			}
 		}
@@ -537,7 +625,7 @@ public class FuseSDKEditor : Editor
 			return;
 		}
 
-		File.WriteAllLines(path, manifest);
+		File.WriteAllLines(path, newManifest.ToArray());
 
 #if UNITY_5
 		try
@@ -564,7 +652,7 @@ public class FuseSDKEditor : Editor
 	}
 	
 	[MenuItem("FuseSDK/Open GitHub Project", false, 21)]
-	static void GoToGitHUb()
+	static void GoToGitHub()
 	{
 		Application.OpenURL(FuseSDKUpdater.LATEST_SDK_URL);
 	}

@@ -127,12 +127,7 @@ public static class FusePostProcess
 		}
 #endif
 
-		UnityEngine.Debug.Log("FusePostProcess - STOP");
-	}
-
-	[PostProcessScene] // <- for old version cleanup
-	public static void OnPostProcessScene()
-	{
+		//Clean up old Fuse files
 		try
 		{
 			// delete older versions of API jar
@@ -174,7 +169,7 @@ public static class FusePostProcess
 						Directory.Delete(Application.dataPath + "/Plugins/Android/libs/x86");
 						if(File.Exists(Application.dataPath + "/Plugins/Android/libs/x86.meta"))
 							File.Delete(Application.dataPath + "/Plugins/Android/libs/x86.meta");
-                    }
+					}
 				}
 
 				if(Directory.Exists(Application.dataPath + "/Plugins/Android/libs/armeabi-v7a"))
@@ -200,6 +195,22 @@ public static class FusePostProcess
 				}
 			}
 
+			if(Application.platform == RuntimePlatform.Android)
+			{
+				EditorApplication.ExecuteMenuItem("FuseSDK/Update Android Manifest");
+			}
+		}
+		catch
+		{ }
+
+		UnityEngine.Debug.Log("FusePostProcess - STOP");
+	}
+
+	[PostProcessScene] // <- should happen after every scene is processed at build time
+	public static void OnPostProcessScene()
+	{
+		try
+		{
 			if(Application.platform == RuntimePlatform.Android)
 			{
 				EditorApplication.ExecuteMenuItem("FuseSDK/Update Android Manifest");
