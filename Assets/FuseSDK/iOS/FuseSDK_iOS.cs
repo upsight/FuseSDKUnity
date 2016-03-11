@@ -14,7 +14,7 @@ public partial class FuseSDK
 
 #region Extern definitions
 	[DllImport("__Internal")]
-	private static extern void Native_StartSession(string gameId, bool registerForPush, bool handleAdURLs);
+	private static extern void Native_StartSession(string gameId, bool registerForPush, bool handleAdURLs, bool enableCrashDetection);
 	[DllImport("__Internal")]
 	private static extern void Native_RegisterPushToken(byte[] token, int size);
 	[DllImport("__Internal")]
@@ -174,7 +174,7 @@ public partial class FuseSDK
 	{
 		if(!string.IsNullOrEmpty(iOSAppID) && StartAutomatically)
 		{
-			_StartSession(iOSAppID, registerForPushNotifications, false);
+			_StartSession(iOSAppID, registerForPushNotifications, false, true);
 		}
 	}
 #endregion
@@ -188,7 +188,7 @@ public partial class FuseSDK
 		}
 		else
 		{
-#if UNITY_3_5 || UNITY_4
+#if UNITY_4
 			foreach(var n in NotificationServices.remoteNotifications)
 				if(n.userInfo.Contains("notification_id"))
 					Native_ReceivedRemoteNotification(n.userInfo["notification_id"].ToString());
@@ -210,12 +210,12 @@ public partial class FuseSDK
 	public static void StartSession()
 	{
 		if(_instance != null)
-			_StartSession(_instance.iOSAppID, _instance.registerForPushNotifications, false);
+			_StartSession(_instance.iOSAppID, _instance.registerForPushNotifications, false, true);
 		else
 			Debug.LogError("FuseSDK instance not initialized. Awake may not have been called.");
 	}
 
-	private static void _StartSession(string gameId, bool registerForPush, bool handleAdURLs)
+	private static void _StartSession(string gameId, bool registerForPush, bool handleAdURLs, bool enableCrashDetection)
 	{
 		if(_sessionStarted)
 		{
@@ -237,7 +237,7 @@ public partial class FuseSDK
 
 		_sessionStarted = true;
 		FuseLog("StartSession(" + gameId + ")");
-		Native_StartSession(gameId, registerForPush, handleAdURLs);
+		Native_StartSession(gameId, registerForPush, handleAdURLs, enableCrashDetection);
 	}
 #endregion
 
@@ -811,7 +811,7 @@ public partial class FuseSDK
 	{
 		FuseLog("SetupPushNotifications()");
 		
-#if UNITY_3_5 || UNITY_4
+#if UNITY_4
 		NotificationServices.RegisterForRemoteNotificationTypes(RemoteNotificationType.Alert | RemoteNotificationType.Badge | RemoteNotificationType.Sound);
 #else
 		UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
@@ -822,7 +822,7 @@ public partial class FuseSDK
 			byte[] token = null;
 			string error = null;
 
-#if UNITY_3_5 || UNITY_4
+#if UNITY_4
 			token = NotificationServices.deviceToken;
 			error = NotificationServices.registrationError;
 #else
@@ -1184,9 +1184,9 @@ public partial class FuseSDK
 #endregion
 
 #if !DOXYGEN_IGNORE
-	public static void Internal_StartSession(string appID, bool registerForPush)
+	public static void Internal_StartSession(string appID, bool registerForPush, bool enableCrashDetection = true)
 	{
-		_StartSession(appID, registerForPush, false);
+		_StartSession(appID, registerForPush, false, enableCrashDetection);
 	}
 
 	/// <summary>Start a session manually providing and adClickHandler.</summary>
@@ -1201,7 +1201,7 @@ public partial class FuseSDK
 		if(_instance != null)
 		{
 			_adClickedwithURL = adClickedWithURLHandler;
-			_StartSession(_instance.iOSAppID, _instance.registerForPushNotifications, true);
+			_StartSession(_instance.iOSAppID, _instance.registerForPushNotifications, true, true);
 		}
 		else Debug.LogError("FuseSDK instance not initialized. Awake may not have been called.");
 	}

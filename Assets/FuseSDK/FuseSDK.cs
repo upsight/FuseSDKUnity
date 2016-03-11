@@ -691,6 +691,8 @@ public partial class FuseSDK : MonoBehaviour
 	public bool iosStoreKit = false;
 	public bool iosUnibill = false;
 
+	public bool soomlaStore = false;
+
 	private static bool _sessionStarted = false;
 	private static FuseSDK _instance = null;
 	private static System.Action<string> _adClickedwithURL = null;

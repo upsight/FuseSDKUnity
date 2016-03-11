@@ -391,9 +391,9 @@ public partial class FuseSDK
 		FuseDotNet.SetRewardedVideoUserID(userID);
 	}
 
-	#endregion
+#endregion
 
-	#region Notifications
+#region Notifications
 
 	/// <summary>Display and in-game Fuse notification.</summary>
 	/// <remarks>
