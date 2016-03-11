@@ -2,17 +2,17 @@
 
 ## Current Version
 
-Version: 2.4.2.1
+Version: 2.5.2.0
 
-Released: January 20th, 2016
+Released: March 11th, 2016
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
 The FuseAPI class has been renamed to FuseSDK, you will need to update your references.
 
 ## To Download
-[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK.unitypackage)  
-[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/raw/master/FuseUnitySDK-Unity5.unitypackage)  
+[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/raw/Core-SDK/FuseUnitySDK.unitypackage)  
+[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/raw/Core-SDK/FuseUnitySDK-Unity5.unitypackage)  
 Once the package has been imported into your project, you will be able to update the FuseSDK Wrapper through the Unity Editor.
 
 ## Getting Started
@@ -29,9 +29,25 @@ Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an acc
 
 ## Release Notes
 
+### 2.5.2.0
+March 11th, 2016
+* Ad provider updates
+* Price localization for offers
+* Rich media pre and post rolls for cross promotional videos
+* Optimized PostProcess scripts
+* Removed support for Unity 3.5
+* Added Soomla Store IAP tracking
+* Added Unity IAP tracking to Extras folder
+* Added new iOS Frameworks
+* Bug fixes
+
 ### 2.4.2.1
 January 20th, 2016
 * Android Manifest bug fixes
+
+### 2.4.2.0
+November 26th, 2015
+* Ad Provider optimizations
 
 ### 2.4.1.0
 November 23rd, 2015
