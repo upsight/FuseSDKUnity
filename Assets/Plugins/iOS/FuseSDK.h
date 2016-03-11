@@ -584,6 +584,7 @@
  @endcode
  */
 +(void) registerForPushToken;
+
 /*!
  * @brief This method is used to manually register for a push notification device token
  * @details This method should only be called if kFuseSDKOptionKey_RegisterForPush was set to @NO during start session
@@ -600,7 +601,6 @@
  
  @endcode
  */
-
 +(void) registerForPushToken:(NSSet *)_categories;
 
 /*!
@@ -904,17 +904,17 @@
 
 
 #pragma mark Interstitial Ads
-/*
- 
+/*!
  * @brief This method sets the user ID string for rewarded video server verification
- * @details To allow server side verificiation. A user id registered with this function is passed to the server when a rewarded video has been completed. The server then transmits faithfully this id 
-    to the 3rd Party server registered on the FusePowered Dashboard. The value is only cached for the duration of the session, and can be changed at any time.
+ * @details To allow server side verificiation. A user id registered with this function is passed to the server when a rewarded video has been completed. The server then transmits this id to the 3rd Party server registered on the FusePowered Dashboard. The value is only cached for the duration of the session, and can be changed at any time.
  
+ @param _userID [NSString *] String username to use for Rewarded verification, May be NULL
  @code
- [FuseSDK setRewardedVideoUserID:@"bobSmith1994"];
  
+    [FuseSDK setRewardedVideoUserID:@"bobSmith1994"];
+ 
+ @endcode
  */
-
 +(void) setRewardedVideoUserID:(NSString *) _userID;
 
 

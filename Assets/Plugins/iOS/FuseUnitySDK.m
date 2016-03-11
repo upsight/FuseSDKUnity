@@ -43,7 +43,7 @@ void CallUnity(const char* methodName, const char* param)
 
 #pragma mark - Session
 
-void Native_StartSession(const char* gameId , bool registerPush, bool handleAdURLs)
+void Native_StartSession(const char* gameId , bool registerPush, bool handleAdURLs, bool enableCrashDetection)
 {
 	
 	static dispatch_once_t once;
@@ -52,7 +52,13 @@ void Native_StartSession(const char* gameId , bool registerPush, bool handleAdUR
 	});
 	
 	[FuseSDK setPlatform:@"unity-ios"];
-	[FuseSDK startSession:[NSString stringWithUTF8String:gameId] delegate:_FuseSDK_delegate withOptions:@{kFuseSDKOptionKey_RegisterForPush: [NSNumber numberWithBool:registerPush],kFuseSDKOptionKey_HandleAdURLs:[NSNumber numberWithBool:handleAdURLs]}];
+	[FuseSDK startSession:[NSString stringWithUTF8String:gameId]
+		delegate:_FuseSDK_delegate withOptions:@{
+			kFuseSDKOptionKey_RegisterForPush: [NSNumber numberWithBool: registerPush],
+			kFuseSDKOptionKey_HandleAdURLs: [NSNumber numberWithBool: handleAdURLs],
+			kFuseSDKOptionKey_DisableCrashReporting: [NSNumber numberWithBool: !enableCrashDetection]
+		}
+	];
 }
 
 
@@ -771,6 +777,7 @@ bool Native_RegisterCustomEventInt(int eventNumber, int value)
 - (void)sessionLoginError:(NSError*)_error
 {
 	CallUnity("_CB_SessionLoginError", [NSString stringWithFormat:@"%ld",[_error code]].UTF8String);
+	[self gameConfigurationReceived];
 }
 
 #pragma mark In-App Purchase Logging

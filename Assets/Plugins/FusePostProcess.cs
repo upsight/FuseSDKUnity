@@ -32,9 +32,10 @@ public static class FusePostProcess
 	const string LIBXML_ID = "3FD2BD0F1A253866002566B9";
 	const string WEBKIT_ID = "CDECA1A21B02531000CAA921";
     const string GAMEKIT_ID = "CDECA1A21B02531000CAA931";
+	const string LIBZ_ID = "CDECA1A21B02531000CAA941";
 
 
-    const string CORETELEPHONY_FW = "3F3EE17B1757FB570038DED8";
+	const string CORETELEPHONY_FW = "3F3EE17B1757FB570038DED8";
 	const string ADSUPPORT_FW = "3F3EE1791757FB4D0038DED9";
 	const string STOREKIT_FW = "3F3EE17D1757FB610038DED0";
 	const string MESSAGEUI_FW = "2076D92010F4D46C00CEE78B";
@@ -48,9 +49,10 @@ public static class FusePostProcess
 	const string LIBXML_FW = "A4FBC40B1A23EC33004D9A02";
 	const string WEBKIT_FW = "CDECA1A11B02531000CAA922";
     const string GAMEKIT_FW = "CDECA1A11B02531000CAA932";
+	const string LIBZ_FW = "CDECA1A11B02531000CAA942";
 
-    // List of all the frameworks to be added to the project
-    public struct framework
+	// List of all the frameworks to be added to the project
+	public struct framework
 	{
 		public string sName;
 		public string sId;
@@ -89,13 +91,12 @@ public static class FusePostProcess
 										 new framework("MobileCoreServices.framework", MCORESERVICES_FW, MCORESERVICES_ID),
 										 new framework("libsqlite3.tbd", SQLITE_FW, SQLITE_ID),
 										 new framework("libxml2.tbd", LIBXML_FW, LIBXML_ID),
+										 new framework("libz.tbd", LIBZ_FW, LIBZ_ID),
 										 new framework("WebKit.framework", WEBKIT_FW, WEBKIT_ID),
                                          new framework("GameKit.framework", GAMEKIT_FW, GAMEKIT_ID),
                                         };
 
-			string xcodeprojPath = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);
-
-			xcodeprojPath = xcodeprojPath + "/Unity-iPhone.xcodeproj";
+			string xcodeprojPath = path + "/Unity-iPhone.xcodeproj";
 			UnityEngine.Debug.Log("XcodeprojPath should be : " + xcodeprojPath);
 
 			updateXcodeProject(xcodeprojPath, myFrameworks);
@@ -235,6 +236,7 @@ public static class FusePostProcess
 	static bool bFoundSQLite = false;
 	static bool bFoundMCS = false;
 	static bool bFoundLibXML = false;
+	static bool bFoundLibZ = false;
 	static bool bFoundWebKit = false;
     static bool bFoundGameKit = false;
 	public static void updateXcodeProject(string xcodeprojPath, framework[] listeFrameworks)
@@ -406,6 +408,10 @@ public static class FusePostProcess
 			{
 				bFoundLibXML = true;
 			}
+			else if(lines[i].Contains("libz.tbd"))
+			{
+				bFoundLibZ = true;
+			}
 
 			++i;
 		}
@@ -511,7 +517,6 @@ public static class FusePostProcess
 				//Mark FuseUnitySDK.m as -fno-objc-arc
 				else if(line.Contains("/* FuseUnitySDK.m in Sources */ = {isa = PBXBuildFile;") && !line.Contains(@"settings = {COMPILER_FLAGS = ""-fno-objc-arc""; };"))
 				{
-					// rewrite the line to set the library as weak linked
 					UnityEngine.Debug.Log("Marking FuseUnitySDK.m as -fno-objc-arc.");
 					string[] splitstring = line.Split(';');
 					string output = string.Join(";", splitstring, 0, splitstring.Length - 2) + @"; settings = {COMPILER_FLAGS = ""-fno-objc-arc""; }; };";
@@ -520,7 +525,6 @@ public static class FusePostProcess
 				//Mark FuseUnityDebug.m as -fno-objc-arc
 				else if(line.Contains("/* FuseUnityDebug.m in Sources */ = {isa = PBXBuildFile;") && !line.Contains(@"settings = {COMPILER_FLAGS = ""-fno-objc-arc""; };"))
 				{
-					// rewrite the line to set the library as weak linked
 					UnityEngine.Debug.Log("Marking FuseUnityDebug.m as -fno-objc-arc.");
 					string[] splitstring = line.Split(';');
 
@@ -530,12 +534,17 @@ public static class FusePostProcess
 				//Mark NSData-Base64.m as -fno-objc-arc
 				else if(line.Contains("/* NSData-Base64.m in Sources */ = {isa = PBXBuildFile;") && !line.Contains(@"settings = {COMPILER_FLAGS = ""-fno-objc-arc""; };"))
 				{
-					// rewrite the line to set the library as weak linked
 					UnityEngine.Debug.Log("Marking NSData-Base64.m as -fno-objc-arc.");
 					string[] splitstring = line.Split(';');
 
 					string output = string.Join(";", splitstring, 0, splitstring.Length - 2) + @"; settings = {COMPILER_FLAGS = ""-fno-objc-arc""; }; };";
 					fCurrentXcodeProjFile.WriteLine(output);
+				}
+				else if(line.Contains("ENABLE_BITCODE"))
+				{
+					// Disable bitcode
+					UnityEngine.Debug.Log("Disabling bitcode.");
+					fCurrentXcodeProjFile.WriteLine(line.Replace("YES", "NO"));
 				}
 				else
 				{
@@ -647,6 +656,7 @@ public static class FusePostProcess
             || (bFoundGameKit && name.Equals("GameKit.framework"))
             || (bFoundSQLite && name.Equals("libsqlite3.tbd"))
 			|| (bFoundLibXML && name.Equals("libxml2.tbd"))
+			|| (bFoundLibZ && name.Equals("libz.tbd"))
 			|| (bFoundMCS && name.Equals("mobileCoreServices.framework")))
 		{
 			// framework is already in the xcode project - do no process it
@@ -725,7 +735,7 @@ public static class FusePostProcess
 		UnityEngine.Debug.Log("OnPostProcessBuild - Adding framework file reference (xml) - " + name);
 
 		string path = "System/Library/Frameworks"; // all the frameworks come from here
-		if(name == "libsqlite3.tbd" || name == "libxml2.tbd")           // except for tbds
+		if(name.EndsWith(".tbd"))           // except for tbds
 		{
 			path = "usr/lib";
 		}
@@ -993,7 +1003,7 @@ public static class FusePostProcess
 
 		string path = "System/Library/Frameworks"; // all the frameworks come from here
 		string type = "wrapper.framework";
-		if(name == "libsqlite3.tbd" || name == "libxml2.tbd")           // except for tbds
+		if(name.EndsWith(".tbd"))           // except for tbds
 		{
 			path = "usr/lib";
 			type = "\"compiled.mach-o.tbd\"";

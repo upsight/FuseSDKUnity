@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
 
 [InitializeOnLoad]
 public static class FuseSDKUpdater
@@ -12,6 +11,7 @@ public static class FuseSDKUpdater
 	public static readonly string LATEST_PACKAGE = @"https://raw.githubusercontent.com/fusepowered/FuseSDKUnity/master/FuseUnitySDK.unitypackage";
 #endif
 	public static readonly string UPDATE_URL = @"https://raw.githubusercontent.com/fusepowered/FuseSDKUnity/master/Assets/FuseSDK/version";
+	public static readonly string ANNOUNCEMENT_URL = @"https://raw.githubusercontent.com/fusepowered/FuseSDKUnity/announcements/message";
 	public static readonly long TIMEOUT = 1000;
 	public static readonly string AUTOUPDATE_KEY = "FuseSDKAutoUpdate";
 	public static readonly string AUTODOWNLOAD_KEY = "FuseSDKAutoDownload";
@@ -36,8 +36,7 @@ public static class FuseSDKUpdater
 		   || Application.isPlaying
 		   || EditorApplication.isPlaying
 		   || EditorApplication.isPlayingOrWillChangePlaymode
-		   || EditorApplication.timeSinceStartup > 5
-		   || EditorPrefs.GetInt(AUTOUPDATE_KEY, 4) < 0)
+		   || EditorApplication.timeSinceStartup > 5)
 			return;
 
 		EditorApplication.update += Update;
@@ -47,7 +46,12 @@ public static class FuseSDKUpdater
 	{
 		//Wait 1 frame before checking for update to make sure Unity loaded
 		if(--_delay < 0)
-			CheckForUpdates();
+		{
+			FuseSDKEditor.CheckForAnnouncements();
+
+			if(EditorPrefs.GetInt(AUTOUPDATE_KEY, 4) >= 0)
+				CheckForUpdates();
+		}
 	}
 
 	public static void CheckForUpdates(bool force = false)
@@ -55,9 +59,9 @@ public static class FuseSDKUpdater
 		EditorApplication.update -= Update;
 
 		string latestVersion = "";
-		string versionFile = "";
-		string ignoreVersion = "";
-		string currentVersion = "";
+		string ignoreVersion;
+		string currentVersion;
+		string updateUrl = LATEST_PACKAGE;
 		var stopwatch = new System.Diagnostics.Stopwatch();
 		stopwatch.Reset();
 		stopwatch.Start();
@@ -79,24 +83,17 @@ public static class FuseSDKUpdater
 		}
 		stopwatch.Stop();
 
-		try
-		{
-			versionFile = System.IO.File.ReadAllText(Application.dataPath + VERSION_PATH);
-		}
-		catch
+		if(!ReadVersionFile(out currentVersion, out ignoreVersion))
 		{
 			Debug.LogWarning("Fuse SDK: Couldn't check for update, your project does not contain a version file.");
 			Debug.Log("You can find the latest FuseSDK at " + LATEST_SDK_URL);
 			return;
 		}
 
-		var sp = versionFile.Split('#');
-		currentVersion = (sp.Length < 1) ? "" : sp[0];
-		ignoreVersion = (sp.Length < 2 || force) ? "" : sp[1];
-
-		int[] myVer = ParseVersion(currentVersion);
-		int[] ignore = ParseVersion(ignoreVersion);
-		int[] newVer = ParseVersion(latestVersion);
+		string _ = null;
+		int[] myVer = ParseVersion(currentVersion, ref _);
+		int[] ignore = force ? null : ParseVersion(ignoreVersion, ref _);
+		int[] newVer = ParseVersion(latestVersion, ref updateUrl);
 
 		if(myVer == null)
 		{
@@ -115,6 +112,9 @@ public static class FuseSDKUpdater
 			Debug.Log("Fuse SDK: A new version is available. Get the latest from " + LATEST_SDK_URL);
 			return;
 		}
+
+		if(latestVersion.Contains(updateUrl))
+			latestVersion = latestVersion.Replace(updateUrl, string.Empty);
 
 		int outOfDate = HowOldIsVersion(myVer, newVer);
 
@@ -143,12 +143,12 @@ public static class FuseSDKUpdater
 					                                                "Go to website");
 					if(dlRet == 0)
 					{
-						StartDownload();
+						StartDownload(updateUrl);
 					}
 					else if(dlRet == 1)
 					{
 						_DoNotImport = true;
-						StartDownload();
+						StartDownload(updateUrl);
 					}
 					else if(dlRet == 2)
 					{
@@ -156,7 +156,7 @@ public static class FuseSDKUpdater
 					}
 				}
 				else
-					StartDownload();
+					StartDownload(updateUrl);
 			}
 			else if(retVal == 1)
 			{
@@ -191,11 +191,32 @@ public static class FuseSDKUpdater
 		}
 	}
 
-	private static int[] ParseVersion(string version)
+	internal static bool ReadVersionFile(out string currentVersion, out string ignoreVersion)
 	{
-		var ver = version.Split('.');
+		try
+		{
+			var versionFile = System.IO.File.ReadAllText(Application.dataPath + VERSION_PATH);
+			var sp = versionFile.Split('#');
+			currentVersion = (sp.Length < 1) ? string.Empty : sp[0];
+			ignoreVersion = (sp.Length < 2) ? string.Empty : sp[1];
+			return true;
+		}
+		catch
+		{
+			currentVersion = ignoreVersion = null;
+			return false;
+		}
+	}
+
+	internal static int[] ParseVersion(string version, ref string updateUrl)
+	{
+		var ver = version.Split(new char[] { '.' }, 5);
+
 		if(ver.Length < 4)
 			return null;
+
+		if(ver.Length == 5)
+			updateUrl = ver[4];
 
 		int[] verInfo = new int[4];
 		if(int.TryParse(ver[0], out verInfo[0])
@@ -207,7 +228,7 @@ public static class FuseSDKUpdater
 			return null;
 	}
 
-	private static int HowOldIsVersion(int[] localVersion, int[] latestVersion)
+	internal static int HowOldIsVersion(int[] localVersion, int[] latestVersion)
 	{
 		for(int i = 0; i < localVersion.Length; i++)
 			if(localVersion[i] < latestVersion[i])
@@ -217,7 +238,7 @@ public static class FuseSDKUpdater
 		return -1;
 	}
 
-	private static void StartDownload()
+	private static void StartDownload(string url)
 	{
 		DownloadProgress = 0f;
 		KBytes = 0;
@@ -234,7 +255,7 @@ public static class FuseSDKUpdater
 		{
 			Downloader.DownloadProgressChanged += HandleDownloadProgressChanged;
 			Downloader.DownloadFileCompleted += HandleDownloadFileCompleted;
-			Downloader.DownloadFileAsync(new System.Uri(LATEST_PACKAGE), Application.temporaryCachePath + TEMP_PACKAGE_NAME);
+			Downloader.DownloadFileAsync(new System.Uri(url), Application.temporaryCachePath + TEMP_PACKAGE_NAME);
 		}
 	}
 

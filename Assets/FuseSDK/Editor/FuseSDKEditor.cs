@@ -14,15 +14,34 @@ using Ionic.Zip;
 [CustomEditor(typeof(FuseSDK))]
 public class FuseSDKEditor : Editor
 {
+	public static readonly string ANNOUNCEMENT_KEY = "FuseSDKAnnouncement";
 	public static readonly string ICON_PATH = "/Plugins/Android/res/drawable/ic_launcher.png";
 	public static readonly string AAR_ICON_COPY = "/FuseSDK/Editor/ic_launcher.png";
 	public static readonly string MANIFEST_COPY = "/FuseSDK/Editor/AndroidManifest.xml";
 	public static readonly string AAR_PATH = "/Plugins/Android/FuseSDK.aar";
+	public static readonly string VERSION_PATH = "Assets/FuseSDK/version";
 	public static readonly int ICON_HEIGHT = 72;
 	public static readonly int ICON_WIDTH = 72;
 
 	private static readonly string API_KEY_PATTERN = @"^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$"; //8-4-4-4-12
 	private static readonly string API_STRIP_PATTERN = @"[^\da-f\-]"; //8-4-4-4-12
+
+	private static readonly string IOS_PLUGIN_M_FLAGS = "-fno-objc-arc";
+	private static readonly string IOS_PLUGIN_A_FLAGS = "-ObjC";
+	private static readonly string[] IOS_PLUGIN_A_FRAMEWORKS = new string[] {
+		"AdSupport",
+		"CoreFoundation",
+		"CoreTelephony",
+		"GameKit",
+		"MobileCoreServices",
+		"Security",
+		"Social",
+		"StoreKit",
+		"Twitter",
+		"EventKit",
+		"EventKitUI",
+		"MessageUI"
+	};
 
 	private static readonly string[] MANIFEST_GCM_RECEIVER_ENTRY = new string[] { "\t\t<meta-data android:name=\"com.fusepowered.replace.gcmReceiver\" android:value=\"{{timestamp}}\" />",
 					"\t\t<!-- GCM -->",
@@ -58,7 +77,7 @@ public class FuseSDKEditor : Editor
 					"\t",
 					"\t<!-- Creates a custom permission so only this app can receive its messages. -->",
 					"\t<meta-data android:name=\"com.fusepowered.replace.packageId\" android:value=\"{{packageId}}\" />",
-					"\t<permission android:name=\"{{packageId}}.permission.C2D_MESSAGE\"\tandroid:protectionLevel=\"signature\" />",
+					"\t<permission android:name=\"{{packageId}}.permission.C2D_MESSAGE\" android:protectionLevel=\"signature\" />",
 					"",
 					"\t<meta-data android:name=\"com.fusepowered.replace.packageId\" android:value=\"{{packageId}}\" />",
 					"\t<uses-permission android:name=\"{{packageId}}.permission.C2D_MESSAGE\" />",
@@ -72,7 +91,8 @@ public class FuseSDKEditor : Editor
 	private FuseSDK _self;
 	private Texture2D _logo, _icon;
 	private string _error, _newIconPath;
-	private bool _p31Android, _p31iOS, _unibill;
+	private bool _p31Android, _p31iOS, _unibill, _soomla;
+	private bool _needReimport, _guiDrawn;
 	private Regex _idRegex, _stripRegex;
 
 	private void OnEnable()
@@ -88,20 +108,16 @@ public class FuseSDKEditor : Editor
 		}
 
 		_self = (FuseSDK)target;
-#if UNITY_3_5
-		_logo = Resources.LoadAssetAtPath(logoPath, typeof(Texture2D)) as Texture2D;
-#elif UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_5_0
-		_logo = Resources.LoadAssetAtPath<Texture2D>(logoPath);
-#else
-		_logo = AssetDatabase.LoadAssetAtPath<Texture2D>(logoPath);
-#endif
+		_logo = LoadAsset<Texture2D>(logoPath);
 		_icon = null;
 		_error = null;
 		_newIconPath = null;
+		_guiDrawn = false;
 		
 		_p31Android = DoClassesExist("GoogleIABManager", "GoogleIAB", "GooglePurchase");
 		_p31iOS = DoClassesExist("StoreKitManager", "StoreKitTransaction");
 		_unibill = DoClassesExist("Unibiller");
+		_soomla = DoClassesExist("SoomlaStore", "StoreEvents");
 
 		_idRegex = new Regex(API_KEY_PATTERN);
 		_stripRegex = new Regex(API_STRIP_PATTERN);
@@ -109,6 +125,8 @@ public class FuseSDKEditor : Editor
 		_self.AndroidAppID = string.IsNullOrEmpty(_self.AndroidAppID) ? string.Empty : _self.AndroidAppID;
 		_self.iOSAppID = string.IsNullOrEmpty(_self.iOSAppID) ? string.Empty : _self.iOSAppID;
 		_self.GCM_SenderID = string.IsNullOrEmpty(_self.GCM_SenderID) ? string.Empty : _self.GCM_SenderID;
+
+		_needReimport = DoSettingsNeedUpdate();
 	}
 
 	private void OnDisable()
@@ -120,10 +138,41 @@ public class FuseSDKEditor : Editor
 	
 	public override void OnInspectorGUI()
 	{
+		if(_needReimport && _guiDrawn)
+		{
+			UpdateAllSettings();
+			_needReimport = false;
+		}
+
+#if !(UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7)
+		Undo.RecordObject(target, "FuseSDK modified");
+#endif
+		_self = (FuseSDK)target;
+
 		GUILayout.Space(8);
 		if(_logo != null)
 			GUILayout.Label(_logo);
-		GUILayout.Space(12);
+		GUILayout.Space(4);
+
+		if(_needReimport)
+		{
+			var oldGUIColor = GUI.color;
+			var newStyle = new GUIStyle(EditorStyles.boldLabel);
+			newStyle.fontStyle = FontStyle.Bold;
+			newStyle.fontSize = 24;
+			GUI.color = Color.yellow;
+			GUILayout.Label("Updating Unity settings for Fuse...", newStyle);
+			GUI.color = oldGUIColor;
+
+			if(Event.current.type == EventType.Repaint)
+			{
+				_guiDrawn = true;
+				EditorUtility.SetDirty(target);
+			}
+			return;
+		}
+
+		GUILayout.Space(4);
 
 		_self.AndroidAppID = _stripRegex.Replace(EditorGUILayout.TextField("Android App ID", _self.AndroidAppID), "");
 #if UNITY_ANDROID
@@ -165,11 +214,11 @@ public class FuseSDKEditor : Editor
 
 		GUILayout.Space(16);
 
-#if !UNITY_3_5
 		bool oldAndroidIAB = _self.androidIAB;
 		bool oldandroidUnibill = _self.androidUnibill;
 		bool oldiosStoreKit = _self.iosStoreKit;
 		bool oldiosUnibill = _self.iosUnibill;
+		bool oldSoomlaStore = _self.soomlaStore;
 
 		
 		EditorGUILayout.BeginHorizontal();
@@ -194,18 +243,28 @@ public class FuseSDKEditor : Editor
 
 		EditorGUILayout.EndHorizontal();
 
+		EditorGUILayout.BeginHorizontal();
+
+		GUI.enabled = _soomla || _self.soomlaStore;
+		_self.soomlaStore = EditorGUILayout.Toggle("Soomla Store", _self.soomlaStore);
+		
+		EditorGUILayout.EndHorizontal();
+
 		GUI.enabled = true;
 
 		CheckToggle(_self.androidIAB, oldAndroidIAB, BuildTargetGroup.Android, "USING_PRIME31_ANDROID");
 		CheckToggle(_self.androidUnibill, oldandroidUnibill, BuildTargetGroup.Android, "USING_UNIBILL_ANDROID");
+		CheckToggle(_self.soomlaStore, oldSoomlaStore, BuildTargetGroup.Android, "USING_SOOMLA_IAP");
 #if UNITY_5
 		CheckToggle(_self.iosStoreKit, oldiosStoreKit, BuildTargetGroup.iOS, "USING_PRIME31_IOS");
 		CheckToggle(_self.iosUnibill, oldiosUnibill, BuildTargetGroup.iOS, "USING_UNIBILL_IOS");
+		CheckToggle(_self.soomlaStore, oldSoomlaStore, BuildTargetGroup.iOS, "USING_SOOMLA_IAP");
 #else
 		CheckToggle(_self.iosStoreKit, oldiosStoreKit, BuildTargetGroup.iPhone, "USING_PRIME31_IOS");
 		CheckToggle(_self.iosUnibill, oldiosUnibill, BuildTargetGroup.iPhone, "USING_UNIBILL_IOS");
+		CheckToggle(_self.soomlaStore, oldSoomlaStore, BuildTargetGroup.iPhone, "USING_SOOMLA_IAP");
 #endif
-#endif
+
 		GUILayout.Space(4);
 
 		if(_iconFoldout = EditorGUILayout.Foldout(_iconFoldout, "Android notification icon"))
@@ -261,6 +320,8 @@ public class FuseSDKEditor : Editor
 #endif
 		}
 
+		GUILayout.BeginVertical();
+
 		GUILayout.BeginHorizontal();
 		GUILayout.FlexibleSpace();
 		if(GUILayout.Button("Open Preferences"))
@@ -269,6 +330,17 @@ public class FuseSDKEditor : Editor
 		}
 		GUILayout.FlexibleSpace();
 		GUILayout.EndHorizontal();
+
+		//GUILayout.BeginHorizontal();
+		//GUILayout.FlexibleSpace();
+		//Color oldColor = GUI.color;
+		//GUI.color = Color.green;
+		//GUILayout.Label("Ready to build!", EditorStyles.boldLabel);
+		//GUI.color = oldColor;
+		//GUILayout.FlexibleSpace();
+		//GUILayout.EndHorizontal();
+
+		GUILayout.EndVertical();
 
 		if(GUI.changed)
 		{
@@ -372,7 +444,6 @@ public class FuseSDKEditor : Editor
 			|| (classes.Length == classes.Intersect(types).Distinct().Count());
 	}
 
-#if !UNITY_3_5
 	private void CheckToggle(bool newVal, bool oldVal, BuildTargetGroup buildGroup, string tag)
 	{
 		if(oldVal != newVal)
@@ -389,7 +460,144 @@ public class FuseSDKEditor : Editor
 			}
 		}
 	}
+
+	private bool DoSettingsNeedUpdate()
+	{
+#if !(UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7)
+		string currentVersion, metaVersion, bundleId;
+		if(!FuseSDKUpdater.ReadVersionFile(out currentVersion, out metaVersion))
+			return true;
+
+		var versionMeta = AssetImporter.GetAtPath(VERSION_PATH);
+		var sp = (versionMeta.userData ?? string.Empty).Split('#');
+		metaVersion = (sp.Length < 1) ? string.Empty : sp[0];
+		bundleId = (sp.Length < 2) ? string.Empty : sp[1];
+
+		string _ = null;
+		int[] actualVer = FuseSDKUpdater.ParseVersion(currentVersion, ref _);
+		int[] metaVer = FuseSDKUpdater.ParseVersion(metaVersion, ref _);
+
+		if(metaVer == null || bundleId != PlayerSettings.bundleIdentifier || FuseSDKUpdater.HowOldIsVersion(metaVer, actualVer) >= 0)
+			return true;
+
+		List<PluginImporter> iosPlugins =
+			Directory.GetFiles(Application.dataPath + "/Plugins/iOS")
+			.Select(file => file.Substring(file.LastIndexOfAny(new char[] { '\\', '/' }) + 1))
+			.Where(file => !file.EndsWith(".meta"))
+			.Where(file => file.Contains("FuseSDK") || file.Contains("libFuse") || file.Contains("FuseUnity") || file.Contains("NSData-Base64"))
+			.Select(file => PluginImporter.GetAtPath("Assets/Plugins/iOS/" + file) as PluginImporter)
+			.Where(plugin => plugin != null)
+			.ToList();
+
+		foreach(var plugin in iosPlugins)
+		{
+			if(plugin.assetPath.EndsWith(".m"))
+			{
+				string flags = plugin.GetPlatformData(BuildTarget.iOS, "CompileFlags");
+				if(!flags.Contains(IOS_PLUGIN_M_FLAGS))
+					return true;
+			}
+			else if(plugin.assetPath.EndsWith(".a"))
+			{
+				string flags = plugin.GetPlatformData(BuildTarget.iOS, "CompileFlags");
+				var frameworks = plugin.GetPlatformData(BuildTarget.iOS, "FrameworkDependencies").Split(';').Where(f => !string.IsNullOrEmpty(f));
+				if(!flags.Contains(IOS_PLUGIN_A_FLAGS) || frameworks.Intersect(IOS_PLUGIN_A_FRAMEWORKS).Count() != IOS_PLUGIN_A_FRAMEWORKS.Length)
+					return true;
+			}
+		}
+
+		List<PluginImporter> androidPlugins =
+			Directory.GetFiles(Application.dataPath + "/Plugins/Android")
+			.Union(Directory.GetDirectories(Application.dataPath + "/Plugins/Android", "res"))
+			.Select(file => file.Substring(file.LastIndexOfAny(new char[] { '\\', '/' }) + 1))
+			.Where(file => !file.EndsWith(".meta"))
+			.Where(file => file.Contains("FuseSDK") || file.Contains("FuseUnity") || file.Contains("android-support-v4.jar") || file.Contains("google-play-services.jar") || file == "res")
+			.Select(file => PluginImporter.GetAtPath("Assets/Plugins/Android/" + file) as PluginImporter)
+			.Where(plugin => plugin != null)
+			.ToList();
+
+		foreach(var plugin in androidPlugins)
+		{
+			if(!plugin.GetCompatibleWithPlatform(BuildTarget.Android))
+				return true;
+		}
 #endif
+
+		return false;
+	}
+
+	private void UpdateAllSettings()
+	{
+#if !(UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7)
+		string currentVersion, _;
+		if(!FuseSDKUpdater.ReadVersionFile(out currentVersion, out _))
+			return;
+
+		var versionMeta = AssetImporter.GetAtPath(VERSION_PATH);
+
+		List<PluginImporter> iosPlugins =
+			Directory.GetFiles(Application.dataPath + "/Plugins/iOS")
+			.Select(file => file.Substring(file.LastIndexOfAny(new char[] { '\\', '/' }) + 1))
+			.Where(file => !file.EndsWith(".meta"))
+			.Where(file => file.Contains("FuseSDK") || file.Contains("libFuse") || file.Contains("FuseUnity") || file.Contains("NSData-Base64"))
+			.Select(file => PluginImporter.GetAtPath("Assets/Plugins/iOS/" + file) as PluginImporter)
+			.Where(plugin => plugin != null)
+			.ToList();
+
+		foreach(var plugin in iosPlugins)
+		{
+			plugin.SetCompatibleWithAnyPlatform(false);
+			plugin.SetCompatibleWithPlatform(BuildTarget.iOS, true);
+			if(plugin.assetPath.EndsWith(".m"))
+			{
+				string flags = plugin.GetPlatformData(BuildTarget.iOS, "CompileFlags");
+				if(!flags.Contains(IOS_PLUGIN_M_FLAGS))
+				{
+					plugin.SetPlatformData(BuildTarget.iOS, "CompileFlags", flags + " " + IOS_PLUGIN_M_FLAGS);
+				}
+			}
+			else if(plugin.assetPath.EndsWith(".a"))
+			{
+				string flags = plugin.GetPlatformData(BuildTarget.iOS, "CompileFlags");
+				if(!flags.Contains(IOS_PLUGIN_A_FLAGS))
+				{
+					plugin.SetPlatformData(BuildTarget.iOS, "CompileFlags", flags + " " + IOS_PLUGIN_A_FLAGS);
+				}
+				var frameworks = plugin.GetPlatformData(BuildTarget.iOS, "FrameworkDependencies").Split(';');
+				string combined = frameworks.Union(IOS_PLUGIN_A_FRAMEWORKS).Where(f => !string.IsNullOrEmpty(f)).Aggregate((accum, f) => accum + ";" + f) + ";";
+				plugin.SetPlatformData(BuildTarget.iOS, "FrameworkDependencies", combined);
+			}
+
+			plugin.SaveAndReimport();
+		}
+
+#if !UNITY_5_0 && !UNITY_5_1
+		PlayerSettings.iOS.allowHTTPDownload = true;
+#endif
+
+		List<PluginImporter> androidPlugins =
+			Directory.GetFiles(Application.dataPath + "/Plugins/Android")
+			.Union(Directory.GetDirectories(Application.dataPath + "/Plugins/Android", "res"))
+			.Select(file => file.Substring(file.LastIndexOfAny(new char[] { '\\', '/' }) + 1))
+			.Where(file => !file.EndsWith(".meta"))
+			.Where(file => file.Contains("FuseSDK") || file.Contains("FuseUnity") || file.Contains("android-support-v4.jar") || file.Contains("google-play-services.jar") || file == "res")
+			.Select(file => PluginImporter.GetAtPath("Assets/Plugins/Android/" + file) as PluginImporter)
+			.Where(plugin => plugin != null)
+			.ToList();
+
+		foreach(var plugin in androidPlugins)
+		{
+			plugin.SetCompatibleWithAnyPlatform(false);
+			plugin.SetCompatibleWithPlatform(BuildTarget.Android, true);
+			plugin.SaveAndReimport();
+		}
+
+		UpdateAndroidManifest();
+
+		versionMeta.userData = currentVersion + "#" + PlayerSettings.bundleIdentifier;
+		versionMeta.SaveAndReimport();
+#endif
+	}
 
 #if !FUSE_DISABLE_INTERNAL_ANALYTICS
 	[PostProcessBuild]
@@ -400,7 +608,7 @@ public class FuseSDKEditor : Editor
 		try
 		{
 			string appID = "", bundleID, prodName, compName, gameVer, unityVer, isPro, targetPlat;
-			string url = "http://api.fusepowered.com/buildstats/";
+			string url = "http://api.fusepowered.com/unity/buildstats.php";
 			string baseJson = @"{
 							""game_id"" : ""{{game_id}}"",
 							""bundle_id"" : ""{{bundle_id}}"",
@@ -416,7 +624,7 @@ public class FuseSDKEditor : Editor
 							}";
 
 			//App ID
-			var fuse = AssetDatabase.LoadAssetAtPath("Assets/FuseSDK/FuseSDK.prefab", typeof(FuseSDK)) as FuseSDK;
+			var fuse = LoadAsset<FuseSDK>("Assets/FuseSDK/FuseSDK.prefab");
 			if(fuse != null)
 			{
 #if UNITY_IOS
@@ -480,11 +688,43 @@ public class FuseSDKEditor : Editor
 	}
 #endif
 
+	public static void CheckForAnnouncements()
+	{
+		var stopwatch = new System.Diagnostics.Stopwatch();
+		stopwatch.Reset();
+		stopwatch.Start();
 
+		try
+		{
+			using(WWW req = new WWW(FuseSDKUpdater.ANNOUNCEMENT_URL))
+			{
+				while(!req.isDone && string.IsNullOrEmpty(req.error) && stopwatch.ElapsedMilliseconds < (FuseSDKUpdater.TIMEOUT / 2)) ;
+				if(req.isDone && string.IsNullOrEmpty(req.error))
+				{
+					int id;
+					string message;
+					string fileContent = req.text;
+					var parts = fileContent.Split(new char[] { ':' }, 2);
+					if(parts.Length != 2 || !int.TryParse(parts[0], out id) || string.IsNullOrEmpty(message = parts[1]))
+						return;
+
+					int lastSeenMessage = EditorPrefs.GetInt(ANNOUNCEMENT_KEY, -1);
+					if(lastSeenMessage < id)
+					{
+						Debug.Log("Fuse Announcement: " + message);
+						EditorPrefs.SetInt(ANNOUNCEMENT_KEY, id);
+					}
+				}
+			}
+		}
+		catch{}
+		stopwatch.Stop();
+	}
+	
 	[MenuItem ("FuseSDK/Regenerate Prefab", false, 0)]
 	static void RegeneratePrefab()
 	{
-		var oldFuse = AssetDatabase.LoadAssetAtPath("Assets/FuseSDK/FuseSDK.prefab", typeof(FuseSDK)) as FuseSDK;
+		var oldFuse = LoadAsset<FuseSDK>("Assets/FuseSDK/FuseSDK.prefab");
 		
 		// re-create the prefab
 		Debug.Log("Creating new prefab...");
@@ -493,12 +733,7 @@ public class FuseSDKEditor : Editor
 		// add script components
 		Debug.Log("Adding script components...");
 
-#if UNITY_3_5
-		temp.active = true;
-#else
 		temp.SetActive(true);
-#endif
-
 
 		var newFuse = temp.AddComponent<FuseSDK>();
 
@@ -662,6 +897,15 @@ public class FuseSDKEditor : Editor
 	{
 		FuseSDKUpdater.CheckForUpdates(true);
 	}
+
+	internal static T LoadAsset<T>(string path) where T : UnityEngine.Object
+	{
+#if UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7 || UNITY_5_0
+		return Resources.LoadAssetAtPath<T>(path);
+#else
+		return AssetDatabase.LoadAssetAtPath<T>(path);
+#endif
+	}
 }
 
 public class FuseSDKPrefs : EditorWindow
@@ -710,12 +954,7 @@ public class FuseSDKPrefs : EditorWindow
 	[MenuItem("FuseSDK/Preferences", false, 60)]
 	public static void Init()
 	{
-#if UNITY_3_5
-		FuseSDKPrefs me = GetWindowWithRect(typeof(FuseSDKPrefs), new Rect(0, 0, 400, 100), true, "Fuse SDK Preferences") as FuseSDKPrefs;
-#else
-		FuseSDKPrefs me = GetWindowWithRect<FuseSDKPrefs>(new Rect(0, 0, 400, 100), true, "Fuse SDK Preferences");
-#endif
-		me.ShowUtility();
+		GetWindowWithRect<FuseSDKPrefs>(new Rect(0, 0, 400, 100), true, "Fuse SDK Preferences").ShowUtility();
 	}
 
 	void OnGUI()

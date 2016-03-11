@@ -7,7 +7,7 @@ void CallUnity(const char* methodName, const char* param);
 
 #pragma mark - Session Creation
 
-void Native_StartSession(const char* gameId , bool registerPush, bool handleAdURLs);
+void Native_StartSession(const char* gameId , bool registerPush, bool handleAdURLs, bool enableCrashDetection);
 
 
 
