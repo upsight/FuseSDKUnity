@@ -12,7 +12,6 @@ using Soomla.Store;
 public class FuseSDK_SoomlaIAP : MonoBehaviour
 {
 #if USING_SOOMLA_IAP
-	public static bool debugOutput = false;
 	public static bool productListUpdated = false;
 
 	void Awake() 

@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.5.2.0
+Version: 2.5.3.0
 
-Released: March 11th, 2016
+Released: March 23rd, 2016
 
 ## Update Instructions
 The location of our Unity packages has changed. The 2 packages in this repository simply contain a Updater that will fetch the package from Unity.  
@@ -12,8 +12,8 @@ Please use the links below to download the FuseSDK.
 
 
 ## To Download
-[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.2.0/FuseUnitySDK.unitypackage)  
-[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.2.0/FuseUnitySDK-Unity5.unitypackage)  
+[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.3.0/FuseUnitySDK.unitypackage)  
+[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.3.0/FuseUnitySDK-Unity5.unitypackage)  
 Once the package has been imported into your project, you will be able to update the FuseSDK Wrapper through the Unity Editor.
 
 ## Getting Started
@@ -29,6 +29,13 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.5.3.0
+March 23rd, 2016
+* Removed Android InAppBilling library (included by Unity or other 3rd party billing plugins)
+* Removed FuseSDK.NET-Stub.dll
+* Added options to FuseSDK prefab to start Fuse Sessions in the Editor and Standalone builds
+* iOS Bug Fixes
 
 ### 2.5.2.0
 March 11th, 2016

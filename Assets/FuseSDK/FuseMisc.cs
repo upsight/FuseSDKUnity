@@ -36,18 +36,6 @@ namespace FuseMisc
 		public string Alias;
 		public bool Pending;
 
-#if UNITY_EDITOR
-		public static implicit operator Friend(FuseSDKDotNETLite.Util.Friend f)
-		{
-			return new Friend() { FuseId = f.FuseId, AccountId = f.AccountId, Alias = f.Alias, Pending = f.Pending };
-		}
-
-		public static implicit operator FuseSDKDotNETLite.Util.Friend(Friend f)
-		{
-			return new FuseSDKDotNETLite.Util.Friend() { FuseId = f.FuseId, AccountId = f.AccountId, Alias = f.Alias, Pending = f.Pending };
-		}
-#endif
-
 		public override string ToString()
 		{
 			JSONObject jo = new JSONObject(JSONObject.Type.OBJECT);
@@ -72,18 +60,6 @@ namespace FuseMisc
 
 		/// <summary>The currency that the price is in.</summary>
 		public string PriceLocale;
-
-#if UNITY_EDITOR
-		public static implicit operator Product(FuseSDKDotNETLite.Util.Product p)
-		{
-			return new Product() { ProductId = p.ProductId, Price = p.Price, PriceLocale = p.PriceLocale };
-		}
-
-		public static implicit operator FuseSDKDotNETLite.Util.Product(Product p)
-		{
-			return new FuseSDKDotNETLite.Util.Product() { ProductId = p.ProductId, Price = p.Price, PriceLocale = p.PriceLocale };
-		}
-#endif
 
 		public override string ToString()
 		{
@@ -114,18 +90,6 @@ namespace FuseMisc
 
 		/// <summary>The amount the user will get as a reward, used when the item is a currency.</summary>
 		public int RewardAmount;
-
-#if UNITY_EDITOR
-		public static implicit operator RewardedInfo(FuseSDKDotNETLite.Util.RewardedInfo r)
-		{
-			return new RewardedInfo() { PreRollMessage = r.PreRollMessage, RewardMessage = r.RewardMessage, RewardAmount = r.RewardAmount, RewardItem = r.RewardItem, RewardItemId = r.RewardItemId };
-		}
-
-		public static implicit operator FuseSDKDotNETLite.Util.RewardedInfo(RewardedInfo r)
-		{
-			return new FuseSDKDotNETLite.Util.RewardedInfo() { PreRollMessage = r.PreRollMessage, RewardMessage = r.RewardMessage, RewardAmount = r.RewardAmount, RewardItem = r.RewardItem, RewardItemId = r.RewardItemId };
-		}
-#endif
 
 		public override string ToString()
 		{
@@ -184,18 +148,6 @@ namespace FuseMisc
 
 		/// <summary>The metadata configured for this offer.</summary>
 		public string Metadata;
-
-#if UNITY_EDITOR
-		public static implicit operator IAPOfferInfo(FuseSDKDotNETLite.Util.IAPOfferInfo o)
-		{
-			return new IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
-		}
-
-		public static implicit operator FuseSDKDotNETLite.Util.IAPOfferInfo(IAPOfferInfo o)
-		{
-			return new FuseSDKDotNETLite.Util.IAPOfferInfo() { ProductId = o.ProductId, ProductPrice = o.ProductPrice, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
-		}
-#endif
 
 		public override string ToString()
 		{
@@ -267,18 +219,6 @@ namespace FuseMisc
 
 		/// <summary>The metadata configured for this offer.</summary>
 		public string Metadata;
-
-#if UNITY_EDITOR
-		public static implicit operator VGOfferInfo(FuseSDKDotNETLite.Util.VGOfferInfo o)
-		{
-			return new VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
-		}
-
-		public static implicit operator FuseSDKDotNETLite.Util.VGOfferInfo(VGOfferInfo o)
-		{
-			return new FuseSDKDotNETLite.Util.VGOfferInfo() { CurrencyID = o.CurrencyID, PurchaseCurrency = o.PurchaseCurrency, PurchasePrice = o.PurchasePrice, VirtualGoodID = o.VirtualGoodID, ItemName = o.ItemName, ItemAmount = o.ItemAmount, StartTime = o.StartTime, EndTime = o.EndTime, Metadata = o.Metadata };
-		}
-#endif
 
 		public override string ToString()
 		{
