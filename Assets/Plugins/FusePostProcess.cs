@@ -131,30 +131,16 @@ public static class FusePostProcess
 		//Clean up old Fuse files
 		try
 		{
-			// delete older versions of API jar
-			for(int i = 0; i < 10; i++)
-			{
-				string oldAPIjar = "Assets/Plugins/Android/FuseAndroidAPI_v1.2" + i + ".jar";
-				AssetDatabase.DeleteAsset(oldAPIjar);
-			}
-
-			AssetDatabase.DeleteAsset("Assets/Plugins/Android/FuseAPI.jar");
-			AssetDatabase.DeleteAsset("Assets/Plugins/Android/FuseUnityAPI.jar");
-
-			AssetDatabase.DeleteAsset("Assets/Plugins/iOS/FuseAPI.h");
-			AssetDatabase.DeleteAsset("Assets/Plugins/iOS/libFuseAPI.a");
-
 			AssetDatabase.DeleteAsset("Assets/Plugins/FuseNativeAPI.dll");
 
-			if(File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET-Stub.dll") && File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET.dll"))
-			{
-				AssetDatabase.DeleteAsset("Assets/Plugins/FuseSDK.NET.dll");
-			}
+			if(File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET-Stub.dll"))
+				AssetDatabase.DeleteAsset("Assets/Plugins/FuseSDK.NET-Stub.dll");
 
-			if(Directory.Exists(Application.dataPath + "/FuseAPI"))
-			{
-				UnityEngine.Debug.LogError("FuseSDK: Please remove the Assets/FuseAPI folder from your project. The FuseSDk is now located in Assets/FuseSDK.");
-			}
+			if(File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET.dll"))
+				AssetDatabase.DeleteAsset("Assets/Plugins/FuseSDK.NET.dll");
+
+			if(File.Exists(Application.dataPath + "/FuseSDK/FuseSDK_UnityEditor.cs"))
+				AssetDatabase.DeleteAsset("Assets/FuseSDK/FuseSDK_UnityEditor.cs");
 
 			if(Directory.Exists(Application.dataPath + "/Plugins/Android/libs"))
 			{

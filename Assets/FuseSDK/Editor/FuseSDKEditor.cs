@@ -211,6 +211,16 @@ public class FuseSDKEditor : Editor
 		_self.StartAutomatically = EditorGUILayout.Toggle("Start Session Automatically", _self.StartAutomatically);
 		EditorGUILayout.EndHorizontal();
 
+		GUILayout.Space(16);
+
+		bool oldEditorSession = _self.editorSessions;
+		bool oldStandaloneSession = _self.standaloneSessions;
+
+		EditorGUILayout.BeginHorizontal();
+		_self.editorSessions = EditorGUILayout.Toggle("Start Fuse in Editor", _self.editorSessions);
+		GUILayout.Space(12);
+		_self.standaloneSessions = EditorGUILayout.Toggle("Start Fuse in Standalone", _self.standaloneSessions);
+		EditorGUILayout.EndHorizontal();
 
 		GUILayout.Space(16);
 
@@ -252,14 +262,21 @@ public class FuseSDKEditor : Editor
 
 		GUI.enabled = true;
 
+		CheckToggle(_self.editorSessions, oldEditorSession, EditorUserBuildSettings.selectedBuildTargetGroup, "FUSE_SESSION_IN_EDITOR");
+		CheckToggle(_self.editorSessions, oldEditorSession, BuildTargetGroup.Standalone, "FUSE_SESSION_IN_EDITOR");
+		CheckToggle(_self.standaloneSessions, oldStandaloneSession, BuildTargetGroup.Standalone, "FUSE_SESSION_IN_STANDALONE");
+
+		CheckToggle(_self.editorSessions, oldEditorSession, BuildTargetGroup.Android, "FUSE_SESSION_IN_EDITOR");
 		CheckToggle(_self.androidIAB, oldAndroidIAB, BuildTargetGroup.Android, "USING_PRIME31_ANDROID");
 		CheckToggle(_self.androidUnibill, oldandroidUnibill, BuildTargetGroup.Android, "USING_UNIBILL_ANDROID");
 		CheckToggle(_self.soomlaStore, oldSoomlaStore, BuildTargetGroup.Android, "USING_SOOMLA_IAP");
 #if UNITY_5
+		CheckToggle(_self.editorSessions, oldEditorSession, BuildTargetGroup.iOS, "FUSE_SESSION_IN_EDITOR");
 		CheckToggle(_self.iosStoreKit, oldiosStoreKit, BuildTargetGroup.iOS, "USING_PRIME31_IOS");
 		CheckToggle(_self.iosUnibill, oldiosUnibill, BuildTargetGroup.iOS, "USING_UNIBILL_IOS");
 		CheckToggle(_self.soomlaStore, oldSoomlaStore, BuildTargetGroup.iOS, "USING_SOOMLA_IAP");
 #else
+		CheckToggle(_self.editorSessions, oldEditorSession, BuildTargetGroup.iPhone, "FUSE_SESSION_IN_EDITOR");
 		CheckToggle(_self.iosStoreKit, oldiosStoreKit, BuildTargetGroup.iPhone, "USING_PRIME31_IOS");
 		CheckToggle(_self.iosUnibill, oldiosUnibill, BuildTargetGroup.iPhone, "USING_UNIBILL_IOS");
 		CheckToggle(_self.soomlaStore, oldSoomlaStore, BuildTargetGroup.iPhone, "USING_SOOMLA_IAP");
@@ -463,6 +480,13 @@ public class FuseSDKEditor : Editor
 
 	private bool DoSettingsNeedUpdate()
 	{
+		if(File.Exists(Application.dataPath + "/FuseSDK/FuseSDK_UnityEditor.cs")
+			|| File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET-Stub.dll")
+			|| File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET.dll"))
+		{
+			return true;
+		}
+
 #if !(UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7)
 		string currentVersion, metaVersion, bundleId;
 		if(!FuseSDKUpdater.ReadVersionFile(out currentVersion, out metaVersion))
@@ -528,6 +552,15 @@ public class FuseSDKEditor : Editor
 
 	private void UpdateAllSettings()
 	{
+		if(File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET-Stub.dll"))
+			AssetDatabase.DeleteAsset("Assets/Plugins/FuseSDK.NET-Stub.dll");
+
+		if(File.Exists(Application.dataPath + "/Plugins/FuseSDK.NET.dll"))
+			AssetDatabase.DeleteAsset("Assets/Plugins/FuseSDK.NET.dll");
+
+		if(File.Exists(Application.dataPath + "/FuseSDK/FuseSDK_UnityEditor.cs"))
+			AssetDatabase.DeleteAsset("Assets/FuseSDK/FuseSDK_UnityEditor.cs");
+
 #if !(UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_4 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7)
 		string currentVersion, _;
 		if(!FuseSDKUpdater.ReadVersionFile(out currentVersion, out _))
