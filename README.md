@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.5.2.0
+Version: 2.5.3.0
 
-Released: March 11th, 2016
+Released: March 23rd, 2016
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
@@ -28,6 +28,13 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.5.3.0
+March 23rd, 2016
+* Removed Android InAppBilling library (included by Unity or other 3rd party billing plugins)
+* Removed FuseSDK.NET-Stub.dll
+* Added options to FuseSDK prefab to start Fuse Sessions in the Editor and Standalone builds
+* iOS Bug Fixes
 
 ### 2.5.2.0
 March 11th, 2016
