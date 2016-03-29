@@ -968,6 +968,7 @@ public class FuseSDKPrefs : EditorWindow
 		LeadBolt = 1 << 3,
 		NativeX = 1 << 4,
 		AerServ = 1 << 5,
+		SuperAwesome = 1 << 6,
 	}
 
 	private static readonly string[] AdapterFilenames = new string[]
@@ -978,6 +979,7 @@ public class FuseSDKPrefs : EditorWindow
 		"libFuseAdapterLeadBolt.a",
 		"libFuseAdapterNativeX.a",
 		"libFuseAdapterAerServ.a",
+		"libFuseAdapterSuperAwesome.a",
 	};
 
 	private static readonly string ADAPTERS_KEY = "FuseSDKActiveAdapters";
@@ -994,7 +996,7 @@ public class FuseSDKPrefs : EditorWindow
 	{
 		UpdateType updateStream = (UpdateType)Mathf.Min(EditorPrefs.GetInt(FuseSDKUpdater.AUTOUPDATE_KEY, 4) + 1, (int)UpdateType.Bugfixes);
 		DownloadType autoDL = (DownloadType)EditorPrefs.GetInt(FuseSDKUpdater.AUTODOWNLOAD_KEY, 1);
-		ActiveAdapters activeAdapters = (ActiveAdapters)EditorPrefs.GetInt(ADAPTERS_KEY, 31);
+		ActiveAdapters activeAdapters = (ActiveAdapters)EditorPrefs.GetInt(ADAPTERS_KEY, int.MaxValue);
 
 		UpdateType newStream = (UpdateType)EditorGUILayout.EnumPopup("Auto Update Checking", updateStream);
 		
