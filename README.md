@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.5.4.0
+Version: 2.5.5.0
 
-Released: March 29th, 2016
+Released: April 1st, 2016
 
 ## Update Instructions
 When updating the Fuse SDK from version 1.* to 2.* or higher, you must first delete the FuseAPI folder before importing the new package.  
@@ -28,6 +28,10 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.5.5.0
+April 1st, 2016
+* Critical Android Bug fixes in 3rd party providers
 
 ### 2.5.4.0
 March 29th, 2016
