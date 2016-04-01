@@ -2,9 +2,9 @@
 
 ## Current Version
 
-Version: 2.5.4.0
+Version: 2.5.5.0
 
-Released: March 29th, 2016
+Released: April 1st, 2016
 
 ## Update Instructions
 The location of our Unity packages has changed. The 2 packages in this repository simply contain a Updater that will fetch the package from Unity.  
@@ -12,8 +12,8 @@ Please use the links below to download the FuseSDK.
 
 
 ## To Download
-[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.4.0/FuseUnitySDK.unitypackage)  
-[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.4.0/FuseUnitySDK-Unity5.unitypackage)  
+[Unity 4 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.5.0/FuseUnitySDK.unitypackage)  
+[Unity 5 Package](https://github.com/fusepowered/FuseSDKUnity/releases/download/v2.5.5.0/FuseUnitySDK-Unity5.unitypackage)  
 Once the package has been imported into your project, you will be able to update the FuseSDK Wrapper through the Unity Editor.
 
 ## Getting Started
@@ -29,6 +29,10 @@ Please review the [integration instructions](https://wiki.fusepowered.com/index.
 Please visit [http://www.fusepowered.com](http://www.fusepowered.com) for an account to get started!
 
 ## Release Notes
+
+### 2.5.5.0
+April 1st, 2016
+* Critical Android Bug fixes in 3rd party providers
 
 ### 2.5.4.0
 March 29th, 2016
